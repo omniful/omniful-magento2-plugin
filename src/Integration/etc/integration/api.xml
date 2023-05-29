@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<integrations>
-    <integration name="Omniful Core Creds.">
-        <resources>
-            <resource name="Magento_Backend::all" />
-        </resources>
-    </integration>
-</integrations>
