@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <update id="Magento_Integration::system_extensions" title="Integrations" translate="title" module="Magento_Integration" sortOrder="45" parent="Magento_Backend::system" resource="Magento_Integration::extensions"/>
+        <update id="Magento_Integration::system_integrations" title="Manage API Keys" translate="title" module="Magento_Integration" sortOrder="10" parent="Magento_Integration::system_extensions" action="adminhtml/integration" resource="Magento_Integration::integrations"/>
+    </menu>
+</config>
