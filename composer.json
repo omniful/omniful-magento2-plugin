@@ -1,0 +1,35 @@
+{
+  "name": "omniful/magento2-plugin",
+  "type": "magento2-module",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Omniful",
+      "role": "Technical Support",
+      "email": "support@omniful.com",
+      "homepage": "https://www.omniful.com"
+    }
+  ],
+  "description": "Grow your retail business and go Quick-Commerce. Easy-to-start plug-and-play SaaS platform for hyperlocal retail",
+  "homepage": "https://www.omniful.com",
+  "keywords": [
+    "OMS",
+    "WMS",
+    "setup",
+    "magento",
+    "magento2"
+  ],
+  "prefer-stable": true,
+  "minimum-stability": "stable",
+  "require": {},
+  "autoload": {
+    "files": [
+      "src/Core/registration.php",
+      "src/Integration/registration.php"
+    ],
+    "psr-4": {
+      "Omniful\\Core\\": "src/Core/",
+      "Omniful\\Integration\\": "src/Integration/"
+    }
+  }
+}
