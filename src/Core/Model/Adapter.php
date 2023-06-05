@@ -144,6 +144,14 @@ class Adapter
 
         $endPoint = $this->webhookUrl;
 
+        $loggingData = [
+            "endPoint" => $endPoint,
+            "payload" => json_encode($payload),
+            "headers" => $this->headers,
+        ];
+
+        file_put_contents(BP . '/var/log/publishMessage.log', print_r($loggingData, true) . "\n", FILE_APPEND);
+
         $this->curl->setHeaders($this->headers);
         $response = $this->curl->_post($endPoint, json_encode($payload));
 

@@ -584,16 +584,16 @@ class Curl extends \Magento\Framework\HTTP\Client\Curl implements
 
             $returnData = $this->helper->getResponseStatus(
                 isset($response["error"]) && $response["error"]["message"]
-                    ? $response["error"]["message"]
-                    : $http_message,
+                ? $response["error"]["message"]
+                : $http_message,
                 $this->httpCode == 200 || $this->httpCode == 201
-                    ? 200
-                    : $this->httpCode,
+                ? 200
+                : $this->httpCode,
                 $this->httpCode == 200 ||
                 $this->httpCode == 201 ||
                 $this->httpCode == 202
-                    ? true
-                    : false,
+                ? true
+                : false,
                 $responseData,
                 null,
                 false
@@ -710,49 +710,43 @@ class Curl extends \Magento\Framework\HTTP\Client\Curl implements
      * @param string $value
      * @return void
      */
-    public function handleRateLimit($headers, $httpCode)
+    public function handleRateLimit(array $headers, ?int $httpCode): void
     {
-        if (
-            isset($headers["x-ratelimit-limit"]) &&
-            isset($headers["x-ratelimit-remaining"]) &&
-            isset($headers["x-ratelimit-reset"])
-        ) {
-            $limit = (int) $headers["x-ratelimit-limit"];
-            $remaining = (int) $headers["x-ratelimit-remaining"];
-            $reset = (int) $headers["x-ratelimit-reset"];
-            $retryAfter = isset($headers["retry-after"])
-                ? (int) $headers["retry-after"]
+        $limit = (int) ($headers["x-ratelimit-limit"] ?? 0);
+        $remaining = (int) ($headers["x-ratelimit-remaining"] ?? 0);
+        $reset = (int) ($headers["x-ratelimit-reset"] ?? 0);
+        $retryAfter = isset($headers["retry-after"]) ? (int) $headers["retry-after"] : 0;
+
+        // check if sliding window rate limit is available
+        if (isset($headers["x-ratelimit-window"])) {
+            $windowSize = (int) $headers["x-ratelimit-window"];
+            $windowStart = time() - $windowSize;
+
+            // get the number of requests made within the sliding window
+            $requestsMade = isset($headers["x-ratelimit-window-requests"])
+                ? (int) $headers["x-ratelimit-window-requests"]
                 : 0;
 
-            // check if sliding window rate limit is available
-            if (isset($headers["x-ratelimit-window"])) {
-                $windowSize = (int) $headers["x-ratelimit-window"];
-                $windowStart = time() - $windowSize;
+            // calculate the number of requests remaining within the sliding window
+            $remaining = $limit - $requestsMade;
 
-                // get the number of requests made within the sliding window
-                $requestsMade = 0;
-                if (isset($headers["x-ratelimit-window-requests"])) {
-                    $requestsMade =
-                        (int) $headers["x-ratelimit-window-requests"];
-                }
-
-                // calculate the number of requests remaining within the sliding window
-                $remaining = $limit - $requestsMade;
-
-                // if there are no requests remaining within the sliding window, calculate the time to wait until the window resets
-                if ($remaining == 0) {
-                    $timeUntilReset = $windowStart + $windowSize - time() + 1;
-                    sleep($timeUntilReset);
-                }
+            // if there are no requests remaining within the sliding window, calculate the time to wait until the window resets
+            if ($remaining == 0) {
+                $timeUntilReset = $windowStart + $windowSize - time() + 1;
+                sleep($timeUntilReset);
             }
+        }
 
-            // if there are remaining requests, calculate the time to wait until the next request can be made
-            if ($remaining > 0) {
-                $waitTime = max(ceil($limit / $remaining), $retryAfter);
-                sleep($waitTime);
-            }
+        file_put_contents(BP . '/var/log/remaining.log', print_r($remaining, true) . "\n", FILE_APPEND);
+
+        // if there are remaining requests, calculate the time to wait until the next request can be made
+        if ($remaining > 0) {
+            $waitTime = max(ceil($limit / $remaining), $retryAfter);
+            sleep($waitTime);
         } elseif (isset($httpCode) && $httpCode == 429) {
+            // sleep for 30 seconds if we hit the API rate limit
             sleep(30);
         }
     }
+
 }

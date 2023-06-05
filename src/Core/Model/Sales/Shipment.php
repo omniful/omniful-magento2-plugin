@@ -33,7 +33,7 @@ class Shipment implements ShipmentInterface
     const INVALID_LINK_ERROR_MESSAGE = "Invalid tracking link provided. Please provide a valid website link.";
     const TRACKING_INFO_OVERRIDE_ERROR_MESSAGE = 'The order already has tracking information. If you wish to override it, please set "override_existing_data" to true.';
 
-    const ALLOWED_STATUSES = [
+    const IGNORED_STATUSES = [
         "refunded",
         "cancelled",
         "failed",
@@ -83,14 +83,6 @@ class Shipment implements ShipmentInterface
         string $carrier_title = null,
         bool $override_exist_data = false
     ) {
-        if (!$carrier_title) {
-            $carrier_title = $this->scopeConfig->getValue(
-                "carriers/" . $this->carrier_code . "/title",
-                \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-            );
-        }
-
-        var_dump($carrier_title);
         // Validate input data
         if (
             empty($tracking_number) ||
@@ -107,7 +99,7 @@ class Shipment implements ShipmentInterface
             $status = $order->getStatus();
 
             // Check if the order status allows adding tracking information
-            if (in_array($status, self::ALLOWED_STATUSES)) {
+            if (in_array($status, self::IGNORED_STATUSES)) {
                 throw new \Magento\Framework\Exception\LocalizedException(
                     __(self::INVALID_STATUS_ERROR_MESSAGE, $status)
                 );
@@ -173,9 +165,6 @@ class Shipment implements ShipmentInterface
             $shipment->save();
             $shipment->getOrder()->save();
 
-            $order->setShippingMethod($this->carrier_code);
-            $order->setShippingDescription($carrier_title);
-
             $commentText =
                 "Order Shipment has been Generated and you can print the <a href='" .
                 $shipping_label_pdf .
@@ -231,17 +220,15 @@ class Shipment implements ShipmentInterface
             foreach ($tracks as $track) {
                 $trackingLink = $track->getTracingLink();
                 $tracking_number = $track->getTrackNumber();
-                $shipping_label_pdf = $track->getShippingLabelPdf();
-                $shippingTitle = $this->scopeConfig->getValue(
-                    "carriers/" . $this->carrier_code . "/title",
-                    \Magento\Store\Model\ScopeInterface::SCOPE_STORE
-                );
+                $shippingLabelPdf = $track->getShippingLabelPdf();
+                $carrierTitle = $track->getDescription() ?: __("Custom");
+
                 $shipmentTracking[] = [
-                    "title" => (string) $shippingTitle,
+                    "title" => (string) $carrierTitle,
                     "code" => (string) $this->carrier_code,
                     "tracing_link" => (string) $trackingLink,
                     "tracking_number" => (string) $tracking_number,
-                    "shipping_label_pdf" => (string) $shipping_label_pdf,
+                    "shipping_label_pdf" => (string) $shippingLabelPdf,
                 ];
             }
         }

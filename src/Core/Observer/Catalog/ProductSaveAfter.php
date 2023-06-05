@@ -122,7 +122,6 @@ class ProductSaveAfter implements ObserverInterface
     public function routeFunctions($product)
     {
         try {
-            // Check if product is new
             if (
                 $product === null ||
                 $product->getId() === null ||

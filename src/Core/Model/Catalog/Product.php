@@ -323,12 +323,20 @@ class Product implements ProductInterface
             ->getAmount()
             ->getValue();
         $price = $salePrice ?: $regularPrice;
+        $msrpPrice = $product
+            ->getPriceInfo()
+            ->getPrice("msrp_price")
+            ->getAmount()
+            ->getValue();
+
         $prices = [
             "regular_price" => (float) $regularPrice,
             "sale_price" => (float) $salePrice,
             "price" => (float) $price,
+            "msrp_price" => (float) $msrpPrice,
             "qty" => (float) $product->getQty(),
         ];
+
 
         $variationDetails = $this->getProductVariations($product->getId());
 
@@ -364,10 +372,10 @@ class Product implements ProductInterface
             "barcode" => $product->getCustomAttribute(
                 "omniful_barcode_attribute"
             )
-                ? (string) $product
-                    ->getCustomAttribute("omniful_barcode_attribute")
-                    ->getValue()
-                : null,
+            ? (string) $product
+                ->getCustomAttribute("omniful_barcode_attribute")
+                ->getValue()
+            : null,
             "stock_quantity" => (float) $stockItem->getQty(),
             "name" => (string) $product->getName(),
             "description" => (string) $product->getDescription(),
@@ -496,12 +504,12 @@ class Product implements ProductInterface
                         "barcode" => $variation->getCustomAttribute(
                             "omniful_barcode_attribute"
                         )
-                            ? (string) $variation
-                                ->getCustomAttribute(
-                                    "omniful_barcode_attribute"
-                                )
-                                ->getValue()
-                            : null,
+                        ? (string) $variation
+                            ->getCustomAttribute(
+                                "omniful_barcode_attribute"
+                            )
+                            ->getValue()
+                        : null,
                         "regular_price" => (float) $variation->getPrice(),
                         "sale_price" => (float) $variation->getSpecialPrice(),
                         "price" => (float) $variation->getFinalPrice(),
