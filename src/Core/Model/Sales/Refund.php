@@ -60,10 +60,10 @@ class Refund implements RefundInterface
      * Create credit memo for specified order items and mark order status as "On Hold"
      *
      * @param int $id
-     * @param mixed $items
+     * @param $items
      * @throws \Exception
      */
-    public function processRefund(int $id, mixed $items): array
+    public function processRefund(int $id, $items): array
     {
         $responseData = [];
 
@@ -139,8 +139,8 @@ class Refund implements RefundInterface
                     throw new \Exception(
                         __(
                             "Invoice ID: " .
-                                $invoice->getId() .
-                                " is already refunded."
+                            $invoice->getId() .
+                            " is already refunded."
                         )
                     );
                 }

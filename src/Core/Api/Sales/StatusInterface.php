@@ -12,14 +12,14 @@ interface StatusInterface
      *
      * @param int $id
      * @param string $status
-     * @param  mixed $hubId
+     * @param  $hubId
      * @param  string $comment
      * @return string[]
      */
     public function processUpdateOrder(
         int $id,
         string $status,
-        mixed $hubId = null,
+        $hubId = null,
         string $comment = null
     );
 }

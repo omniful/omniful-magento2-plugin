@@ -191,9 +191,9 @@ class Product implements ProductInterface
      * @inheritDoc
      */
     public function updateProductsInventory(
-        mixed $sku,
+        $sku,
         int $qty,
-        bool $status = null
+        ?bool $status = null
     ) {
         try {
             $product = $this->productRepository->get($sku);

@@ -11,8 +11,8 @@ interface RefundInterface
      * Update order status.
      *
      * @param  int $id
-     * @param  mixed $items
+     * @param  $items
      * @return string[]
      */
-    public function processRefund(int $id, mixed $items);
+    public function processRefund(int $id, $items);
 }

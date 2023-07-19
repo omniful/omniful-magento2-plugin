@@ -17,10 +17,10 @@ interface ProductManagementInterface
     /**
      * Get product by sku
      *
-     * @param mixed $sku
+     * @param $sku
      * @return string[]
      */
-    public function getProductBySku(mixed $sku);
+    public function getProductBySku($sku);
 
     /**
      * Get product by id
@@ -33,22 +33,21 @@ interface ProductManagementInterface
     /**
      * Bulk Update Product Inventory
      *
-     * @param int $accountId
-     * @param mixed $products
+     * @param $products
      * @return string[]
      */
-    public function updateBulkProductsInventory(mixed $products);
+    public function updateBulkProductsInventory($products);
 
     /**
      * Update Product Inventory
      *
-     * @param mixed $sku
+     * @param $sku
      * @param int $qty
      * @param bool $status
      * @return string[]
      */
     public function updateProductsInventory(
-        mixed $sku,
+        $sku,
         int $qty,
         bool $status = null
     );
