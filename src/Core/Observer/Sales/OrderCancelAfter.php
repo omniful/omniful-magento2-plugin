@@ -66,8 +66,6 @@ class OrderCancelAfter implements ObserverInterface
                 return $response;
             }
         } catch (\Exception $e) {
-            var_dump($e->getMessage());
-            exit();
             // $this->logger->info($e->getMessage());
         }
     }

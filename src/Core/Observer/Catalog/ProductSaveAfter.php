@@ -164,8 +164,6 @@ class ProductSaveAfter implements ObserverInterface
 
             return true;
         } catch (\Exception $e) {
-            var_dump($e->getMessage());
-            exit();
             $this->logger->info("Error while updating : " . $e->getMessage());
         }
     }
@@ -196,8 +194,6 @@ class ProductSaveAfter implements ObserverInterface
 
             return true;
         } catch (\Exception $e) {
-            var_dump($e->getMessage());
-            exit();
             $this->logger->info("Error while updating : " . $e->getMessage());
         }
     }

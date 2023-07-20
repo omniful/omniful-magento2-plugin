@@ -190,8 +190,6 @@ class Shipment implements ShipmentInterface
 
             return $responseData;
         } catch (\Exception $e) {
-            // var_dump($e->getMessage());
-            // exit;
             $responseData[] = [
                 "httpCode" => 500,
                 "status" => false,
