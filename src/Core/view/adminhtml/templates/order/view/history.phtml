@@ -6,8 +6,9 @@
 
 /** @var \Magento\Sales\Block\Adminhtml\Order\View\History $block */
 /** @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer */
+use \Omniful\Core\Helper\Data;
 
-$helper = $this->helper('Omniful\Core\Helper\Data');
+$helper = $block->helper(Data::class);
 $isOrderStatusDropdownDisabled = !$helper->isOrderStatusDropdownDisabled();
 ?>
 
@@ -17,7 +18,8 @@ $isOrderStatusDropdownDisabled = !$helper->isOrderStatusDropdownDisabled();
             <div class="order-history-block" id="history_form">
 
                 <div class="admin__field">
-                    <label for="history_status" class="admin__field-label"><?= $block->escapeHtml(__('Status')) ?></label>
+                    <label for="history_status" class="admin__field-label"><?=
+                        $block->escapeHtml(__('Status')) ?></label>
                     <div class="admin__field-control">
                         <select name="history[status]" id="history_status" class="admin__control-select">
                             <?php foreach ($block->getStatuses() as $_code => $_label): ?>
@@ -97,7 +99,8 @@ $isOrderStatusDropdownDisabled = !$helper->isOrderStatusDropdownDisabled();
                     <?php elseif ($_item->getIsCustomerNotified()): ?>
                         <span class="note-list-customer-notified"><?= $block->escapeHtml(__('Notified')) ?></span>
                     <?php else: ?>
-                        <span class="note-list-customer-not-notified"><?= $block->escapeHtml(__('Not Notified')) ?></span>
+                        <span class="note-list-customer-not-notified"><?=
+                            $block->escapeHtml(__('Not Notified')) ?></span>
                     <?php endif; ?>
                 </span>
                 <?php if ($_item->getComment()): ?>
@@ -110,10 +113,11 @@ $isOrderStatusDropdownDisabled = !$helper->isOrderStatusDropdownDisabled();
         </ul>
         <?php $scriptString = <<<script
             require(['prototype'], function(){
-                if($('order_status'))$('order_status').update('{$block->escapeJs($block->getOrder()->getStatusLabel())}');
+                if($('order_status'))$('order_status').update('{
+                $block->escapeJs($block->getOrder()->getStatusLabel())}');
             });
-            script;
-            ?>
+script;
+        ?>
         <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $scriptString, false) ?>
     </div>
 <?php endif; ?>
