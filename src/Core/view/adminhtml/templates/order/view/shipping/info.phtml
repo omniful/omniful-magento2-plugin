@@ -25,14 +25,17 @@ endif; ?>
         <span class="title"><?= $block->escapeHtml(__('Shipping &amp; Handling Information')) ?></span>
     </div>
     <div class="admin__page-section-item-content">
-        <?php  if ($order->getTracksCollection()->count()): ?>
+        <?php if ($order->getTracksCollection()->count()): ?>
             <p>
                 <?php /*<a href="#" id="linkId" title="<?= $block->escapeHtmlAttr(__('Track Order')) ?>">
                     <?= $block->escapeHtml(__('Track Order')) ?>
                 </a> */ ?>
-                <?php echo ($order->getTrackNumber()) ? preg_replace('#(<a.*?>).*?(</a>)#', '$1'.__("Track Shipment").'$2' , $order->getTrackNumber()) : ""; ?>
+                <?= ($order->getTrackNumber()) ?
+                    preg_replace('#(<a.*?>).*?(</a>)#', '$1' . __("Track Shipment") . '$2', /* @noEscape */ $order
+                        ->getTrackNumber()) : ""; ?>
             </p>
-            <?= /* @noEscape */ $secureRenderer->renderEventListenerAsTag(
+            <?= /* @noEscape */
+            $secureRenderer->renderEventListenerAsTag(
                 'onclick',
                 "popWin('" . $block->escapeJs($shippingHelper->getTrackingPopupUrlBySalesModel($order)) .
                 "','track_order','width=800,height=600,resizable=yes,scrollbars=yes')",
@@ -41,7 +44,6 @@ endif; ?>
         <?php endif; ?>
         <?php if ($order->getShippingDescription()): ?>
             <strong><?= $block->escapeHtml($order->getShippingDescription()) ?></strong>
-
             <?php if ($taxHelper->displayShippingPriceIncludingTax()): ?>
                 <?php $_excl = $block->displayShippingPriceInclTax($order); ?>
             <?php else: ?>
@@ -49,9 +51,11 @@ endif; ?>
             <?php endif; ?>
             <?php $_incl = $block->displayShippingPriceInclTax($order); ?>
 
-            <?= /** @noEscape */ $_excl ?>
+            <?= /** @noEscape */
+            $_excl ?>
             <?php if ($taxHelper->displayShippingBothPrices() && $_incl != $_excl): ?>
-                (<?= $block->escapeHtml(__('Incl. Tax')) ?> <?= /** @noEscape */ $_incl ?>)
+                (<?= $block->escapeHtml(__('Incl. Tax')) ?> <?= /** @noEscape */
+                $_incl ?>)
             <?php endif; ?>
         <?php else: ?>
             <?= $block->escapeHtml(__('No shipping information available')) ?>
