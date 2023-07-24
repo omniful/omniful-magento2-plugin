@@ -8,7 +8,7 @@
 /** @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer */
 use \Omniful\Core\Helper\Data;
 
-$helper = $block->helper(Data::class);
+$helper = $this->helper(Data::class);
 $isOrderStatusDropdownDisabled = !$helper->isOrderStatusDropdownDisabled();
 ?>
 
