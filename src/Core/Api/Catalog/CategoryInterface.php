@@ -17,7 +17,7 @@ interface CategoryInterface
     /**
      * Get category by ID.
      *
-     * @param int $id
+     * @param  int $id
      * @return string[]
      */
     public function getCategoryById(int $id);

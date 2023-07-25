@@ -4,6 +4,12 @@ namespace Omniful\Core\Helper;
 
 class Countries
 {
+    /**
+     * Get Country By Code
+     *
+     * @param  mixed $code
+     * @return mixed
+     */
     public function getCountryByCode($code)
     {
         $countryArray = [
@@ -413,9 +419,7 @@ class Countries
         if (array_key_exists($code, $countryArray)) {
             $countryData["name"] = ucwords(strtolower($countryArray[$code]["name"]));
             $countryData["code"] = $countryArray[$code]["code"];
-            $returnData = $countryData;
-
-            return $returnData;
+            return $countryData;
         }
     }
 }

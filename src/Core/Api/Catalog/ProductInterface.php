@@ -17,7 +17,7 @@ interface ProductInterface
     /**
      * Get product by identifier.
      *
-     * @param $identifier
+     * @param  string $identifier
      * @return string[]
      */
     public function getProductByIdentifier($identifier);
@@ -25,16 +25,18 @@ interface ProductInterface
     /**
      * Update product in Bulk.
      *
-     * @param $products
+     * @param  string $products
      * @return string[]
      */
     public function updateBulkProductsInventory($products);
 
     /**
-     * Update product by SKU.
+     * Update product by SKU
      *
-     * @param $sku
-     * @return string[]
+     * @param  string    $sku
+     * @param  int       $qty
+     * @param  bool|null $status
+     * @return mixed
      */
     public function updateProductsInventory(
         $sku,

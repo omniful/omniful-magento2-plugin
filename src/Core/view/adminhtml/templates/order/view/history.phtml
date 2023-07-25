@@ -8,7 +8,7 @@
 /** @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer */
 use \Omniful\Core\Helper\Data;
 
-$helper = $block->helper(Data::class);
+$helper = $this->helper(Data::class);
 $isOrderStatusDropdownDisabled = !$helper->isOrderStatusDropdownDisabled();
 ?>
 
@@ -113,8 +113,7 @@ $isOrderStatusDropdownDisabled = !$helper->isOrderStatusDropdownDisabled();
         </ul>
         <?php $scriptString = <<<script
             require(['prototype'], function(){
-                if($('order_status'))$('order_status').update('{
-                $block->escapeJs($block->getOrder()->getStatusLabel())}');
+                if($('order_status'))$('order_status').update('{$block->getOrder()->getStatusLabel()}');
             });
 script;
         ?>

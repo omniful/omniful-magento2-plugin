@@ -6,6 +6,13 @@ use Magento\Sales\Model\ResourceModel\Order\Grid\Collection as OrderGridCollecti
 
 class OrderGridCollectionPlugin
 {
+    /**
+     * After Get Search Result
+     *
+     * @param  OrderGridCollection $subject
+     * @param  mixed               $result
+     * @return mixed
+     */
     public function afterGetSearchResult(OrderGridCollection $subject, $result)
     {
         $result
@@ -22,6 +29,14 @@ class OrderGridCollectionPlugin
         return $result;
     }
 
+    /**
+     * After Prepare Entity
+     *
+     * @param  OrderGridCollection $subject
+     * @param  mixed               $result
+     * @param  Document            $document
+     * @return mixed
+     */
     public function afterPrepareEntity(
         OrderGridCollection $subject,
         $result,

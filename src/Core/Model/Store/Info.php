@@ -2,6 +2,7 @@
 
 namespace Omniful\Core\Model\Store;
 
+use Magento\Sales\Model\ResourceModel\Order\Status\CollectionFactory;
 use Omniful\Core\Api\Store\InfoInterface;
 use Magento\Store\Model\StoreManagerInterface;
 
@@ -11,15 +12,20 @@ class Info implements InfoInterface
      * @var StoreManagerInterface
      */
     protected $storeManager;
-
+    /**
+     * @var CollectionFactory
+     */
     protected $statusCollectionFactory;
 
     /**
+     * Info constructor.
+     *
      * @param StoreManagerInterface $storeManager
+     * @param CollectionFactory $statusCollectionFactory
      */
     public function __construct(
         StoreManagerInterface $storeManager,
-        \Magento\Sales\Model\ResourceModel\Order\Status\CollectionFactory $statusCollectionFactory
+        CollectionFactory $statusCollectionFactory
     ) {
         $this->storeManager = $storeManager;
         $this->statusCollectionFactory = $statusCollectionFactory;
@@ -35,7 +41,6 @@ class Info implements InfoInterface
         try {
             $stores = $this->storeManager->getStores();
             $storeInfo = [];
-
             foreach ($stores as $store) {
                 $storeInfo["stores"] = [
                     "store_id" => (int) $store->getId(),
@@ -64,7 +69,6 @@ class Info implements InfoInterface
                     "order_statuses" => $orderStatuses,
                 ],
             ];
-
             return $responseData;
         } catch (\Exception $e) {
             $responseData[] = [
@@ -72,7 +76,6 @@ class Info implements InfoInterface
                 "status" => false,
                 "message" => (string) $e->getMessage(),
             ];
-
             return $responseData;
         }
     }
@@ -85,17 +88,14 @@ class Info implements InfoInterface
     private function getOrderStatuses(): array
     {
         $orderStatuses = [];
-
         $statusCollection = $this->statusCollectionFactory->create();
         $statuses = $statusCollection->toOptionArray();
-
         foreach ($statuses as $status) {
             $orderStatuses[] = [
                 "title" => $status["label"],
                 "code" => $status["value"],
             ];
         }
-
         return $orderStatuses;
     }
 }

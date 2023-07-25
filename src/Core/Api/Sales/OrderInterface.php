@@ -17,7 +17,7 @@ interface OrderInterface
     /**
      * Get order by ID.
      *
-     * @param int $id
+     * @param  int $id
      * @return string[]
      */
     public function getOrderById(int $id);

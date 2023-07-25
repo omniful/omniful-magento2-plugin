@@ -11,20 +11,31 @@ use Magento\Store\Model\StoreManagerInterface;
 
 class OrderCancelAfter implements ObserverInterface
 {
-    const EVENT_NAME = "order.canceled";
-
+    public const EVENT_NAME = "order.canceled";
+    /**
+     * @var Logger
+     */
     protected $logger;
+    /**
+     * @var Adapter
+     */
     protected $adapter;
+    /**
+     * @var StoreManagerInterface
+     */
     protected $storeManager;
+    /**
+     * @var OrderManagement
+     */
     protected $orderManagement;
 
     /**
      * Constructor Injection
      *
-     * @param \Omniful\Core\Logger\Logger $logger
-     * @param \Omniful\Core\Model\Adapter $adapter
-     * @param \Omniful\Core\Model\Sales\Order $orderManagement
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param Logger $logger
+     * @param Adapter $adapter
+     * @param OrderManagement $orderManagement
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         Logger $logger,
@@ -41,32 +52,28 @@ class OrderCancelAfter implements ObserverInterface
     /**
      * Triggers when an order is canceled and initiates the adapter order cancel function
      *
-     * @param \Magento\Framework\Event\Observer $observer
+     * @param Observer $observer
      * @return void
      */
     public function execute(Observer $observer)
     {
         $order = $observer->getOrder();
-
         try {
             if ($order->getStatus() == "canceled") {
                 // CONNECT FIRST
                 $this->adapter->connect();
-
                 // PUSH CANCEL ORDER EVENT
                 $payload = $this->orderManagement->getOrderData($order);
                 $response = $this->adapter->publishMessage(
                     self::EVENT_NAME,
                     $payload
                 );
-
                 // LOG MESSAGE
-                // $this->logger->info('Order Canceled successfully');
-
+                 $this->logger->info('Order Canceled successfully');
                 return $response;
             }
         } catch (\Exception $e) {
-            // $this->logger->info($e->getMessage());
+             $this->logger->info($e->getMessage());
         }
     }
 }

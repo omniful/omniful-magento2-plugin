@@ -17,7 +17,7 @@ interface ProductManagementInterface
     /**
      * Get product by sku
      *
-     * @param $sku
+     * @param  string $sku
      * @return string[]
      */
     public function getProductBySku($sku);
@@ -25,7 +25,7 @@ interface ProductManagementInterface
     /**
      * Get product by id
      *
-     * @param int $id
+     * @param  int $id
      * @return string[]
      */
     public function getProductById(int $id);
@@ -33,7 +33,7 @@ interface ProductManagementInterface
     /**
      * Bulk Update Product Inventory
      *
-     * @param $products
+     * @param  string $products
      * @return string[]
      */
     public function updateBulkProductsInventory($products);
@@ -41,9 +41,9 @@ interface ProductManagementInterface
     /**
      * Update Product Inventory
      *
-     * @param $sku
-     * @param int $qty
-     * @param bool $status
+     * @param  string $sku
+     * @param  int    $qty
+     * @param  bool   $status
      * @return string[]
      */
     public function updateProductsInventory(

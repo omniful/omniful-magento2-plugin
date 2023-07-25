@@ -2,43 +2,54 @@
 
 namespace Omniful\Integration\Api;
 
+use Magento\Integration\Model\Integration;
+
 /**
  * @api
  */
 interface ApiServiceInterface
 {
-    const API_INTEGRATION_NAME = "Omniful Core Creds.";
+    public const API_INTEGRATION_NAME = "Omniful Core Creds.";
 
     /**
-     * @return string
+     * Get Token
+     *
+     * @return mixed
      */
     public function getToken();
 
     /**
-     * @param \Magento\Integration\Model\Integration $integration
-     * @return string
+     * Get Integration Access Token
+     *
+     * @param Integration $integration
+     * @return mixed
      */
     public function getIntegrationAccessToken(
-        \Magento\Integration\Model\Integration $integration
+        Integration $integration
     );
 
     /**
-     * @param \Magento\Integration\Model\Integration $integration
+     * Create Access Token
+     *
+     * @param Integration $integration
      * @throws \Exception
      * @return $this|ApiServiceInterface
      */
     public function createAccessToken(
-        \Magento\Integration\Model\Integration $integration
+        Integration $integration
     );
 
     /**
-     * @return $this
+     * Setup Integration
+     *
+     * @return mixed
      */
     public function setupIntegration();
 
     /**
-     * @throws \Exception
-     * @return \Magento\Integration\Model\Integration
+     * Get Integration
+     *
+     * @return mixed
      */
     public function getIntegration();
 }

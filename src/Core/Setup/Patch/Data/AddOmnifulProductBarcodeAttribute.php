@@ -4,8 +4,10 @@ namespace Omniful\Core\Setup\Patch\Data;
 
 use Magento\Eav\Setup\EavSetup;
 use Magento\Eav\Setup\EavSetupFactory;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\Patch\DataPatchInterface;
+use Magento\Framework\Validator\ValidateException;
 
 class AddOmnifulProductBarcodeAttribute implements DataPatchInterface
 {
@@ -17,14 +19,15 @@ class AddOmnifulProductBarcodeAttribute implements DataPatchInterface
     private $moduleDataSetup;
 
     /**
-     * EavSetupFactory.
-     *
      * @var EavSetupFactory
      */
     private $eavSetupFactory;
 
     /**
-     * AddRecommendedAttribute constructor.
+     * AddOmnifulProductBarcodeAttribute constructor.
+     *
+     * @param EavSetupFactory          $eavSetupFactory
+     * @param ModuleDataSetupInterface $moduleDataSetup
      */
     public function __construct(
         EavSetupFactory $eavSetupFactory,
@@ -35,14 +38,22 @@ class AddOmnifulProductBarcodeAttribute implements DataPatchInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Apply
+     *
+     * @return AddOmnifulProductBarcodeAttribute|void
+     * @throws LocalizedException
+     * @throws ValidateException
      */
     public function apply()
     {
-        /** @var EavSetup $eavSetup */
-        $eavSetup = $this->eavSetupFactory->create([
+        /**
+         * @var EavSetup $eavSetup
+        */
+        $eavSetup = $this->eavSetupFactory->create(
+            [
             "setup" => $this->moduleDataSetup,
-        ]);
+            ]
+        );
 
         $eavSetup->addAttribute(
             \Magento\Catalog\Model\Product::ENTITY,
@@ -73,7 +84,9 @@ class AddOmnifulProductBarcodeAttribute implements DataPatchInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Get Dependencies
+     *
+     * @return array|string[]
      */
     public static function getDependencies()
     {
@@ -81,7 +94,9 @@ class AddOmnifulProductBarcodeAttribute implements DataPatchInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Get Aliases
+     *
+     * @return array|string[]
      */
     public function getAliases()
     {

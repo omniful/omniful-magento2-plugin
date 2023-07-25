@@ -10,7 +10,7 @@ use Magento\Framework\UrlInterface;
 class Adapter
 {
     /**
-     * API endpoint
+     * @var WebhookUrl
      */
     protected $webhookUrl;
 
@@ -50,18 +50,29 @@ class Adapter
     protected $webhookToken;
 
     /**
-     * @var array
+     * @var Headers
      */
     protected $headers;
-
+    /**
+     * @var UrlInterface
+     */
     protected $urlInterface;
+    /**
+     * @var Domain
+     */
     protected $domain;
+    /**
+     * @var Timestamp
+     */
     protected $timestamp;
 
     /**
      * Adapter constructor.
      *
-     * @param \Omniful\Core\Helper\Data $coreHelper
+     * @param Http                                $request
+     * @param Logger                              $logger
+     * @param Data                                $coreHelper
+     * @param UrlInterface                        $urlInterface
      * @param \Magento\Framework\HTTP\Client\Curl $curl
      */
     public function __construct(
@@ -107,7 +118,7 @@ class Adapter
             $this->workspaceId = $this->coreHelper->getWorkspaceId();
             $this->webhookToken = $this->coreHelper->getWebhookToken();
         } catch (\Magento\Framework\Exception\LocalizedException $e) {
-            // $this->logger->info($e->getMessage());
+            $this->logger->info($e->getMessage());
         }
 
         $this->headers = [
@@ -126,7 +137,7 @@ class Adapter
      * Cancel order method
      *
      * @param string $event
-     * @param array $payload
+     * @param array  $payload
      *
      * @return mixed
      */
@@ -140,6 +151,7 @@ class Adapter
             "data" => $payload,
         ];
 
+        $this->logger->info("Payload: " . json_encode($payload));
         $this->headers["X-Event-Name"] = $event;
 
         $endPoint = $this->webhookUrl;
@@ -149,12 +161,10 @@ class Adapter
             "payload" => json_encode($payload),
             "headers" => $this->headers,
         ];
-
-        file_put_contents(BP . '/var/log/publishMessage.log', print_r($loggingData, true) . "\n", FILE_APPEND);
-
+        $this->logger->info("LoggingData: " . json_encode($loggingData));
         $this->curl->setHeaders($this->headers);
-        $response = $this->curl->_post($endPoint, json_encode($payload));
-
+        $response = $this->curl->post($endPoint, json_encode($payload));
+        $this->logger->info("Response: " . json_encode($response));
         return $response;
     }
 }

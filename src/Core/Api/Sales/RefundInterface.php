@@ -8,11 +8,11 @@ namespace Omniful\Core\Api\Sales;
 interface RefundInterface
 {
     /**
-     * Update order status.
+     * Update order status
      *
-     * @param  int $id
-     * @param  $items
-     * @return string[]
+     * @param  int   $id
+     * @param  mixed $items
+     * @return mixed
      */
     public function processRefund(int $id, $items);
 }
