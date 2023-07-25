@@ -44,7 +44,10 @@ $allowedAddressHtmlTags = ['b', 'br', 'em', 'i', 'li', 'ol', 'p', 'strong', 'sub
     <div class="admin__page-section-content">
         <div class="admin__page-section-item order-information">
             <?php /* Order Information */?>
-            <?php $confirmationEmailStatusMessage = $order->getEmailSent() ? __('The order confirmation email was sent') : __('The order confirmation email is not sent'); ?>
+            <?php $confirmationEmailStatusMessage =
+                $order->getEmailSent() ?
+                __('The order confirmation email was sent') :
+                __('The order confirmation email is not sent'); ?>
             <div class="admin__page-section-item-title">
                 <span class="title">
                     <?php if ($block->getNoUseOrderLink()): ?>
@@ -52,7 +55,9 @@ $allowedAddressHtmlTags = ['b', 'br', 'em', 'i', 'li', 'ol', 'p', 'strong', 'sub
                             <?= $block->escapeHtml($confirmationEmailStatusMessage) ?>
                         </span>)
                     <?php else: ?>
-                        <a href="<?= $block->escapeUrl($block->getViewUrl($order->getId())) ?>"><?= $block->escapeHtml(__('Order # %1', $order->getRealOrderId())) ?></a>
+                        <a href="<?= $block->escapeUrl($block->getViewUrl($order->getId())) ?>">
+                            <?= $block->escapeHtml(__('Order # %1', $order->getRealOrderId())) ?>
+                        </a>
                         <span>(
                             <?= $block->escapeHtml($confirmationEmailStatusMessage) ?>)
                         </span>
@@ -72,7 +77,8 @@ $allowedAddressHtmlTags = ['b', 'br', 'em', 'i', 'li', 'ol', 'p', 'strong', 'sub
                     <?php if ($orderAdminDate != $orderStoreDate): ?>
                         <tr>
                             <th>
-                                <?= $block->escapeHtml(__('Order Date (%1)', $block->getTimezoneForStore($order->getStore()))) ?>
+                                <?= $block->escapeHtml(__('Order Date (%1)', $block
+                                    ->getTimezoneForStore($order->getStore()))) ?>
                             </th>
                             <td>
                                 <?= $block->escapeHtml($orderStoreDate) ?>
@@ -129,7 +135,8 @@ $allowedAddressHtmlTags = ['b', 'br', 'em', 'i', 'li', 'ol', 'p', 'strong', 'sub
                             </th>
                             <td>
                                 <?= $block->escapeHtml($order->getRemoteIp()); ?>
-                                <?= $order->getXForwardedFor() ? ' (' . $block->escapeHtml($order->getXForwardedFor()) . ')' : ''; ?>
+                                <?= $order->getXForwardedFor() ? ' (' . $block
+                                        ->escapeHtml($order->getXForwardedFor()) . ')' : ''; ?>
                             </td>
                         </tr>
                     <?php endif; ?>
@@ -143,7 +150,8 @@ $allowedAddressHtmlTags = ['b', 'br', 'em', 'i', 'li', 'ol', 'p', 'strong', 'sub
                             </td>
                         </tr>
                     <?php endif; ?>
-                    <?php if ($baseCurrencyCode !== $orderCurrencyCode && $globalCurrencyCode !== $orderCurrencyCode): ?>
+                    <?php if ($baseCurrencyCode !== $orderCurrencyCode &&
+                        $globalCurrencyCode !== $orderCurrencyCode): ?>
                         <tr>
                             <th>
                                 <?= $block->escapeHtml(__('%1 / %2 rate:', $orderCurrencyCode, $baseCurrencyCode)) ?>
@@ -193,7 +201,10 @@ $allowedAddressHtmlTags = ['b', 'br', 'em', 'i', 'li', 'ol', 'p', 'strong', 'sub
                         <th>
                             <?= $block->escapeHtml(__('Email')) ?>
                         </th>
-                        <td><a href="mailto:<?= $block->escapeHtmlAttr($order->getCustomerEmail()) ?>"><?= $block->escapeHtml($order->getCustomerEmail()) ?></a></td>
+                        <td><a href="mailto:<?= $block->escapeHtmlAttr($order->getCustomerEmail()) ?>">
+                                <?= $block->escapeHtml($order->getCustomerEmail()) ?>
+                            </a>
+                        </td>
                     </tr>
                     <?php if ($groupName = $block->getCustomerGroupName()): ?>
                         <tr>
@@ -281,7 +292,9 @@ $allowedAddressHtmlTags = ['b', 'br', 'em', 'i', 'li', 'ol', 'p', 'strong', 'sub
                 </div>
             </div>
             <address class="admin__page-section-item-content">
-                <?= $block->escapeHtml($block->getFormattedAddress($order->getBillingAddress()), $allowedAddressHtmlTags); ?>
+                <?= $block->escapeHtml($block
+                    ->getFormattedAddress($order
+                        ->getBillingAddress()), $allowedAddressHtmlTags); ?>
             </address>
         </div>
         <?php if (!$block->getOrder()->getIsVirtual()): ?>
@@ -296,7 +309,9 @@ $allowedAddressHtmlTags = ['b', 'br', 'em', 'i', 'li', 'ol', 'p', 'strong', 'sub
                     </div>
                 </div>
                 <address class="admin__page-section-item-content">
-                    <?= $block->escapeHtml($block->getFormattedAddress($order->getShippingAddress()), $allowedAddressHtmlTags); ?>
+                    <?= $block->escapeHtml($block
+                        ->getFormattedAddress($order
+                            ->getShippingAddress()), $allowedAddressHtmlTags); ?>
                 </address>
             </div>
         <?php endif; ?>

@@ -4,23 +4,42 @@ namespace Omniful\Core\Model\Catalog;
 
 use Magento\Framework\Exception\NoSuchEntityException;
 use Omniful\Core\Api\Catalog\CategoryInterface;
-
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollection;
 use Omniful\Core\Helper\CacheManager;
 
 class Category implements CategoryInterface
 {
-    const SUB_CAT_DATA_INDEXER_CACHE_ID = "sub_category_data_cache_";
-
+    public const SUB_CAT_DATA_INDEXER_CACHE_ID = "sub_category_data_cache_";
+    /**
+     * @var \Magento\Catalog\Api\CategoryRepositoryInterface
+     */
     private $categoryRepository;
-
+    /**
+     * @var \Magento\Store\Model\StoreManagerInterface
+     */
     protected $storeManager;
-
+    /**
+     * @var CategoryCollection
+     */
     protected $categoryCollectionFactory;
-
+    /**
+     * @var CacheManager
+     */
     protected $cacheManager;
+    /**
+     * @var CategoryCollection
+     */
     protected $categoryCollection;
 
+    /**
+     * Category constructor.
+     *
+     * @param CacheManager                                     $cacheManager
+     * @param CategoryCollection                               $categoryCollection
+     * @param \Magento\Store\Model\StoreManagerInterface       $storeManager
+     * @param \Magento\Catalog\Api\CategoryRepositoryInterface $categoryRepository
+     * @param CategoryCollection                               $categoryCollectionFactory
+     */
     public function __construct(
         CacheManager $cacheManager,
         CategoryCollection $categoryCollection,
@@ -36,7 +55,9 @@ class Category implements CategoryInterface
     }
 
     /**
-     * @inheritDoc
+     * Get Categories
+     *
+     * @return array|string[]
      */
     public function getCategories()
     {
@@ -56,7 +77,9 @@ class Category implements CategoryInterface
             $categories = $collection->getItems();
             $categoryData = [];
 
-            /** @var \Magento\Catalog\Model\Category $category */
+            /**
+             * @var \Magento\Catalog\Model\Category $category
+            */
             foreach ($categories as $category) {
                 $categoryId = $category->getId();
                 if ($categoryId == $defaultCategoryId) {
@@ -86,7 +109,10 @@ class Category implements CategoryInterface
     }
 
     /**
-     * @inheritDoc
+     * Get Category By Id
+     *
+     * @param int $id
+     * @return mixed|string[]
      */
     public function getCategoryById(int $id)
     {
@@ -128,8 +154,8 @@ class Category implements CategoryInterface
     /**
      * Recursively builds the category tree structure.
      *
-     * @param array $categories
-     * @param int $parentId
+     * @param  array $categories
+     * @param  int   $parentId
      * @return array
      */
     private function buildCategoryTree(array $categories, $parentId = 0)
@@ -154,14 +180,14 @@ class Category implements CategoryInterface
     /**
      * Retrieves category data and sets the data type for each value.
      *
-     * @param array $categoryData
-     * @return array
+     * @param  mixed $category
+     * @return mixed
+     * @throws NoSuchEntityException
      */
     private function getCategoryData($category)
     {
         $categoryId = $category->getId();
         $storeId = $this->storeManager->getStore()->getId();
-
         $categoryData["id"] = (int) $category->getId();
         $categoryData["urlKey"] = (string) $category->getUrlKey();
         $categoryData["name"] = (string) $category->getName();
@@ -174,13 +200,10 @@ class Category implements CategoryInterface
         $categoryData["childrenCount"] = (int) $category->getChildrenCount();
         $categoryData["attributeSetId"] = (int) $category->getAttributeSetId();
         $categoryData["productCount"] = (int) $category->getProductCount();
-        $categoryData["hasChildren"] =
-            (bool) $category->getChildrenCount() > 0 ? true : false;
-
+        $categoryData["hasChildren"] = (bool) $category->getChildrenCount() > 0 ? true : false;
         $categoryData["displayMode"] = (string) $category->getDisplayMode();
         $categoryData["includeInMenu"] = (bool) $category->getIncludeInMenu();
         $categoryData["description"] = $category->getDescription();
-
         // Getting Sub Categories Data /////////////////////////////////////////////////
         if ($categoryData["hasChildren"]) {
             $categoryData["subCategoriesData"] = $this->getSubCategoriesData(
@@ -188,18 +211,16 @@ class Category implements CategoryInterface
                 $storeId
             );
         }
-
-        $returnData = $categoryData;
-
-        return $returnData;
+        return $categoryData;
     }
 
     /**
-     * getSubCategoriesData
+     * GetSubCategoriesData
      *
      * @param integer $categoryId
      * @param integer $storeId
      * @return array
+     * @throws NoSuchEntityException
      */
     public function getSubCategoriesData(int $categoryId, int $storeId): array
     {
@@ -222,7 +243,6 @@ class Category implements CategoryInterface
                 return $this->cacheManager->getDataFromCache($cacheIdentifier);
             } else {
                 $subCategoryData = $this->getCategoryData($subCategory);
-
                 $returnData[] = $subCategoryData;
             }
         }
@@ -230,7 +250,6 @@ class Category implements CategoryInterface
         if ($cacheIdentifier) {
             $this->cacheManager->saveDataToCache($cacheIdentifier, $returnData);
         }
-
         return $returnData;
     }
 }

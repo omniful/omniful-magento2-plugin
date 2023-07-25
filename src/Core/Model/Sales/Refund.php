@@ -16,21 +16,61 @@ use Magento\Sales\Api\OrderItemRepositoryInterface;
 
 class Refund implements RefundInterface
 {
-    const UN_FULFILLED = "Un FulFilled";
-
+    public const UN_FULFILLED = "Un FulFilled";
+    /**
+     * @var Logger
+     */
     protected $logger;
+    /**
+     * @var OrderService
+     */
     protected $orderService;
+    /**
+     * @var Order
+     */
     protected $orderManagement;
+    /**
+     * @var OrderRepositoryInterface
+     */
     protected $orderRepository;
+    /**
+     * @var InvoiceManagement
+     */
     protected $invoiceManagement;
+    /**
+     * @var CreditmemoFactory
+     */
     protected $creditmemoFactory;
+    /**
+     * @var CreditmemoService
+     */
     protected $creditmemoService;
+    /**
+     * @var OrderItemRepositoryInterface
+     */
     protected $orderItemRepository;
+    /**
+     * @var CreditmemoRepositoryInterface
+     */
     protected $creditmemoRepository;
+    /**
+     * @var ItemFactory
+     */
     protected $creditmemoItemFactory;
 
     /**
      * Refund constructor.
+     *
+     * @param Logger                        $logger
+     * @param OrderService                  $orderService
+     * @param Order                         $orderManagement
+     * @param ItemFactory                   $creditmemoItemFactory
+     * @param CreditmemoFactory             $creditmemoFactory
+     * @param InvoiceManagement             $invoiceManagement
+     * @param CreditmemoService             $creditmemoService
+     * @param OrderRepositoryInterface      $orderRepository
+     * @param OrderItemRepositoryInterface  $orderItemRepository
+     * @param CreditmemoRepositoryInterface $creditmemoRepository
      */
     public function __construct(
         Logger $logger,
@@ -60,8 +100,8 @@ class Refund implements RefundInterface
      * Create credit memo for specified order items and mark order status as "On Hold"
      *
      * @param int $id
-     * @param $items
-     * @throws \Exception
+     * @param array $items
+     * @return array
      */
     public function processRefund(int $id, $items): array
     {
@@ -78,11 +118,8 @@ class Refund implements RefundInterface
 
                 // If invoice creation fails
                 if (!$invoice) {
-                    throw new \Exception(
-                        __(
-                            "Could not create invoice for Order ID: %1",
-                            $order->getId()
-                        )
+                    throw new \Magento\Framework\Exception\AlreadyExistsException(
+                        __("Could not create invoice for Order ID: %1", $order->getId())
                     );
                 }
             }
@@ -136,7 +173,7 @@ class Refund implements RefundInterface
                         "data" => $orderData,
                     ];
                 } else {
-                    throw new \Exception(
+                    throw new \Magento\Framework\Exception\AlreadyExistsException(
                         __(
                             "Invoice ID: " .
                             $invoice->getId() .
@@ -162,6 +199,12 @@ class Refund implements RefundInterface
         }
     }
 
+    /**
+     * Create Invoice
+     *
+     * @param  mixed $order
+     * @return mixed
+     */
     public function createInvoice($order)
     {
         // Prepare invoice

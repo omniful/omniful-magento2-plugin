@@ -11,12 +11,19 @@ class Integration implements \Omniful\Integration\Api\IntegrationInterface
      */
     protected $apiService;
 
+    /**
+     * Integration constructor.
+     *
+     * @param ApiServiceInterface $apiService
+     */
     public function __construct(ApiServiceInterface $apiService)
     {
         $this->apiService = $apiService;
     }
 
     /**
+     * GetToken
+     *
      * @return string
      */
     public function getToken()

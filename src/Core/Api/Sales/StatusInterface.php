@@ -8,13 +8,13 @@ namespace Omniful\Core\Api\Sales;
 interface StatusInterface
 {
     /**
-     * Update order status.
+     * Update order status
      *
-     * @param int $id
-     * @param string $status
-     * @param  $hubId
-     * @param  string $comment
-     * @return string[]
+     * @param  int         $id
+     * @param  string      $status
+     * @param  mixed       $hubId
+     * @param  string|null $comment
+     * @return mixed
      */
     public function processUpdateOrder(
         int $id,

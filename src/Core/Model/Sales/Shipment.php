@@ -2,6 +2,7 @@
 
 namespace Omniful\Core\Model\Sales;
 
+use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Api\ShipmentRepositoryInterface;
 use Magento\Sales\Model\Order\ShipmentFactory;
 use Magento\Framework\Exception\LocalizedException;
@@ -15,25 +16,49 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 
 class Shipment implements ShipmentInterface
 {
+    /**
+     * @var Logger
+     */
     protected $logger;
+    /**
+     * @var ScopeConfigInterface
+     */
     protected $scopeConfig;
+    /**
+     * @var TrackFactory
+     */
     protected $trackFactory;
+    /**
+     * @var ShipmentFactory
+     */
     protected $shipmentFactory;
+    /**
+     * @var OrderRepositoryInterface
+     */
     protected $orderRepository;
+    /**
+     * @var ShipmentRepositoryInterface
+     */
     protected $shipmentRepository;
+    /**
+     * @var OrderConvertFactory
+     */
     protected $orderConvertFactory;
+    /**
+     * @var ShipmentTrackInterfaceFactory
+     */
     protected $shipmentTrackFactory;
+    /**
+     * @var string
+     */
     protected $carrier_code = "omniful_express";
 
-    const INVALID_DATA_ERROR_MESSAGE = "Invalid/Missing data provided.";
-    const TRACKING_INFO_ADDED_MESSAGE = "Order tracking information added successfully.";
-    const EXCEPTION_ERROR_MESSAGE = "Could not add tracking information to the order: %1";
-    const TRACKING_INFO_UPDATED_MESSAGE = "Order tracking information updated successfully.";
-    const INVALID_STATUS_ERROR_MESSAGE = "Cannot add tracking information to an order with the %1 status.";
-    const INVALID_LINK_ERROR_MESSAGE = "Invalid tracking link provided. Please provide a valid website link.";
-    const TRACKING_INFO_OVERRIDE_ERROR_MESSAGE = 'The order already has tracking information. If you wish to override it, please set "override_existing_data" to true.';
-
-    const IGNORED_STATUSES = [
+    public const INVALID_DATA_ERROR_MESSAGE = "Invalid/Missing data provided.";
+    public const TRACKING_INFO_ADDED_MESSAGE = "Order tracking information added successfully.";
+    public const EXCEPTION_ERROR_MESSAGE = "Could not add tracking information to the order: %1";
+    public const INVALID_STATUS_ERROR_MESSAGE = "Cannot add tracking information to an order with the %1 status.";
+    public const INVALID_LINK_ERROR_MESSAGE = "Invalid tracking link provided. Please provide a valid website link.";
+    public const IGNORED_STATUSES = [
         "refunded",
         "cancelled",
         "failed",
@@ -42,8 +67,20 @@ class Shipment implements ShipmentInterface
         "pending",
         "shipped",
     ];
-    const URL_PATTERN = '/^(http|https):\/\/[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*(\.[a-zA-Z]{2,6})+(\/[^\s]*)?$/';
+    public const URL_PATTERN = '/^(http|https):\/\/[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*(\.[a-zA-Z]{2,6})+(\/[^\s]*)?$/';
 
+    /**
+     * Shipment constructor.
+     *
+     * @param Logger $logger
+     * @param TrackFactory $trackFactory
+     * @param ShipmentFactory $shipmentFactory
+     * @param ScopeConfigInterface $scopeConfig
+     * @param OrderConvertFactory $orderConvertFactory
+     * @param ShipmentRepositoryInterface $shipmentRepository
+     * @param ShipmentTrackInterfaceFactory $shipmentTrackFactory
+     * @param OrderRepositoryInterface $orderRepository
+     */
     public function __construct(
         Logger $logger,
         TrackFactory $trackFactory,
@@ -52,7 +89,7 @@ class Shipment implements ShipmentInterface
         OrderConvertFactory $orderConvertFactory,
         ShipmentRepositoryInterface $shipmentRepository,
         ShipmentTrackInterfaceFactory $shipmentTrackFactory,
-        \Magento\Sales\Api\OrderRepositoryInterface $orderRepository
+        OrderRepositoryInterface $orderRepository
     ) {
         $this->logger = $logger;
         $this->scopeConfig = $scopeConfig;
@@ -71,9 +108,10 @@ class Shipment implements ShipmentInterface
      * @param string $tracking_link
      * @param string $tracking_number
      * @param string $shipping_label_pdf
+     * @param string $carrier_title
      * @param bool $override_exist_data
-     * @return array
-     * @throws \Magento\Framework\Exception\LocalizedException
+     * @return mixed|string[]
+     * @throws LocalizedException
      */
     public function processShipment(
         int $id,
@@ -84,14 +122,12 @@ class Shipment implements ShipmentInterface
         bool $override_exist_data = false
     ) {
         // Validate input data
-        if (
-            empty($tracking_number) ||
-            empty($tracking_link) ||
-            empty($shipping_label_pdf)
+        if (empty($tracking_number)
+            || empty($tracking_link)
+            || empty($shipping_label_pdf)
         ) {
-            throw new \Magento\Framework\Exception\LocalizedException(
-                __(self::INVALID_DATA_ERROR_MESSAGE)
-            );
+            $errorMessage = self::INVALID_DATA_ERROR_MESSAGE;
+            throw new \Magento\Framework\Exception\LocalizedException(__($errorMessage));
         }
 
         try {
@@ -100,16 +136,14 @@ class Shipment implements ShipmentInterface
 
             // Check if the order status allows adding tracking information
             if (in_array($status, self::IGNORED_STATUSES)) {
-                throw new \Magento\Framework\Exception\LocalizedException(
-                    __(self::INVALID_STATUS_ERROR_MESSAGE, $status)
-                );
+                $errorMessage = self::INVALID_STATUS_ERROR_MESSAGE;
+                throw new \Magento\Framework\Exception\LocalizedException(__($errorMessage, $status));
             }
 
             // Validate tracking link
             if (!preg_match(self::URL_PATTERN, $tracking_link)) {
-                throw new \Magento\Framework\Exception\LocalizedException(
-                    __(self::INVALID_LINK_ERROR_MESSAGE)
-                );
+                $errorMessage = self::INVALID_LINK_ERROR_MESSAGE;
+                throw new \Magento\Framework\Exception\LocalizedException(__($errorMessage));
             }
 
             if (!$order->canShip() && !$override_exist_data) {
@@ -145,8 +179,7 @@ class Shipment implements ShipmentInterface
                 $itemsWeight += $item->getWeight() * $item->getQtyOrdered();
             }
 
-            $comment =
-                "a Carrier has been assigned to that shipment via Omniful Core";
+            $comment = "a Carrier has been assigned to that shipment via Omniful Core";
             $track = $this->shipmentTrackFactory
                 ->create()
                 ->setQty($itemCount)
@@ -181,20 +214,21 @@ class Shipment implements ShipmentInterface
             }
 
             $order->save();
-
+            $addedMessage = self::TRACKING_INFO_ADDED_MESSAGE;
             $responseData[] = [
                 "httpCode" => 200,
                 "status" => true,
-                "message" => __(self::TRACKING_INFO_ADDED_MESSAGE),
+                "message" => __($addedMessage),
             ];
 
             return $responseData;
         } catch (\Exception $e) {
+            $errorMessage = self::EXCEPTION_ERROR_MESSAGE;
             $responseData[] = [
                 "httpCode" => 500,
                 "status" => false,
                 "message" => __(
-                    self::EXCEPTION_ERROR_MESSAGE,
+                    $errorMessage,
                     $e->getMessage()
                 ),
             ];
@@ -206,13 +240,12 @@ class Shipment implements ShipmentInterface
     /**
      * Get shipment tracking data for the order
      *
-     * @param OrderInterface $order
+     * @param  OrderInterface $order
      * @return array
      */
     public function getShipmentData($order)
     {
         $shipmentTracking = [];
-
         $tracks = $order->getTracksCollection();
         if ($tracks) {
             foreach ($tracks as $track) {
@@ -220,7 +253,6 @@ class Shipment implements ShipmentInterface
                 $tracking_number = $track->getTrackNumber();
                 $shippingLabelPdf = $track->getShippingLabelPdf();
                 $carrierTitle = $track->getDescription() ?: __("Custom");
-
                 $shipmentTracking[] = [
                     "title" => (string) $carrierTitle,
                     "code" => (string) $this->carrier_code,
@@ -230,7 +262,6 @@ class Shipment implements ShipmentInterface
                 ];
             }
         }
-
         return $shipmentTracking;
     }
 }

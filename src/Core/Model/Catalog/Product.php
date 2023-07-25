@@ -4,7 +4,6 @@ namespace Omniful\Core\Model\Catalog;
 
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\App\ProductMetadataInterface;
-
 use Magento\Catalog\Api\Data\ProductInterfaceFactory;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Omniful\Core\Api\Catalog\ProductInterface;
@@ -14,7 +13,7 @@ use Magento\Framework\App\Request\Http;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Catalog\Model\Product as MagentoProduct;
-
+use Magento\Framework\Filesystem\Io\File;
 use Magento\Eav\Api\AttributeRepositoryInterface;
 use Magento\Eav\Api\Data\AttributeInterface;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
@@ -40,26 +39,50 @@ class Product implements ProductInterface
      * @var SearchCriteriaBuilder
      */
     protected $searchCriteriaBuilder;
-
+    /**
+     * @var File
+     */
+    private $file;
     /**
      * @var Http
      */
     protected $request;
-
+    /**
+     * @var StockRegistryInterface
+     */
     protected $stockRegistry;
+    /**
+     * @var AttributeRepositoryInterface
+     */
     protected $attributeRepository;
+    /**
+     * @var CategoryRepositoryInterface
+     */
     protected $categoryRepository;
+    /**
+     * @var Configurable
+     */
     protected $configurableProductType;
 
     /**
-     * @param ProductRepositoryInterface $productRepository
-     * @param ProductMetadataInterface $productMetadata
-     * @param ProductInterfaceFactory $productFactory
+     * Product constructor.
+     *
+     * @param Http                         $request
+     * @param StockRegistryInterface       $stockRegistry
+     * @param Configurable                 $configurableProductType
+     * @param File                         $file
+     * @param AttributeRepositoryInterface $attributeRepository
+     * @param CategoryRepositoryInterface  $categoryRepository
+     * @param SearchCriteriaBuilder        $searchCriteriaBuilder
+     * @param ProductRepositoryInterface   $productRepository
+     * @param ProductMetadataInterface     $productMetadata
+     * @param ProductInterfaceFactory      $productFactory
      */
     public function __construct(
         Http $request,
         StockRegistryInterface $stockRegistry,
         Configurable $configurableProductType,
+        File $file,
         AttributeRepositoryInterface $attributeRepository,
         CategoryRepositoryInterface $categoryRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
@@ -71,6 +94,7 @@ class Product implements ProductInterface
         $this->attributeRepository = $attributeRepository;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->productRepository = $productRepository;
+        $this->file = $file;
         $this->productMetadata = $productMetadata;
         $this->productFactory = $productFactory;
         $this->configurableProductType = $configurableProductType;
@@ -79,32 +103,29 @@ class Product implements ProductInterface
     }
 
     /**
-     * @inheritDoc
+     * Get Products
+     *
+     * @return mixed|\string[][]
      */
     public function getProducts()
     {
         try {
             $page = (int) $this->request->getParam("page") ?: 1;
             $limit = (int) $this->request->getParam("limit") ?: 200;
-
             $searchCriteria = $this->createSearchCriteria($page, $limit);
             $searchResults = $this->productRepository->getList($searchCriteria);
             $products = $searchResults->getItems();
             $totalProducts = $searchResults->getTotalCount(); // Total products count
-
             $productData = [];
-
             foreach ($products as $product) {
                 $productData[] = $this->getProductData($product);
             }
-
             $pageInfo = [
                 "current_page" => $page,
                 "per_page" => $limit,
                 "total_count" => $totalProducts,
                 "total_pages" => ceil($totalProducts / $limit),
             ];
-
             $responseData[] = [
                 "httpCode" => 200,
                 "status" => true,
@@ -112,7 +133,6 @@ class Product implements ProductInterface
                 "data" => $productData,
                 "page_info" => $pageInfo,
             ];
-
             return $responseData;
         } catch (\Exception $e) {
             $responseData[] = [
@@ -120,7 +140,6 @@ class Product implements ProductInterface
                 "status" => false,
                 "message" => $e->getMessage(),
             ];
-
             return $responseData;
         }
     }
@@ -145,7 +164,10 @@ class Product implements ProductInterface
     }
 
     /**
-     * @inheritDoc
+     * Get Product By Identifier
+     *
+     * @param string $identifier
+     * @return mixed|string[]
      */
     public function getProductByIdentifier($identifier)
     {
@@ -159,14 +181,12 @@ class Product implements ProductInterface
                 $product = $this->productRepository->get($productSku);
                 $productData = $this->getProductData($product);
             }
-
             $responseData[] = [
                 "httpCode" => 200,
                 "status" => true,
                 "message" => "Success",
                 "data" => $productData,
             ];
-
             return $responseData;
         } catch (NoSuchEntityException $e) {
             $responseData[] = [
@@ -174,7 +194,6 @@ class Product implements ProductInterface
                 "status" => false,
                 "message" => "Product not found",
             ];
-
             return $responseData;
         } catch (\Exception $e) {
             $responseData[] = [
@@ -182,7 +201,6 @@ class Product implements ProductInterface
                 "status" => false,
                 "message" => $e->getMessage(),
             ];
-
             return $responseData;
         }
     }
@@ -198,16 +216,13 @@ class Product implements ProductInterface
         try {
             $product = $this->productRepository->get($sku);
             $stockData = ["qty" => $qty];
-
             if (isset($status) && $status === "out_of_stock") {
                 $stockData["is_in_stock"] = false;
             } else {
                 $stockData["is_in_stock"] = true;
             }
-
             $product->setStockData($stockData);
             $this->productRepository->save($product);
-
             $productData = $this->getProductData($product);
             $responseData[] = [
                 "httpCode" => 200,
@@ -215,7 +230,6 @@ class Product implements ProductInterface
                 "message" => "Success",
                 "data" => $productData,
             ];
-
             return $responseData;
         } catch (NoSuchEntityException $e) {
             $responseData[] = [
@@ -223,7 +237,6 @@ class Product implements ProductInterface
                 "status" => false,
                 "message" => "Product not found",
             ];
-
             return $responseData;
         } catch (\Exception $e) {
             $responseData[] = [
@@ -231,13 +244,15 @@ class Product implements ProductInterface
                 "status" => false,
                 "message" => $e->getMessage(),
             ];
-
             return $responseData;
         }
     }
 
     /**
-     * @inheritDoc
+     * Update Bulk Products Inventory
+     *
+     * @param string $products
+     * @return mixed|string[]
      */
     public function updateBulkProductsInventory($products)
     {
@@ -246,25 +261,21 @@ class Product implements ProductInterface
                 $product = $this->productRepository->get($productData["sku"]);
                 $stockData = ["qty" => $productData["qty"]];
 
-                if (
-                    isset($productData["status"]) &&
-                    $productData["status"] === "out_of_stock"
+                if (isset($productData["status"])
+                    && $productData["status"] === "out_of_stock"
                 ) {
                     $stockData["is_in_stock"] = false;
                 } else {
                     $stockData["is_in_stock"] = true;
                 }
-
                 $product->setStockData($stockData);
                 $this->productRepository->save($product);
             }
-
             $responseData[] = [
                 "httpCode" => 200,
                 "status" => true,
                 "message" => "Success",
             ];
-
             return $responseData;
         } catch (NoSuchEntityException $e) {
             $responseData[] = [
@@ -272,7 +283,6 @@ class Product implements ProductInterface
                 "status" => false,
                 "message" => "Product not found",
             ];
-
             return $responseData;
         } catch (\Exception $e) {
             $responseData[] = [
@@ -280,24 +290,21 @@ class Product implements ProductInterface
                 "status" => false,
                 "message" => $e->getMessage(),
             ];
-
             return $responseData;
         }
     }
 
     /**
-     * @inheritDoc
+     * Get Product Data
+     *
+     * @param array $product
+     * @return array
+     * @throws NoSuchEntityException
      */
     public function getProductData($product)
     {
         $galleryUrls = [];
         $variationDetails = [];
-
-        try {
-        } catch (NoSuchEntityException $e) {
-            throw new \Exception("Product not found.");
-        }
-
         $categories = [];
         $productCategories = $product->getCategoryIds();
 
@@ -337,7 +344,6 @@ class Product implements ProductInterface
             "qty" => (float) $product->getQty(),
         ];
 
-
         $variationDetails = $this->getProductVariations($product->getId());
 
         // Get the product images
@@ -353,8 +359,7 @@ class Product implements ProductInterface
         $thumbnailUrl = $image->getUrl("thumbnail");
 
         foreach ($galleryImages as $galleryImage) {
-            $gallery_alt = pathinfo($galleryImage->getUrl(), PATHINFO_FILENAME);
-
+            $gallery_alt = $this->file->getPathInfo($galleryImage->getUrl(), PATHINFO_FILENAME);
             $galleryUrls[] = [
                 "url" => (string) $galleryImage->getUrl(),
                 "alt" => (string) $gallery_alt,
@@ -366,7 +371,7 @@ class Product implements ProductInterface
             $product->getSku()
         );
 
-        $productData = [
+        return [
             "id" => (int) $product->getId(),
             "sku" => (string) $product->getSku(),
             "barcode" => $product->getCustomAttribute(
@@ -400,15 +405,18 @@ class Product implements ProductInterface
             "backorders_allowed" => (bool) $stockItem->getBackOrder(),
             "weight" => (float) $product->getWeight(),
         ];
-
-        return $productData;
     }
 
+    /**
+     * Get Product Attributes With Options
+     *
+     * @param  array $productId
+     * @return array
+     */
     public function getProductAttributesWithOptions($productId)
     {
         try {
             $productAttributes = [];
-
             $product = $this->attributeRepository->get(
                 MagentoProduct::ENTITY,
                 $productId
@@ -425,13 +433,19 @@ class Product implements ProductInterface
                     $productAttributes[] = $attributeData;
                 }
             }
-
             return $productAttributes;
         } catch (\Exception $e) {
+            return $e->getMessage();
             // Handle the exception
         }
     }
 
+    /**
+     * Get Attribute Options
+     *
+     * @param  AttributeInterface $attribute
+     * @return array
+     */
     protected function getAttributeOptions(AttributeInterface $attribute)
     {
         $options = [];
@@ -447,34 +461,11 @@ class Product implements ProductInterface
     }
 
     /**
-     * Get child attribute details
+     * Get Product Variations
      *
-     * @param array $attributesData
+     * @param  array $productId
      * @return array
      */
-    public function getChildAttributes($attributesData)
-    {
-        $attributesDetails = [];
-
-        foreach ($attributesData as $attribute) {
-            $attributeOptions = $attribute->getOptions();
-
-            $options = [];
-            foreach ($attributeOptions as $option) {
-                $options[] = $option->getLabel();
-            }
-
-            $attributeDetail = [
-                "name" => (string) $attribute->getLabel(),
-                "options" => $options,
-            ];
-
-            $attributesDetails[] = $attributeDetail;
-        }
-
-        return $attributesDetails;
-    }
-
     public function getProductVariations($productId)
     {
         try {
@@ -525,7 +516,6 @@ class Product implements ProductInterface
                     // Add the variation details to the array
                     $variationDetails[] = $variationDetail;
                 }
-
                 return $variationDetails;
             }
 
@@ -543,12 +533,12 @@ class Product implements ProductInterface
 
     /**
      * Load product by ID
-     * @param int $productId
-     * @return \Magento\Catalog\Model\Product
+     *
+     * @param  int $productId
+     * @return MagentoProduct
      */
     public function loadProductById($productId)
     {
-        $product = $this->productFactory->create()->load($productId);
-        return $product;
+        return $this->productFactory->create()->load($productId);
     }
 }

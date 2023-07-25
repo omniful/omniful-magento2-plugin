@@ -1,7 +1,5 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
-    <preference for="Magento\Framework\HTTP\Client\Curl" type="Omniful\Core\Plugin\Framework\HTTP\Client\Curl"/>
-
     <!-- STORE -->
     <preference for="Omniful\Core\Api\Store\InfoInterface" type="Omniful\Core\Model\Store\Info" />
 
@@ -19,10 +17,7 @@
     <type name="Magento\Backend\Block\Widget\Button\Toolbar">
         <plugin disabled="false" name="disable_widget_ship_button" sortOrder="10" type="Omniful\Core\Plugin\Backend\Block\Widget\Button\Toolbar"/>
     </type>
-    
-    <type name="Magento\Framework\HTTP\Client\Curl">
-        <plugin name="omniful_curl_class" type="Omniful\Core\Plugin\Framework\HTTP\Client\Curl" sortOrder="10" disabled="false" />
-    </type>
+
     <type name="Omniful\Core\Logger\Handler">
         <arguments>
             <argument name="filesystem" xsi:type="object">Magento\Framework\Filesystem\Driver\File</argument>

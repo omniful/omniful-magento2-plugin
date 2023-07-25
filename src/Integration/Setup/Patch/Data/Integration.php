@@ -9,6 +9,9 @@ use Omniful\Integration\Api\ApiServiceInterface;
 
 class Integration implements DataPatchInterface
 {
+    /**
+     * @var ModuleDataSetupInterface
+     */
     protected $moduleDataSetup;
 
     /**
@@ -16,6 +19,12 @@ class Integration implements DataPatchInterface
      */
     protected $apiService;
 
+    /**
+     * Integration constructor.
+     *
+     * @param ApiServiceInterface $apiService
+     * @param ModuleDataSetupInterface $moduleDataSetup
+     */
     public function __construct(
         ApiServiceInterface $apiService,
         ModuleDataSetupInterface $moduleDataSetup
@@ -25,7 +34,10 @@ class Integration implements DataPatchInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Apply
+     *
+     * @return Integration|void
+     * @throws \Exception
      */
     public function apply()
     {
@@ -39,7 +51,9 @@ class Integration implements DataPatchInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Get Dependencies
+     *
+     * @return array|string[]
      */
     public static function getDependencies()
     {
@@ -47,7 +61,9 @@ class Integration implements DataPatchInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Get Aliases
+     *
+     * @return array|string[]
      */
     public function getAliases()
     {

@@ -113,8 +113,7 @@ $isOrderStatusDropdownDisabled = !$helper->isOrderStatusDropdownDisabled();
         </ul>
         <?php $scriptString = <<<script
             require(['prototype'], function(){
-                if($('order_status'))$('order_status').update('{
-                $block->escapeJs($block->getOrder()->getStatusLabel())}');
+                if($('order_status'))$('order_status').update('{$block->getOrder()->getStatusLabel()}');
             });
 script;
         ?>

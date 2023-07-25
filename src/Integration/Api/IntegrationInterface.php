@@ -8,6 +8,8 @@ namespace Omniful\Integration\Api;
 interface IntegrationInterface
 {
     /**
+     * Get Token
+     *
      * @return string
      */
     public function getToken();

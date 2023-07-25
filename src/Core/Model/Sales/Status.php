@@ -3,6 +3,7 @@
 namespace Omniful\Core\Model\Sales;
 
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Sales\Api\OrderRepositoryInterface;
 use Omniful\Core\Model\Sales\Order as OrderManagement;
 use Omniful\Core\Api\Sales\StatusInterface;
 use Magento\Sales\Model\Order;
@@ -10,35 +11,55 @@ use Magento\Sales\Model\Service\InvoiceService;
 
 class Status implements StatusInterface
 {
-    const STATUS_NEW = "pending";
-    const STATUS_PACKED = "packed";
-    const STATUS_SHIPPED = "shipped";
-    const STATUS_REFUNDED = "refunded";
-    const STATUS_DELIVERED = "delivered";
-    const STATUS_READY_TO_SHIP = "ready_to_ship";
-
+    public const STATUS_NEW = "pending";
+    public const STATUS_PACKED = "packed";
+    public const STATUS_SHIPPED = "shipped";
+    public const STATUS_REFUNDED = "refunded";
+    public const STATUS_DELIVERED = "delivered";
+    public const STATUS_READY_TO_SHIP = "ready_to_ship";
+    /**
+     * @var InvoiceService
+     */
     protected $invoiceService;
+    /**
+     * @var \Omniful\Core\Model\Sales\Order
+     */
     protected $orderManagement;
+    /**
+     * @var OrderRepositoryInterface
+     */
     protected $orderRepository;
 
     /**
-     * OrderManagement constructor.
+     * Status constructor.
      *
+     * @param \Omniful\Core\Model\Sales\Order $orderManagement
+     * @param InvoiceService $invoiceService
+     * @param OrderRepositoryInterface $orderRepository
      */
     public function __construct(
         OrderManagement $orderManagement,
         InvoiceService $invoiceService,
-        \Magento\Sales\Api\OrderRepositoryInterface $orderRepository
+        OrderRepositoryInterface $orderRepository
     ) {
         $this->invoiceService = $invoiceService;
         $this->orderRepository = $orderRepository;
         $this->orderManagement = $orderManagement;
     }
 
+    /**
+     * Process Update Order
+     *
+     * @param int $id
+     * @param string $status
+     * @param mixed|null $hubId
+     * @param string $comment
+     * @return array
+     */
     public function processUpdateOrder(
         int $id,
         string $status,
-        mixed $hubId = null,
+        $hubId = null,
         string $comment = null
     ): array {
         $responseData = [];
@@ -51,10 +72,9 @@ class Status implements StatusInterface
             }
 
             // Check if status is "ready_to_ship" or "shipped" or "delivered"
-            if (
-                $status === self::STATUS_READY_TO_SHIP ||
-                $status === self::STATUS_SHIPPED ||
-                $status === self::STATUS_DELIVERED
+            if ($status === self::STATUS_READY_TO_SHIP
+                || $status === self::STATUS_SHIPPED
+                || $status === self::STATUS_DELIVERED
             ) {
                 $shipments = $order->getShipmentsCollection();
 
@@ -97,11 +117,8 @@ class Status implements StatusInterface
             if ($comment !== null && $comment !== "") {
                 $order->addCommentToStatusHistory($comment);
             }
-
             $order->save();
-
             $orderData = $this->orderManagement->getOrderData($order);
-
             $responseData[] = [
                 "httpCode" => 200,
                 "status" => true,
@@ -117,10 +134,15 @@ class Status implements StatusInterface
                 ),
             ];
         }
-
         return $responseData;
     }
 
+    /**
+     * Get Order Status
+     *
+     * @param string $status
+     * @return string
+     */
     protected function getOrderStatus(string $status): string
     {
         switch ($status) {
@@ -152,6 +174,12 @@ class Status implements StatusInterface
         }
     }
 
+    /**
+     * Get Order State
+     *
+     * @param  string $status
+     * @return string
+     */
     protected function getOrderState(string $status): string
     {
         switch ($status) {

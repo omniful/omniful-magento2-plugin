@@ -16,18 +16,15 @@ use Magento\Store\Model\StoreManagerInterface;
  * It also uses Magento SerializerInterface to serialize and unserialize data before caching.
  * It uses Magento StoreManagerInterface to manage different stores in the Magento application.
  * It also uses Magento ScopeConfigInterface to fetch the configuration value saving those into cache.
- *
- * @category  Omniful\Core\Helper
- * @package   Omniful\Core\Helper
  */
 class CacheManager
 {
-    const default = "default";
-    const WEBSITE_ID_CACHE_ID = "omniful_website_cache";
-    const STORE_ID_FROM_CACHE_ID = "omniful_store_id_cache_";
-    const CURRENCY_FROM_CACHE_ID = "omniful_currency_cache_";
-    const SCOPE_CONFIG_CACHE_ID = "omniful_scope_config_cache_";
-    const MEDIA_BASE_URL_CACHE_ID = "omniful_base_url_media_cache_";
+    public const DEFAULT = "default";
+    public const WEBSITE_ID_CACHE_ID = "omniful_website_cache";
+    public const STORE_ID_FROM_CACHE_ID = "omniful_store_id_cache_";
+    public const CURRENCY_FROM_CACHE_ID = "omniful_currency_cache_";
+    public const SCOPE_CONFIG_CACHE_ID = "omniful_scope_config_cache_";
+    public const MEDIA_BASE_URL_CACHE_ID = "omniful_base_url_media_cache_";
 
     /**
      * Serializer instance
@@ -58,26 +55,22 @@ class CacheManager
     protected $scopeConfig;
 
     /**
-     * Cashable data
-     *
-     * @var mixed
+     * @var CashableData
      */
     protected $cashableData;
 
     /**
-     * Store ID
-     *
-     * @var integer
+     * @var StoreId
      */
     protected $storeId;
 
     /**
-     * Construct the CacheManager class
+     * CacheManager constructor.
      *
-     * @param CacheInterface         $cacheManager  Cache manager instance
-     * @param SerializerInterface    $serializer   Serializer instance
-     * @param ScopeConfigInterface   $scopeConfig  ScopeConfig instance
-     * @param StoreManagerInterface $storeManager Store manager instance
+     * @param CacheInterface        $cacheManager
+     * @param SerializerInterface   $serializer
+     * @param ScopeConfigInterface  $scopeConfig
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         CacheInterface $cacheManager,
@@ -94,7 +87,7 @@ class CacheManager
     /**
      * Check if data is available in cache
      *
-     * @param  string $cacheIdentifier Cache ID
+     * @param string $cacheIdentifier Cache ID
      * @return bool
      */
     public function isDataAvailableInCache(string $cacheIdentifier): bool
@@ -126,140 +119,12 @@ class CacheManager
     /**
      * Save data to cache
      *
-     * @param  string              $cacheIdentifier Cache ID
-     * @param  array|string|integer|bool $savableData    Data to save
-     * @return void
+     * @param string $cacheIdentifier
+     * @param string $savableData
      */
     public function saveDataToCache(string $cacheIdentifier, $savableData)
     {
         $cacheData = $this->serializer->serialize($savableData);
         $this->cacheManager->save($cacheData, $cacheIdentifier);
-    }
-
-    /**
-     * Get website ID from cache
-     *
-     * @param  integer $storeId Store ID
-     * @return mixed
-     */
-    public function getWebsiteIdFromCache(int $storeId)
-    {
-        $cacheIdentifier = self::WEBSITE_ID_CACHE_ID . $storeId;
-        if ($this->isDataAvailableInCache($cacheIdentifier)) {
-            return $this->getDataFromCache($cacheIdentifier);
-        } else {
-            $websiteId = $this->storeManager
-                ->getStore($storeId)
-                ->getWebsiteId();
-            $this->saveDataToCache($cacheIdentifier, $websiteId);
-
-            return $websiteId;
-        }
-    }
-
-    /**
-     * Get config data from cache
-     *
-     * @param  string   $path     Path to config data
-     * @param  integer  $storeId  Store ID
-     * @param  string   $scope    Scope type
-     * @return string
-     */
-    public function getConfigDataFromCache(
-        string $path,
-        $storeId = null,
-        $scope = ScopeInterface::SCOPE_STORE
-    ) {
-        $cacheIdentifier =
-            self::SCOPE_CONFIG_CACHE_ID . $path . "_" . self::default;
-        if ($storeId) {
-            $cacheIdentifier =
-                self::SCOPE_CONFIG_CACHE_ID . $path . "_" . $storeId;
-        }
-
-        if ($this->isDataAvailableInCache($cacheIdentifier)) {
-            return $this->getDataFromCache($cacheIdentifier);
-        } else {
-            $value = $this->scopeConfig->getValue($path, $scope, $storeId);
-            $this->saveDataToCache($cacheIdentifier, $value);
-
-            return $value;
-        }
-    }
-
-    /**
-     * Get base URL from cache
-     *
-     * @param  integer|null $storeId Store ID
-     * @param  string|null  $path    Path to URL
-     * @return mixed
-     */
-    public function getBaseUrlFromCache(
-        int $storeId = null,
-        string $path = null
-    ) {
-        if (!$storeId) {
-            $storeId = $this->getStoreIdFromCache();
-        }
-        $cacheIdentifier = self::MEDIA_BASE_URL_CACHE_ID . $storeId;
-        if ($this->isDataAvailableInCache($cacheIdentifier)) {
-            return $this->getDataFromCache($cacheIdentifier);
-        } else {
-            if ($path) {
-                $cacheIdentifier =
-                    self::MEDIA_BASE_URL_CACHE_ID . $path . "_" . $storeId;
-                $baseUrl = $this->storeManager
-                    ->getStore($storeId)
-                    ->getBaseUrl($path, true);
-            } else {
-                $baseUrl = $this->storeManager
-                    ->getStore($storeId)
-                    ->getBaseUrl();
-            }
-            $this->saveDataToCache($cacheIdentifier, $baseUrl);
-
-            return $baseUrl;
-        }
-    }
-
-    /**
-     * Get store ID from cache
-     *
-     * @return int
-     */
-    public function getStoreIdFromCache()
-    {
-        $cacheIdentifier = self::STORE_ID_FROM_CACHE_ID . $this->storeId;
-        if ($this->isDataAvailableInCache($cacheIdentifier)) {
-            return $this->getDataFromCache($cacheIdentifier);
-        } else {
-            $storeId = $this->storeManager->getStore()->getId();
-            $this->storeId = $storeId;
-            $cacheIdentifier = self::STORE_ID_FROM_CACHE_ID . $this->storeId;
-            $this->saveDataToCache($cacheIdentifier, $storeId);
-
-            return $storeId;
-        }
-    }
-
-    /**
-     * Get current currency code from cache
-     *
-     * @param  integer $storeId Store ID
-     * @return string
-     */
-    public function getCurrentCurrencyCodeFromCache(int $storeId): string
-    {
-        $cacheIdentifier = self::CURRENCY_FROM_CACHE_ID . $storeId;
-        if ($this->isDataAvailableInCache($cacheIdentifier)) {
-            return $this->getDataFromCache($cacheIdentifier);
-        } else {
-            $currentCurrency = $this->storeManager
-                ->getStore($storeId)
-                ->getCurrentCurrencyCode();
-            $this->saveDataToCache($cacheIdentifier, $currentCurrency);
-
-            return $storeId;
-        }
     }
 }

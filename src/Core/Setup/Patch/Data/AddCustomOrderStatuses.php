@@ -9,6 +9,7 @@ use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\Patch\DataPatchInterface;
 use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Sales\Model\ResourceModel\Order\StatusFactory as StatusResourceFactory;
+use Magento\Sales\Model\ResourceModel\Status\CollectionFactory;
 
 class AddCustomOrderStatuses implements DataPatchInterface
 {
@@ -16,22 +17,41 @@ class AddCustomOrderStatuses implements DataPatchInterface
      * Custom Order-Status.
      */
 
-    const PACKED = "packed";
-    const SHIPPED = "shipped";
-    const REFUNDED = "refunded";
-    const DELIVERED = "delivered";
-    const READY_TO_SHIP = "ready_to_ship";
-
+    public const PACKED = "packed";
+    public const SHIPPED = "shipped";
+    public const REFUNDED = "refunded";
+    public const DELIVERED = "delivered";
+    public const READY_TO_SHIP = "ready_to_ship";
+    /**
+     * @var StatusFactory
+     */
     protected $statusFactory;
+    /**
+     * @var ModuleDataSetupInterface
+     */
     protected $moduleDataSetup;
+    /**
+     * @var CollectionFactory
+     */
     protected $statusCollection;
+    /**
+     * @var StatusResourceFactory
+     */
     protected $statusResourceFactory;
 
+    /**
+     * AddCustomOrderStatuses constructor.
+     *
+     * @param StatusFactory $statusFactory
+     * @param ModuleDataSetupInterface $moduleDataSetup
+     * @param StatusResourceFactory $statusResourceFactory
+     * @param CollectionFactory $statusCollection
+     */
     public function __construct(
         StatusFactory $statusFactory,
         ModuleDataSetupInterface $moduleDataSetup,
         StatusResourceFactory $statusResourceFactory,
-        \Magento\Sales\Model\ResourceModel\Status\CollectionFactory $statusCollection
+        CollectionFactory $statusCollection
     ) {
         $this->statusFactory = $statusFactory;
         $this->moduleDataSetup = $moduleDataSetup;
@@ -40,7 +60,9 @@ class AddCustomOrderStatuses implements DataPatchInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Apply
+     *
+     * @return AddCustomOrderStatuses|void
      */
     public function apply()
     {
@@ -91,11 +113,21 @@ class AddCustomOrderStatuses implements DataPatchInterface
             $status->save();
         } catch (\Exception $e) {
             // Do nothing
+            return $e->getMessage();
         }
 
         $this->moduleDataSetup->endSetup();
     }
 
+    /**
+     * Add New Order State And Status
+     *
+     * @param string $code
+     * @param string $label
+     * @param string $state
+     * @param string $sortOrder
+     * @param bool   $isDefault
+     */
     protected function addNewOrderStateAndStatus(
         $code,
         $label,
@@ -105,13 +137,17 @@ class AddCustomOrderStatuses implements DataPatchInterface
     ) {
         try {
             $statusResource = $this->statusResourceFactory->create();
-            /** @var Status $status */
+            /**
+             * @var Status $status
+            */
             $status = $this->statusFactory->create();
-            $status->setData([
+            $status->setData(
+                [
                 "status" => $code,
                 "label" => $label,
                 "sort_order" => $sortOrder,
-            ]);
+                ]
+            );
             try {
                 $statusResource->save($status);
             } catch (AlreadyExistsException $exception) {
@@ -124,7 +160,9 @@ class AddCustomOrderStatuses implements DataPatchInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Get Dependencies
+     *
+     * @return array|string[]
      */
     public static function getDependencies()
     {
@@ -132,7 +170,9 @@ class AddCustomOrderStatuses implements DataPatchInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Get Aliases
+     *
+     * @return array|string[]
      */
     public function getAliases()
     {
@@ -140,7 +180,10 @@ class AddCustomOrderStatuses implements DataPatchInterface
     }
 
     /**
-     * {@inheritdoc}
+     * To KebabCase
+     *
+     * @param  string $value
+     * @return string
      */
     public function toKebabCase($value)
     {
