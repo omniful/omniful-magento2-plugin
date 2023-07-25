@@ -13,11 +13,11 @@ use Omniful\Core\Model\Sales\Status;
 
 class OrderSaveAfter implements ObserverInterface
 {
-    const ORDER_CREATED_EVENT_NAME = "order.created";
-    const ORDER_UPDATED_EVENT_NAME = "order.updated";
-    const ORDER_STATUS_UPDATED_EVENT_NAME = "order.status.updated";
+    public const ORDER_CREATED_EVENT_NAME = "order.created";
+    public const ORDER_UPDATED_EVENT_NAME = "order.updated";
+    public const ORDER_STATUS_UPDATED_EVENT_NAME = "order.status.updated";
 
-    const ALLOWED_STATUSES = [
+    public const ALLOWED_STATUSES = [
         Order::STATE_NEW,
         Order::STATE_PENDING_PAYMENT,
         Order::STATE_PROCESSING,
@@ -28,19 +28,30 @@ class OrderSaveAfter implements ObserverInterface
         Status::STATUS_DELIVERED,
         Order::STATE_COMPLETE,
     ];
-
+    /**
+     * @var Logger
+     */
     protected $logger;
+    /**
+     * @var Adapter
+     */
     protected $adapter;
+    /**
+     * @var StoreManagerInterface
+     */
     protected $storeManager;
+    /**
+     * @var OrderManagement
+     */
     protected $orderManagement;
 
     /**
-     * Constructor Injection
+     * OrderSaveAfter constructor.
      *
-     * @param \Omniful\Core\Logger\Logger $logger
-     * @param \Omniful\Core\Model\Adapter $adapter
-     * @param \Omniful\Core\Model\Sales\Order $orderManagement
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param Logger                $logger
+     * @param Adapter               $adapter
+     * @param OrderManagement       $orderManagement
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         Logger $logger,
@@ -57,7 +68,7 @@ class OrderSaveAfter implements ObserverInterface
     /**
      * Triggers when an order is saved and performs necessary actions based on order status
      *
-     * @param \Magento\Framework\Event\Observer $observer
+     * @param Observer $observer
      * @return void
      */
     public function execute(Observer $observer)
@@ -80,15 +91,12 @@ class OrderSaveAfter implements ObserverInterface
             // Publish the event if the event name is not empty
             if ($eventName !== "") {
                 $payload = $this->orderManagement->getOrderData($order);
-                $response = $this->adapter->publishMessage(
+                // Log the successful publication of the order event
+                 $this->logger->info('Order event published successfully');
+                return $this->adapter->publishMessage(
                     $eventName,
                     $payload
                 );
-
-                // Log the successful publication of the order event
-                // $this->logger->info('Order event published successfully');
-
-                return $response;
             }
         } catch (\Exception $e) {
             $this->logger->error($e->getMessage());
@@ -98,26 +106,23 @@ class OrderSaveAfter implements ObserverInterface
     /**
      * Determine the event name based on order status changes
      *
-     * @param \Magento\Sales\Model\Order $order
+     * @param Order $order
      * @return string
      */
     private function getEventName(Order $order)
     {
         $eventName = "";
 
-        if (
-            $order->getOrigData("status") === null &&
-            $order->getStatus() !== Order::STATE_CANCELED
+        if ($order->getOrigData("status") === null
+            && $order->getStatus() !== Order::STATE_CANCELED
         ) {
             $eventName = self::ORDER_CREATED_EVENT_NAME;
-        } elseif (
-            $order->getStatus() !== Order::STATE_CANCELED &&
-            $order->getStatus() !== $order->getOrigData("status") &&
-            in_array($order->getStatus(), self::ALLOWED_STATUSES)
+        } elseif ($order->getStatus() !== Order::STATE_CANCELED
+            && $order->getStatus() !== $order->getOrigData("status")
+            && in_array($order->getStatus(), self::ALLOWED_STATUSES)
         ) {
             $eventName = self::ORDER_STATUS_UPDATED_EVENT_NAME;
         }
-
         return $eventName;
     }
 }

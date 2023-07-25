@@ -2,6 +2,8 @@
 
 namespace Omniful\Core\Model\Sales;
 
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Sales\Api\OrderRepositoryInterface;
 use Omniful\Core\Api\Sales\OrderInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\App\RequestInterface;
@@ -15,24 +17,38 @@ class Order implements OrderInterface
      * @var RequestInterface
      */
     protected $request;
-
+    /**
+     * @var OrderRepositoryInterface
+     */
     protected $orderRepository;
-
+    /**
+     * @var Shipment
+     */
     protected $shipmentManagement;
-
+    /**
+     * @var Countries
+     */
     protected $countriesHelper;
+    /**
+     * @var CollectionFactory
+     */
     protected $orderCollectionFactory;
 
     /**
-     * OrderManagement constructor.
+     * Order constructor.
      *
+     * @param RequestInterface $request
+     * @param Countries $countriesHelper
+     * @param Shipment $shipmentManagement
+     * @param CollectionFactory $orderCollectionFactory
+     * @param OrderRepositoryInterface $orderRepository
      */
     public function __construct(
         RequestInterface $request,
         Countries $countriesHelper,
         ShipmentManagement $shipmentManagement,
         CollectionFactory $orderCollectionFactory,
-        \Magento\Sales\Api\OrderRepositoryInterface $orderRepository
+        OrderRepositoryInterface $orderRepository
     ) {
         $this->request = $request;
         $this->countriesHelper = $countriesHelper;
@@ -42,7 +58,9 @@ class Order implements OrderInterface
     }
 
     /**
-     * @inheritdoc
+     * Get Orders
+     *
+     * @return mixed|string[]
      */
     public function getOrders()
     {
@@ -50,7 +68,8 @@ class Order implements OrderInterface
         $limit = (int) $this->request->getParam('limit') ?: 200;
 
         // Default status values to be filtered
-        $statuses = $this->request->getHeader('statuses') ?: ['pending', 'processing', 'complete', 'holded', 'pending_payment'];
+        $statuses = $this->request->getHeader('statuses') ?:
+            ['pending', 'processing', 'complete', 'holded', 'pending_payment'];
 
         $orderCollection = $this->orderCollectionFactory->create();
         $orderCollection->addFieldToFilter('status', ['in' => $statuses]);
@@ -83,7 +102,11 @@ class Order implements OrderInterface
     }
 
     /**
-     * @inheritdoc
+     * Get Order By Id
+     *
+     * @param int|int $orderId
+     * @return mixed|string[]
+     * @throws NoSuchEntityException
      */
     public function getOrderById($orderId)
     {
@@ -109,6 +132,7 @@ class Order implements OrderInterface
      *
      * @param \Magento\Sales\Model\Order $order
      * @return array
+     * @throws LocalizedException
      */
     public function getOrderData($order)
     {
@@ -156,7 +180,8 @@ class Order implements OrderInterface
                     'sku' => (string) $product->getSku(),
                     'product_id' => (int) $product->getId(),
                     'name' => (string) $product->getName(),
-                    'barcode' => $product->getCustomAttribute('omniful_barcode_attribute') ? (string) $product->getCustomAttribute('omniful_barcode_attribute')->getValue() : null,
+                    'barcode' => $product->getCustomAttribute('omniful_barcode_attribute') ?
+                        (string) $product->getCustomAttribute('omniful_barcode_attribute')->getValue() : null,
                     'quantity' => (float) $item->getQtyOrdered(),
                     'price' => (float) $item->getPrice(),
                     'subtotal' => (float) $item->getRowTotal(),
@@ -227,7 +252,7 @@ class Order implements OrderInterface
                 ],
             ];
 
-            $orderData = [
+            return [
                 'id' => (int) $order->getEntityId(),
                 'status' => [
                     'code' => (string) $order->getStatus(),
@@ -250,8 +275,6 @@ class Order implements OrderInterface
                 'totals' => $totals,
                 'shipments' => $shipmentTracking,
             ];
-
-            return $orderData;
         } catch (NoSuchEntityException $e) {
             $responseData[] = [
                 'httpCode' => 500,
@@ -263,12 +286,10 @@ class Order implements OrderInterface
         }
     }
 
-
-
     /**
      * Get order by order identifier
      *
-     * @param int|string $orderIdentifier
+     * @param  int|string $orderIdentifier
      * @return OrderInterface|null
      * @throws NoSuchEntityException
      */
@@ -290,7 +311,7 @@ class Order implements OrderInterface
     /**
      * Check if the order payment method is cash on delivery
      *
-     * @param OrderInterface $order
+     * @param  OrderInterface $order
      * @return bool
      */
     protected function isCashOnDelivery($order)
@@ -301,7 +322,7 @@ class Order implements OrderInterface
     /**
      * Get cancel reason for order
      *
-     * @param OrderInterface $order
+     * @param  OrderInterface $order
      * @return string|null
      */
     protected function getCancelReason($order)
@@ -309,10 +330,16 @@ class Order implements OrderInterface
         return $order->getData('omniful_cancel_reason') ?: null;
     }
 
+    /**
+     * Get Shipping Address Data
+     *
+     * @param  mixed $customerId
+     * @param  mixed $address
+     * @return mixed
+     */
     public function getShippingAddressData($customerId, $address)
     {
         $country = $this->countriesHelper->getCountryByCode($address["country_id"]);
-
         $shippingAddressData["first_name"] = $address["firstname"];
         $shippingAddressData["last_name"] = $address["lastname"];
         $shippingAddressData["email"] = $address["email"];
@@ -325,7 +352,6 @@ class Order implements OrderInterface
         $shippingAddressData["addressType"] = $address["address_type"];
         $shippingAddressData["company"] = $address["company"] ?: "";
         $shippingAddressData["phone"] = $address["telephone"] ?: "";
-
         return $shippingAddressData;
     }
 }

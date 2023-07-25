@@ -2,50 +2,55 @@
 
 namespace Omniful\Integration\Model;
 
+use Magento\Framework\Exception\InputException;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\User\Model\User as UserModel;
 use Magento\Integration\Model\CredentialsValidator;
 use Magento\Integration\Model\Oauth\Token as Token;
 use Magento\Framework\Exception\AuthenticationException;
 use Magento\Integration\Model\Oauth\Token\RequestThrottler;
 use Magento\Integration\Model\Oauth\TokenFactory as TokenModelFactory;
+use Omniful\Integration\Api\ApiServiceInterface;
 
 class AdminTokenService implements
     \Omniful\Integration\Api\AdminTokenServiceInterface
 {
+    /**
+     * @var ApiServiceInterface
+     */
+    protected $adminToken;
     /**
      * Token Model.
      *
      * @var TokenModelFactory
      */
     private $tokenModelFactory;
-
     /**
-     * User Model.
-     *
      * @var UserModel
      */
     private $userModel;
-
     /**
-     * @var \Magento\Integration\Model\CredentialsValidator
+     * @var CredentialsValidator
      */
     private $validatorHelper;
-
     /**
      * @var RequestThrottler
      */
     private $requestThrottler;
 
-    protected $adminToken;
-
     /**
-     * Initialize service.
+     * AdminTokenService constructor.
+     *
+     * @param UserModel $userModel
+     * @param TokenModelFactory $tokenModelFactory
+     * @param CredentialsValidator $validatorHelper
+     * @param ApiServiceInterface $adminToken
      */
     public function __construct(
         UserModel $userModel,
         TokenModelFactory $tokenModelFactory,
         CredentialsValidator $validatorHelper,
-        \Omniful\Integration\Api\ApiServiceInterface $adminToken
+        ApiServiceInterface $adminToken
     ) {
         $this->userModel = $userModel;
         $this->adminToken = $adminToken;
@@ -54,7 +59,11 @@ class AdminTokenService implements
     }
 
     /**
-     * {@inheritdoc}
+     * Get Integration Token
+     *
+     * @param mixed $username
+     * @param mixed $password
+     * @return mixed
      */
     public function getIntegrationToken($username, $password)
     {
@@ -66,7 +75,11 @@ class AdminTokenService implements
     }
 
     /**
-     * {@inheritdoc}
+     * Get Token
+     *
+     * @param string $username
+     * @param string $password
+     * @return mixed|string
      */
     public function getToken($username, $password)
     {
@@ -91,7 +104,13 @@ class AdminTokenService implements
     }
 
     /**
-     * {@inheritdoc}
+     * Create Admin Access Token
+     *
+     * @param string $username
+     * @param string $password
+     * @return string
+     * @throws AuthenticationException
+     * @throws InputException|LocalizedException
      */
     public function createAdminAccessToken($username, $password)
     {
@@ -109,7 +128,7 @@ class AdminTokenService implements
             throw new AuthenticationException(
                 __(
                     "The account sign-in was incorrect or your account is disabled temporarily. " .
-                        "Please wait and try again later."
+                    "Please wait and try again later."
                 )
             );
         }
@@ -125,11 +144,9 @@ class AdminTokenService implements
     }
 
     /**
-     * Get request throttler instance.
+     * Get request throttler instance
      *
-     * @return RequestThrottler
-     *
-     * @deprecated 100.0.4
+     * @return RequestThrottler|mixed
      */
     private function getRequestThrottler()
     {

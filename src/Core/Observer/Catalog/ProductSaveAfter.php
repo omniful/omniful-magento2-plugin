@@ -2,17 +2,17 @@
 
 namespace Omniful\Core\Observer\Catalog;
 
-use Omniful\Core\Logger\Logger;
 use Magento\Catalog\Model\Product as ProductModel;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Omniful\Core\Logger\Logger;
 use Omniful\Core\Model\Adapter;
 use Omniful\Core\Model\Catalog\Product as ProductManagement;
 
 class ProductSaveAfter implements ObserverInterface
 {
-    const ORDER_CREATED_EVENT_NAME = "product.created";
-    const ORDER_UPDATED_EVENT_NAME = "product.updated";
+    public const ORDER_CREATED_EVENT_NAME = "product.created";
+    public const ORDER_UPDATED_EVENT_NAME = "product.updated";
 
     /**
      * @var Logger
@@ -23,15 +23,22 @@ class ProductSaveAfter implements ObserverInterface
      * @var ProductModel
      */
     protected $productModel;
-
+    /**
+     * @var Adapter
+     */
     protected $adapter;
+    /**
+     * @var ProductManagement
+     */
     protected $productManagement;
 
     /**
-     * __construct
+     * ProductSaveAfter constructor.
      *
-     * @param Logger $logger
-     * @param ProductModel $productModel
+     * @param Logger            $logger
+     * @param Adapter           $adapter
+     * @param ProductModel      $productModel
+     * @param ProductManagement $productManagement
      */
     public function __construct(
         Logger $logger,
@@ -46,9 +53,9 @@ class ProductSaveAfter implements ObserverInterface
     }
 
     /**
-     * execute
+     * Execute
      *
-     * @param Observer $observer
+     * @param  Observer $observer
      * @return void
      */
     public function execute(Observer $observer)
@@ -70,9 +77,9 @@ class ProductSaveAfter implements ObserverInterface
     }
 
     /**
-     * updateSingle
+     * UpdateSingle
      *
-     * @param Observer $observer
+     * @param  Observer $observer
      * @return void
      */
     public function updateSingle(Observer $observer)
@@ -89,43 +96,17 @@ class ProductSaveAfter implements ObserverInterface
     }
 
     /**
-     * updateBulk
+     * UpdateSingle
      *
-     * @param Observer $observer
-     * @return void
-     */
-    public function updateBulk(Observer $observer)
-    {
-        try {
-            $productIds = $this->getProductIdsFromBunch($observer->getBunch());
-            if ($productIds) {
-                foreach ($productIds as $productId) {
-                    $product = $this->productManagement->loadProductById(
-                        $productId
-                    );
-                    $this->routeFunctions($product);
-                }
-            }
-        } catch (\Exception $e) {
-            $this->logger->info(
-                "Error while bulk updating : " . $e->getMessage()
-            );
-        }
-    }
-
-    /**
-     * updateSingle
-     *
-     * @param Product $product
+     * @param  Product $product
      * @return void
      */
     public function routeFunctions($product)
     {
         try {
-            if (
-                $product === null ||
-                $product->getId() === null ||
-                $product->getCreatedAt() == $product->getUpdatedAt()
+            if ($product === null
+                || $product->getId() === null
+                || $product->getCreatedAt() == $product->getUpdatedAt()
             ) {
                 $this->handleProductCreated([$product]);
             } else {
@@ -139,12 +120,12 @@ class ProductSaveAfter implements ObserverInterface
     }
 
     /**
-     * handleProductCreated
+     * HandleProductCreated
      *
-     * @param array $productIds
-     * @return mixed|null
+     * @param  array $products
+     * @return mixed
      */
-    public function handleProductCreated(array $products): mixed
+    public function handleProductCreated(array $products)
     {
         try {
             // CONNECT FIRST
@@ -169,12 +150,12 @@ class ProductSaveAfter implements ObserverInterface
     }
 
     /**
-     * handleProductUpdated
+     * HandleProductUpdated
      *
-     * @param array $productIds
-     * @return mixed|null
+     * @param  array $products
+     * @return mixed
      */
-    public function handleProductUpdated($products): mixed
+    public function handleProductUpdated($products)
     {
         try {
             // CONNECT FIRST
@@ -199,9 +180,34 @@ class ProductSaveAfter implements ObserverInterface
     }
 
     /**
-     * getProductIdsFromBunch
+     * UpdateBulk
      *
-     * @param array $bunch
+     * @param  Observer $observer
+     * @return void
+     */
+    public function updateBulk(Observer $observer)
+    {
+        try {
+            $productIds = $this->getProductIdsFromBunch($observer->getBunch());
+            if ($productIds) {
+                foreach ($productIds as $productId) {
+                    $product = $this->productManagement->loadProductById(
+                        $productId
+                    );
+                    $this->routeFunctions($product);
+                }
+            }
+        } catch (\Exception $e) {
+            $this->logger->info(
+                "Error while bulk updating : " . $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * GetProductIdsFromBunch
+     *
+     * @param  array $bunch
      * @return array
      */
     public function getProductIdsFromBunch(array $bunch): array
@@ -216,20 +222,5 @@ class ProductSaveAfter implements ObserverInterface
         }
 
         return $productIds;
-    }
-
-    private function getUpdatedFields(
-        array $newData,
-        array $originalData
-    ): array {
-        $updatedFields = [];
-
-        foreach ($newData as $key => $value) {
-            if (isset($originalData[$key]) && $originalData[$key] !== $value) {
-                $updatedFields[$key] = $value;
-            }
-        }
-
-        return $updatedFields;
     }
 }

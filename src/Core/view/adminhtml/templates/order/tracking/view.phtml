@@ -1,12 +1,3 @@
-<?php
-/**
- * Copyright © Magento, Inc. All rights reserved.
- * See COPYING.txt for license details.
- */
-//phpcs:disable Squiz.ControlStructures.ControlSignature.NewlineAfterOpenBrace
-//phpcs:disable Magento2.Templates.ThisInTemplate.FoundThis
-//phpcs:disable Magento2.Files.LineLength.MaxExceeded
-?>
 <?php /** @var $block Magento\Shipping\Block\Adminhtml\Order\Tracking\View */
 ?>
 <div class="admin__control-table-wrapper">
@@ -44,13 +35,17 @@
                                 <?php if ($_track->isCustom()): ?>
                                     <?= $block->escapeHtml($_track->getNumber()) ?>
                                 <?php else: ?>
-                                    <a href="<?= $_track->getData("tracing_link") ?>" target="_blank"><?= $block->escapeHtml($_track->getNumber()) ?></a>
+                                    <a href="<?= /* @noEscape */ $_track
+                                        ->getData("tracing_link") ?>" target="_blank"><?= $block
+                                            ->escapeHtml($_track->getNumber()) ?></a>
                                     <div id="shipment_tracking_info_response_<?= (int) $_track->getId() ?>"></div>
                                 <?php endif; ?>
                             </td>
                             <td style=" cursor: not-allowed;" class="col-delete last">
                                 <button class="action-delete" type="button" disabled
-                                    onclick="deleteTrackingNumber('<?= $block->escapeJs($block->escapeUrl($block->getRemoveUrl($_track))) ?>'); return false;">
+                                    onclick="deleteTrackingNumber('<?=
+                                    $block->escapeJs($block->escapeUrl($block
+                                        ->getRemoveUrl($_track))) ?>'); return false;">
                                     <span>
                                         <?= $block->escapeHtml(__('Delete')) ?>
                                     </span>

@@ -11,12 +11,12 @@ interface ShipmentInterface
      * Create Order Shipment
      *
      * @param int $id
-     * @param string $tracingLink
-     * @param string $trackingNumber
-     * @param string $shippingLabelPdf
+     * @param string $tracking_link
+     * @param string $tracking_number
+     * @param string $shipping_label_pdf
      * @param string $carrier_title
-     * @param bool $overrideExistingData
-     * @return string[]
+     * @param bool $override_exist_data
+     * @return mixed
      */
     public function processShipment(
         int $id,

@@ -14,22 +14,50 @@ use Magento\Sales\Api\InvoiceRepositoryInterface;
 
 class Cancel implements CancelInterface
 {
-    const UN_FULFILLED = "Un FulFilled";
-
+    public const UN_FULFILLED = "Un FulFilled";
+    /**
+     * @var Logger
+     */
     protected $logger;
+    /**
+     * @var Order
+     */
     protected $orderManagement;
+    /**
+     * @var OrderRepositoryInterface
+     */
     protected $orderRepository;
+    /**
+     * @var InvoiceRepositoryInterface
+     */
     protected $invoiceRepository;
+    /**
+     * @var CreditmemoService
+     */
     protected $creditmemoService;
+    /**
+     * @var CreditmemoFactory
+     */
     protected $creditmemoFactory;
+    /**
+     * @var MagentoOrderManagementInterface
+     */
     protected $magentoOrderManagementInterface;
 
-    const DEFAULT_CANCEL_REASON = "Omniful Side";
-    const OMNIFUL_CANCEL_REASON = "omniful_cancel_reason";
-    const STATE_CANCELED = \Magento\Sales\Model\Order::STATE_CANCELED;
+    public const DEFAULT_CANCEL_REASON = "Omniful Side";
+    public const OMNIFUL_CANCEL_REASON = "omniful_cancel_reason";
+    public const STATE_CANCELED = \Magento\Sales\Model\Order::STATE_CANCELED;
 
     /**
-     * OrderManagement constructor.
+     * Cancel constructor.
+     *
+     * @param Logger                          $logger
+     * @param Order                           $orderManagement
+     * @param CreditmemoFactory               $creditmemoFactory
+     * @param CreditmemoService               $creditmemoService
+     * @param OrderRepositoryInterface        $orderRepository
+     * @param InvoiceRepositoryInterface      $invoiceRepository
+     * @param MagentoOrderManagementInterface $magentoOrderManagementInterface
      */
     public function __construct(
         Logger $logger,
@@ -52,24 +80,21 @@ class Cancel implements CancelInterface
     /**
      * Cancel Magento 2 order and add cancel reason as custom order attribute
      *
-     * @param int $orderId
-     * @param string $cancel_reason
+     * @param  int    $orderId
+     * @param  string $cancelReason
      * @return array
      * @throws CouldNotCancelException
-     * @throws LocalizedException
      */
     public function processCancel(
         $orderId,
-        $cancel_reason = self::DEFAULT_CANCEL_REASON
+        $cancelReason = self::DEFAULT_CANCEL_REASON
     ) {
         try {
             // Load the order
             $order = $this->orderRepository->get($orderId);
 
             // Check if the order state is "complete", and throw an error if it is
-            if (
-                $order->getState() ===
-                \Magento\Sales\Model\Order::STATE_COMPLETE
+            if ($order->getState() ===\Magento\Sales\Model\Order::STATE_COMPLETE
             ) {
                 throw new LocalizedException(
                     __(
@@ -89,15 +114,15 @@ class Cancel implements CancelInterface
             $this->magentoOrderManagementInterface->cancel($orderId);
 
             // Set the cancel reason as a custom attribute
-            $order->setData(self::OMNIFUL_CANCEL_REASON, $cancel_reason);
+            $order->setData(self::OMNIFUL_CANCEL_REASON, $cancelReason);
             $order
                 ->getResource()
                 ->saveAttribute($order, self::OMNIFUL_CANCEL_REASON);
 
             // Add a comment to the order if the comment value is not empty or null
-            if (!empty($cancel_reason)) {
+            if (!empty($cancelReason)) {
                 $order
-                    ->addStatusHistoryComment($cancel_reason)
+                    ->addStatusHistoryComment($cancelReason)
                     ->setIsCustomerNotified(false);
             }
 
@@ -142,16 +167,13 @@ class Cancel implements CancelInterface
 
             // Save the order
             $this->orderRepository->save($order);
-
             $orderData = $this->orderManagement->getOrderData($order);
-
             $responseData[] = [
                 "httpCode" => 200,
                 "status" => true,
                 "message" => "Success",
                 "data" => $orderData,
             ];
-
             return $responseData;
         } catch (LocalizedException $e) {
             $responseData[] = [
@@ -162,7 +184,6 @@ class Cancel implements CancelInterface
                     $e->getMessage()
                 ),
             ];
-
             return $responseData;
         } catch (\Exception $e) {
             $responseData[] = [
@@ -173,7 +194,6 @@ class Cancel implements CancelInterface
                     $e->getMessage()
                 ),
             ];
-
             return $responseData;
         }
     }

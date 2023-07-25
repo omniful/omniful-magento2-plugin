@@ -8,11 +8,11 @@ namespace Omniful\Core\Api\Sales;
 interface CancelInterface
 {
     /**
-     * Cancel order.
+     * Cancel order
      *
-     * @param int $id
+     * @param  int    $id
      * @param  string $cancel_reason
-     * @return string[]
+     * @return mixed
      */
     public function processCancel(int $id, string $cancel_reason);
 }
