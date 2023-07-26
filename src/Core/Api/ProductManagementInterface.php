@@ -31,10 +31,10 @@ interface ProductManagementInterface
     public function getProductById(int $id);
 
     /**
-     * Bulk Update Product Inventory
+     * Update Bulk Products Inventory
      *
-     * @param  string $products
-     * @return string[]
+     * @param mixed $products
+     * @return mixed
      */
     public function updateBulkProductsInventory($products);
 
@@ -51,4 +51,28 @@ interface ProductManagementInterface
         int $qty,
         bool $status = null
     );
+
+    /**
+     * Update product by SKU
+     *
+     * @param string $sku
+     * @param int $qty
+     * @param string $sourceCode
+     * @param string $status
+     * @return mixed
+     */
+    public function updateProductsInventorySource(
+        $sku,
+        int $qty,
+        $sourceCode,
+        $status
+    );
+
+    /**
+     * Update Bulk Products Inventory
+     *
+     * @param mixed $products
+     * @return mixed
+     */
+    public function updateBulkProductsInventorySource($products);
 }
