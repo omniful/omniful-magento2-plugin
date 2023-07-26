@@ -48,6 +48,20 @@
         </resources>
     </route>
 
+    <route url="/V2/product/stock/source" method="PUT">
+        <service class="Omniful\Core\Api\Catalog\ProductInterface" method="updateProductsInventorySource" />
+        <resources>
+            <resource ref="Magento_Catalog::products" />
+        </resources>
+    </route>
+
+    <route url="/V2/product/bulk/stock/source" method="PUT">
+        <service class="Omniful\Core\Api\Catalog\ProductInterface" method="updateBulkProductsInventorySource" />
+        <resources>
+            <resource ref="Magento_Catalog::products" />
+        </resources>
+    </route>
+
     <!-- PRODUCT APIs -->
     <route url="/V2/orders" method="GET">
         <service class="Omniful\Core\Api\Sales\OrderInterface" method="getOrders"/>
@@ -83,6 +97,14 @@
         <service class="Omniful\Core\Api\Sales\RefundInterface" method="processRefund"/>
         <resources>
             <resource ref="Magento_Sales::products" />
+        </resources>
+    </route>
+
+    <!-- Update Config -->
+    <route url="/V2/config/value/update" method="POST">
+        <service class="Omniful\Core\Api\Config\UpdateConfigInterface" method="updateConfig"/>
+        <resources>
+            <resource ref="Magento_Catalog::products" />
         </resources>
     </route>
 </routes>
