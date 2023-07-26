@@ -359,10 +359,9 @@ class Product implements ProductInterface
         $thumbnailUrl = $image->getUrl("thumbnail");
 
         foreach ($galleryImages as $galleryImage) {
-            $gallery_alt = $this->file->getPathInfo($galleryImage->getUrl(), PATHINFO_FILENAME);
             $galleryUrls[] = [
                 "url" => (string) $galleryImage->getUrl(),
-                "alt" => (string) $gallery_alt,
+                "alt" => (string) $galleryImage->getLabel(),
             ];
         }
 
@@ -417,12 +416,8 @@ class Product implements ProductInterface
     {
         try {
             $productAttributes = [];
-            $product = $this->attributeRepository->get(
-                MagentoProduct::ENTITY,
-                $productId
-            );
+            $product = $this->productRepository->getById($productId);
             $attributes = $product->getAttributes();
-
             foreach ($attributes as $attribute) {
                 if ($attribute->getFrontendInput() === "select") {
                     $attributeData = [
@@ -436,7 +431,6 @@ class Product implements ProductInterface
             return $productAttributes;
         } catch (\Exception $e) {
             return $e->getMessage();
-            // Handle the exception
         }
     }
 
