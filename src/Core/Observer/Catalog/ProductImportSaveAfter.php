@@ -62,39 +62,60 @@ class ProductSaveAfter implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        $product = $observer->getProduct();
+        $eventName = null;
+        $productIds = $this->getProductIdsFromBunch($observer->getEvent()->getProductIds());
 
         try {
-            // Check if the product is new or updated
-            $eventName = $this->isNewProduct($product)
-                ? self::PRODUCT_CREATED_EVENT_NAME
-                : self::PRODUCT_UPDATED_EVENT_NAME;
-
             // Connect to the adapter
             $this->adapter->connect();
 
-            // Publish the event
-            $payload = $this->productManagement->getProductData($product);
-            $response = $this->adapter->publishMessage($eventName, $payload);
+            if ($productIds) {
+                foreach ($productIds as $productId) {
+                    $product = $this->productManagement->loadProductById($productId);
 
-            if (!$response) {
-                return false;
+                    if (
+                        $product === null
+                        || $product->getId() === null
+                        || $product->getCreatedAt() == $product->getUpdatedAt()
+                    ) {
+                        $eventName = self::PRODUCT_CREATED_EVENT_NAME;
+                    } else {
+                        $eventName = self::PRODUCT_UPDATED_EVENT_NAME;
+                    }
+
+                    $payload = $this->productManagement->getProductData($product);
+                    $response = $this->adapter->publishMessage($eventName, $payload);
+
+                    if (!$response) {
+                        return false;
+                    }
+                }
+
+                return true;
             }
-
-            return true;
         } catch (\Exception $e) {
-            $this->logger->info("Error while updating product: " . $e->getMessage());
+            $this->logger->info("Error while updating: " . $e->getMessage());
         }
     }
 
     /**
-     * Check if the product is new or updated
+     * GetProductIdsFromBunch
      *
-     * @param ProductModel $product
-     * @return bool
+     * @param  array $productIds
+     * @return array
      */
-    private function isNewProduct(ProductModel $product): bool
+    public function getProductIdsFromBunch(array $productIds): array
     {
-        return $product->getId() === null || $product->getCreatedAt() == $product->getUpdatedAt();
+        $validProductIds = [];
+        if (!empty($productIds)) {
+            foreach ($productIds as $productId) {
+                $product = $this->productModel->load($productId);
+                if ($product && $product->getId()) {
+                    $validProductIds[] = $product->getId();
+                }
+            }
+        }
+
+        return $validProductIds;
     }
 }
