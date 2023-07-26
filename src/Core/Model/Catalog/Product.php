@@ -359,10 +359,9 @@ class Product implements ProductInterface
         $thumbnailUrl = $image->getUrl("thumbnail");
 
         foreach ($galleryImages as $galleryImage) {
-            $gallery_alt = $this->file->getPathInfo($galleryImage->getUrl(), PATHINFO_FILENAME);
             $galleryUrls[] = [
                 "url" => (string) $galleryImage->getUrl(),
-                "alt" => (string) $gallery_alt,
+                "alt" => (string) $galleryImage->getLabel(),
             ];
         }
 
