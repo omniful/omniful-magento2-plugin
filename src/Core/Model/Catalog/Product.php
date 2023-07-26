@@ -416,12 +416,8 @@ class Product implements ProductInterface
     {
         try {
             $productAttributes = [];
-            $product = $this->attributeRepository->get(
-                MagentoProduct::ENTITY,
-                $productId
-            );
+            $product = $this->productRepository->getById($productId);
             $attributes = $product->getAttributes();
-
             foreach ($attributes as $attribute) {
                 if ($attribute->getFrontendInput() === "select") {
                     $attributeData = [
@@ -435,7 +431,6 @@ class Product implements ProductInterface
             return $productAttributes;
         } catch (\Exception $e) {
             return $e->getMessage();
-            // Handle the exception
         }
     }
 
