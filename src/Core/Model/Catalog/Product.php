@@ -21,6 +21,7 @@ use Magento\Eav\Api\Data\AttributeInterface;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\InventoryApi\Api\SourceItemsSaveInterface;
 use Magento\InventoryApi\Api\Data\SourceItemInterface;
+use Omniful\Core\Helper\Data;
 
 class Product implements ProductInterface
 {
@@ -72,6 +73,10 @@ class Product implements ProductInterface
      * @var SourceItemInterface
      */
     private $sourceItem;
+    /**
+     * @var Data
+     */
+    private $helper;
 
     /**
      * Product constructor.
@@ -80,6 +85,7 @@ class Product implements ProductInterface
      * @param StockRegistryInterface $stockRegistry
      * @param Configurable $configurableProductType
      * @param File $file
+     * @param Data $helper
      * @param AttributeRepositoryInterface $attributeRepository
      * @param CategoryRepositoryInterface $categoryRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
@@ -94,6 +100,7 @@ class Product implements ProductInterface
         StockRegistryInterface $stockRegistry,
         Configurable $configurableProductType,
         File $file,
+        Data $helper,
         AttributeRepositoryInterface $attributeRepository,
         CategoryRepositoryInterface $categoryRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
@@ -115,6 +122,7 @@ class Product implements ProductInterface
         $this->request = $request;
         $this->sourceItemsSave = $sourceItemsSave;
         $this->sourceItem = $sourceItem;
+        $this->helper = $helper;
     }
 
     /**
@@ -141,21 +149,23 @@ class Product implements ProductInterface
                 "total_count" => $totalProducts,
                 "total_pages" => ceil($totalProducts / $limit),
             ];
-            $responseData[] = [
-                "httpCode" => 200,
-                "status" => true,
-                "message" => "Success",
-                "data" => $productData,
-                "page_info" => $pageInfo,
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                "Success",
+                200,
+                true,
+                $productData,
+                $pageInfo,
+                $nestedArray = true
+            );
         } catch (Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => $e->getMessage(),
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 
@@ -349,13 +359,14 @@ class Product implements ProductInterface
 
             return [];
         } catch (Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => $e->getMessage(),
-            ];
-
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 
@@ -425,27 +436,34 @@ class Product implements ProductInterface
                 $product = $this->productRepository->get($productSku);
                 $productData = $this->getProductData($product);
             }
-            $responseData[] = [
-                "httpCode" => 200,
-                "status" => true,
-                "message" => "Success",
-                "data" => $productData,
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                "Success",
+                200,
+                true,
+                $productData,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (NoSuchEntityException $e) {
-            $responseData[] = [
-                "httpCode" => 404,
-                "status" => false,
-                "message" => "Product not found",
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __(
+                    "Product not found"
+                ),
+                404,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => $e->getMessage(),
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 
@@ -480,27 +498,34 @@ class Product implements ProductInterface
             $product->setStockData($stockData);
             $this->productRepository->save($product);
             $productData = $this->getProductData($product);
-            $responseData[] = [
-                "httpCode" => 200,
-                "status" => true,
-                "message" => "Success",
-                "data" => $productData,
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                "Success",
+                200,
+                true,
+                $productData,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (NoSuchEntityException $e) {
-            $responseData[] = [
-                "httpCode" => 404,
-                "status" => false,
-                "message" => "Product not found",
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __(
+                    "Product not found"
+                ),
+                404,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => $e->getMessage(),
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 
@@ -526,27 +551,34 @@ class Product implements ProductInterface
             $this->sourceItem->setStatus($stockData);
             $this->sourceItemsSave->execute([$this->sourceItem]);
             $productData = $this->getProductData($product);
-            $responseData[] = [
-                "httpCode" => 200,
-                "status" => true,
-                "message" => "Success",
-                "data" => $productData,
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                "Success",
+                200,
+                true,
+                $productData,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (NoSuchEntityException $e) {
-            $responseData[] = [
-                "httpCode" => 404,
-                "status" => false,
-                "message" => "Product not found",
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __(
+                    "CategoProductry not found"
+                ),
+                404,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => $e->getMessage(),
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 
@@ -563,8 +595,7 @@ class Product implements ProductInterface
                 $product = $this->productRepository->get($productData["sku"]);
                 $stockData = ["qty" => $productData["qty"]];
 
-                if (
-                    isset($productData["status"])
+                if (isset($productData["status"])
                     && $productData["status"] === "out_of_stock"
                 ) {
                     $stockData["is_in_stock"] = false;
@@ -574,26 +605,34 @@ class Product implements ProductInterface
                 $product->setStockData($stockData);
                 $this->productRepository->save($product);
             }
-            $responseData[] = [
-                "httpCode" => 200,
-                "status" => true,
-                "message" => "Success",
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                "Success",
+                200,
+                true,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (NoSuchEntityException $e) {
-            $responseData[] = [
-                "httpCode" => 404,
-                "status" => false,
-                "message" => "Product not found",
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __(
+                    "Product not found"
+                ),
+                404,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => $e->getMessage(),
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 
@@ -607,8 +646,7 @@ class Product implements ProductInterface
     {
         try {
             foreach ($products as $productData) {
-                if (
-                    isset($productData["status"])
+                if (isset($productData["status"])
                     && $productData["status"] === "out_of_stock"
                 ) {
                     $stockData = false;
@@ -621,26 +659,34 @@ class Product implements ProductInterface
                 $this->sourceItem->setStatus($stockData);
                 $this->sourceItemsSave->execute([$this->sourceItem]);
             }
-            $responseData[] = [
-                "httpCode" => 200,
-                "status" => true,
-                "message" => "Success",
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                "Success",
+                200,
+                true,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (NoSuchEntityException $e) {
-            $responseData[] = [
-                "httpCode" => 404,
-                "status" => false,
-                "message" => "Product not found",
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __(
+                    "Product not found"
+                ),
+                404,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => $e->getMessage(),
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 }

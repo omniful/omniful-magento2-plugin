@@ -119,13 +119,11 @@ class OrderSaveAfter implements ObserverInterface
     {
         $eventName = "";
 
-        if (
-            $order->getOrigData("status") === null
+        if ($order->getOrigData("status") === null
             && $order->getStatus() !== Order::STATE_CANCELED
         ) {
             $eventName = self::ORDER_CREATED_EVENT_NAME;
-        } elseif (
-            $order->getStatus() !== Order::STATE_CANCELED
+        } elseif ($order->getStatus() !== Order::STATE_CANCELED
             && $order->getStatus() !== $order->getOrigData("status")
             && in_array($order->getStatus(), self::ALLOWED_STATUSES)
         ) {

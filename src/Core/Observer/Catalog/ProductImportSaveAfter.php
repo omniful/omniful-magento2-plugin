@@ -2,14 +2,16 @@
 
 namespace Omniful\Core\Observer\Catalog;
 
-use Magento\Catalog\Model\Product as ProductModel;
+use Exception;
+use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Omniful\Core\Logger\Logger;
 use Omniful\Core\Model\Adapter;
 use Omniful\Core\Model\Catalog\Product as ProductManagement;
 
-class ProductSaveAfter implements ObserverInterface
+class ProductImportSaveAfter implements ObserverInterface
 {
     public const PRODUCT_CREATED_EVENT_NAME = "product.created";
     public const PRODUCT_UPDATED_EVENT_NAME = "product.updated";
@@ -20,11 +22,6 @@ class ProductSaveAfter implements ObserverInterface
     protected $logger;
 
     /**
-     * @var ProductModel
-     */
-    protected $productModel;
-
-    /**
      * @var Adapter
      */
     protected $adapter;
@@ -33,37 +30,41 @@ class ProductSaveAfter implements ObserverInterface
      * @var ProductManagement
      */
     protected $productManagement;
+    /**
+     * @var ProductRepositoryInterface
+     */
+    private $productRepository;
 
     /**
      * ProductSaveAfter constructor.
      *
-     * @param Logger            $logger
-     * @param Adapter           $adapter
-     * @param ProductModel      $productModel
+     * @param Logger $logger
+     * @param Adapter $adapter
+     * @param ProductRepositoryInterface $productRepository
      * @param ProductManagement $productManagement
      */
     public function __construct(
         Logger $logger,
         Adapter $adapter,
-        ProductModel $productModel,
+        ProductRepositoryInterface $productRepository,
         ProductManagement $productManagement
     ) {
         $this->logger = $logger;
         $this->adapter = $adapter;
-        $this->productModel = $productModel;
         $this->productManagement = $productManagement;
+        $this->productRepository = $productRepository;
     }
 
     /**
      * Execute
      *
-     * @param  Observer $observer
+     * @param Observer $observer
      * @return void
      */
     public function execute(Observer $observer)
     {
         $eventName = null;
-        $productIds = $this->getProductIdsFromBunch($observer->getEvent()->getProductIds());
+        $productIds = $this->getProductIdsFromBunch($observer->getEvent()->getData('bunch'));
 
         try {
             // Connect to the adapter
@@ -73,8 +74,7 @@ class ProductSaveAfter implements ObserverInterface
                 foreach ($productIds as $productId) {
                     $product = $this->productManagement->loadProductById($productId);
 
-                    if (
-                        $product === null
+                    if ($product === null
                         || $product->getId() === null
                         || $product->getCreatedAt() == $product->getUpdatedAt()
                     ) {
@@ -82,18 +82,15 @@ class ProductSaveAfter implements ObserverInterface
                     } else {
                         $eventName = self::PRODUCT_UPDATED_EVENT_NAME;
                     }
-
                     $payload = $this->productManagement->getProductData($product);
                     $response = $this->adapter->publishMessage($eventName, $payload);
-
                     if (!$response) {
                         return false;
                     }
                 }
-
                 return true;
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->info("Error while updating: " . $e->getMessage());
         }
     }
@@ -101,21 +98,21 @@ class ProductSaveAfter implements ObserverInterface
     /**
      * GetProductIdsFromBunch
      *
-     * @param  array $productIds
+     * @param array $productsBunch
      * @return array
+     * @throws NoSuchEntityException
      */
-    public function getProductIdsFromBunch(array $productIds): array
+    public function getProductIdsFromBunch(array $productsBunch): array
     {
         $validProductIds = [];
-        if (!empty($productIds)) {
-            foreach ($productIds as $productId) {
-                $product = $this->productModel->load($productId);
+        if (!empty($productsBunch)) {
+            foreach ($productsBunch as $productBunch) {
+                $product = $this->productRepository->get($productBunch['sku']);
                 if ($product && $product->getId()) {
                     $validProductIds[] = $product->getId();
                 }
             }
         }
-
         return $validProductIds;
     }
 }

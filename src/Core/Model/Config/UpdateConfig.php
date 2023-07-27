@@ -10,6 +10,7 @@ use Omniful\Core\Api\Config\UpdateConfigInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Webapi\Rest\Request;
+use Omniful\Core\Helper\Data;
 
 class UpdateConfig implements UpdateConfigInterface
 {
@@ -29,17 +30,23 @@ class UpdateConfig implements UpdateConfigInterface
      * @var TypeListInterface
      */
     private $cacheTypeList;
+    /**
+     * @var Data
+     */
+    private $helper;
 
     /**
      * UpdateConfig constructor.
      * @param WriterInterface $configWriter
      * @param Request $request
+     * @param Data $helper
      * @param TypeListInterface $cacheTypeList
      * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         WriterInterface $configWriter,
         Request $request,
+        Data $helper,
         TypeListInterface $cacheTypeList,
         StoreManagerInterface $storeManager
     ) {
@@ -47,6 +54,7 @@ class UpdateConfig implements UpdateConfigInterface
         $this->configWriter = $configWriter;
         $this->storeManager = $storeManager;
         $this->cacheTypeList = $cacheTypeList;
+        $this->helper = $helper;
     }
 
     /**
@@ -58,10 +66,11 @@ class UpdateConfig implements UpdateConfigInterface
     {
         try {
             $params = $this->request->getBodyParams();
+            $store = $this->storeManager->getStore();
             $path = 'omniful_core/general/';
             foreach ($params as $key => $value) {
                 $this->configWriter
-                    ->save($path . $key, $value, $scope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT, $scopeId = 0);
+                    ->save($path . $key, $value, $scope = $store->getCode(), $store->getId());
             }
             if (isset($params['enable_debugging'])) {
                 $this->configWriter->save(
@@ -72,26 +81,34 @@ class UpdateConfig implements UpdateConfigInterface
                 );
             }
             $this->cacheTypeList->cleanType(Config::TYPE_IDENTIFIER);
-            $responseData[] = [
-                "httpCode" => 200,
-                "status" => true,
-                "message" => "Success",
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                "Success",
+                200,
+                true,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (NoSuchEntityException $e) {
-            $responseData[] = [
-                "httpCode" => 404,
-                "status" => false,
-                "message" => "Config not Save",
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __(
+                    "Config not found"
+                ),
+                404,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => $e->getMessage(),
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 }
