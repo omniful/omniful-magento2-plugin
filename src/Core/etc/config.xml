@@ -8,5 +8,10 @@
                 <disable_order_status_dropdown>1</disable_order_status_dropdown>
             </general>
         </omniful_core>
+        <oauth>
+            <consumer>
+                <enable_integration_as_bearer>1</enable_integration_as_bearer>
+            </consumer>
+        </oauth>
     </default>
 </config>
