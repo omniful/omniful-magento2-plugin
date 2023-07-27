@@ -59,7 +59,8 @@ class ProductImportSaveAfter implements ObserverInterface
      * Execute
      *
      * @param Observer $observer
-     * @return void
+     * @return bool
+     * @throws NoSuchEntityException
      */
     public function execute(Observer $observer)
     {
