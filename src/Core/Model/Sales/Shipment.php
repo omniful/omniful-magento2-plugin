@@ -13,6 +13,7 @@ use Omniful\Core\Model\Sales\Status;
 use Magento\Sales\Model\Order\Shipment\TrackFactory;
 use Magento\Sales\Model\Convert\OrderFactory as OrderConvertFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Omniful\Core\Helper\Data;
 
 class Shipment implements ShipmentInterface
 {
@@ -68,6 +69,10 @@ class Shipment implements ShipmentInterface
         "shipped",
     ];
     public const URL_PATTERN = '/^(http|https):\/\/[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*(\.[a-zA-Z]{2,6})+(\/[^\s]*)?$/';
+    /**
+     * @var Data
+     */
+    private $helper;
 
     /**
      * Shipment constructor.
@@ -77,6 +82,7 @@ class Shipment implements ShipmentInterface
      * @param ShipmentFactory $shipmentFactory
      * @param ScopeConfigInterface $scopeConfig
      * @param OrderConvertFactory $orderConvertFactory
+     * @param Data $helper
      * @param ShipmentRepositoryInterface $shipmentRepository
      * @param ShipmentTrackInterfaceFactory $shipmentTrackFactory
      * @param OrderRepositoryInterface $orderRepository
@@ -87,6 +93,7 @@ class Shipment implements ShipmentInterface
         ShipmentFactory $shipmentFactory,
         ScopeConfigInterface $scopeConfig,
         OrderConvertFactory $orderConvertFactory,
+        Data $helper,
         ShipmentRepositoryInterface $shipmentRepository,
         ShipmentTrackInterfaceFactory $shipmentTrackFactory,
         OrderRepositoryInterface $orderRepository
@@ -99,6 +106,7 @@ class Shipment implements ShipmentInterface
         $this->shipmentRepository = $shipmentRepository;
         $this->orderConvertFactory = $orderConvertFactory;
         $this->shipmentTrackFactory = $shipmentTrackFactory;
+        $this->helper = $helper;
     }
 
     /**
@@ -215,25 +223,28 @@ class Shipment implements ShipmentInterface
 
             $order->save();
             $addedMessage = self::TRACKING_INFO_ADDED_MESSAGE;
-            $responseData[] = [
-                "httpCode" => 200,
-                "status" => true,
-                "message" => __($addedMessage),
-            ];
 
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                $addedMessage,
+                200,
+                true,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (\Exception $e) {
             $errorMessage = self::EXCEPTION_ERROR_MESSAGE;
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => __(
+            return $this->helper->getResponseStatus(
+                __(
                     $errorMessage,
                     $e->getMessage()
                 ),
-            ];
-
-            return $responseData;
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 

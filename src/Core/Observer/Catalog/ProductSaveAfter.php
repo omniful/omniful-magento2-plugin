@@ -11,8 +11,8 @@ use Omniful\Core\Model\Catalog\Product as ProductManagement;
 
 class ProductSaveAfter implements ObserverInterface
 {
-    public const ORDER_CREATED_EVENT_NAME = "product.created";
-    public const ORDER_UPDATED_EVENT_NAME = "product.updated";
+    public const PRODUCT_CREATED_EVENT_NAME = "product.created";
+    public const PRODUCT_UPDATED_EVENT_NAME = "product.updated";
 
     /**
      * @var Logger
@@ -23,10 +23,12 @@ class ProductSaveAfter implements ObserverInterface
      * @var ProductModel
      */
     protected $productModel;
+
     /**
      * @var Adapter
      */
     protected $adapter;
+
     /**
      * @var ProductManagement
      */
@@ -60,167 +62,39 @@ class ProductSaveAfter implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        $event = $observer->getEvent();
-        $eventName = $event->getName();
-
-        switch ($eventName) {
-            case "catalog_product_save_after":
-                $this->updateSingle($observer);
-                break;
-            case "catalog_product_import_bunch_save_after":
-                $this->updateBulk($observer);
-                break;
-            default:
-                $this->logger->info("Invalid event: " . $eventName);
-                break;
-        }
-    }
-
-    /**
-     * UpdateSingle
-     *
-     * @param  Observer $observer
-     * @return void
-     */
-    public function updateSingle(Observer $observer)
-    {
         $product = $observer->getProduct();
 
         try {
-            $this->routeFunctions($product);
-        } catch (\Exception $e) {
-            $this->logger->info(
-                "Error while single updating : " . $e->getMessage()
-            );
-        }
-    }
+            // Check if the product is new or updated
+            $eventName = $this->isNewProduct($product)
+                ? self::PRODUCT_CREATED_EVENT_NAME
+                : self::PRODUCT_UPDATED_EVENT_NAME;
 
-    /**
-     * UpdateSingle
-     *
-     * @param  Product $product
-     * @return void
-     */
-    public function routeFunctions($product)
-    {
-        try {
-            if ($product === null
-                || $product->getId() === null
-                || $product->getCreatedAt() == $product->getUpdatedAt()
-            ) {
-                $this->handleProductCreated([$product]);
-            } else {
-                $this->handleProductUpdated([$product]);
-            }
-        } catch (\Exception $e) {
-            $this->logger->info(
-                "Error while single updating : " . $e->getMessage()
-            );
-        }
-    }
-
-    /**
-     * HandleProductCreated
-     *
-     * @param  array $products
-     * @return mixed
-     */
-    public function handleProductCreated(array $products)
-    {
-        try {
-            // CONNECT FIRST
+            // Connect to the adapter
             $this->adapter->connect();
 
-            foreach ($products as $product) {
-                $payload = $this->productManagement->getProductData($product);
-                $response = $this->adapter->publishMessage(
-                    self::ORDER_CREATED_EVENT_NAME,
-                    $payload
-                );
+            // Publish the event
+            $payload = $this->productManagement->getProductData($product);
+            $response = $this->adapter->publishMessage($eventName, $payload);
 
-                if (!$response) {
-                    return false;
-                }
+            if (!$response) {
+                return false;
             }
 
             return true;
         } catch (\Exception $e) {
-            $this->logger->info("Error while updating : " . $e->getMessage());
+            $this->logger->info("Error while updating product: " . $e->getMessage());
         }
     }
 
     /**
-     * HandleProductUpdated
+     * Check if the product is new or updated
      *
-     * @param  array $products
-     * @return mixed
+     * @param ProductModel $product
+     * @return bool
      */
-    public function handleProductUpdated($products)
+    private function isNewProduct(ProductModel $product): bool
     {
-        try {
-            // CONNECT FIRST
-            $this->adapter->connect();
-
-            foreach ($products as $product) {
-                $payload = $this->productManagement->getProductData($product);
-                $response = $this->adapter->publishMessage(
-                    self::ORDER_UPDATED_EVENT_NAME,
-                    $payload
-                );
-
-                if (!$response) {
-                    return false;
-                }
-            }
-
-            return true;
-        } catch (\Exception $e) {
-            $this->logger->info("Error while updating : " . $e->getMessage());
-        }
-    }
-
-    /**
-     * UpdateBulk
-     *
-     * @param  Observer $observer
-     * @return void
-     */
-    public function updateBulk(Observer $observer)
-    {
-        try {
-            $productIds = $this->getProductIdsFromBunch($observer->getBunch());
-            if ($productIds) {
-                foreach ($productIds as $productId) {
-                    $product = $this->productManagement->loadProductById(
-                        $productId
-                    );
-                    $this->routeFunctions($product);
-                }
-            }
-        } catch (\Exception $e) {
-            $this->logger->info(
-                "Error while bulk updating : " . $e->getMessage()
-            );
-        }
-    }
-
-    /**
-     * GetProductIdsFromBunch
-     *
-     * @param  array $bunch
-     * @return array
-     */
-    public function getProductIdsFromBunch(array $bunch): array
-    {
-        $productIds = [];
-        if (count($bunch)) {
-            foreach ($bunch as $product) {
-                $productIds[] = $this->productModel->getIdBySku(
-                    $product["sku"]
-                );
-            }
-        }
-
-        return $productIds;
+        return $product->getId() === null || $product->getCreatedAt() == $product->getUpdatedAt();
     }
 }

@@ -2,9 +2,25 @@
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Webapi:etc/webapi.xsd">
     <!-- STORE APIs -->
     <route url="/V2/store/info" method="GET">
-        <service class="Omniful\Core\Api\Store\InfoInterface" method="getAllStoreInfo"/>
+        <service class="Omniful\Core\Api\Store\InfoInterface" method="getStoreInfo"/>
         <resources>
             <resource ref="anonymous"/>
+        </resources>
+    </route>
+
+    <!-- Update Config -->
+    <route url="/V2/store/config" method="PUT">
+        <service class="Omniful\Core\Api\Config\UpdateConfigInterface" method="updateConfig"/>
+        <resources>
+            <resource ref="Magento_Catalog::products" />
+        </resources>
+    </route>
+
+    <!-- STOCK SOURCE -->
+    <route url="/V2/stock/sources" method="GET">
+        <service class="Omniful\Core\Api\Stock\StockSourcesInterface" method="getStockSources"/>
+        <resources>
+            <resource ref="Magento_Catalog::products" />
         </resources>
     </route>
 
@@ -97,14 +113,6 @@
         <service class="Omniful\Core\Api\Sales\RefundInterface" method="processRefund"/>
         <resources>
             <resource ref="Magento_Sales::products" />
-        </resources>
-    </route>
-
-    <!-- Update Config -->
-    <route url="/V2/config/value/update" method="POST">
-        <service class="Omniful\Core\Api\Config\UpdateConfigInterface" method="updateConfig"/>
-        <resources>
-            <resource ref="Magento_Catalog::products" />
         </resources>
     </route>
 </routes>

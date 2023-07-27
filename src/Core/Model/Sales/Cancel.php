@@ -11,6 +11,7 @@ use Omniful\Core\Model\Sales\Order as OrderManagement;
 use Magento\Sales\Model\Order\CreditmemoFactory;
 use Magento\Sales\Model\Service\CreditmemoService;
 use Magento\Sales\Api\InvoiceRepositoryInterface;
+use Omniful\Core\Helper\Data;
 
 class Cancel implements CancelInterface
 {
@@ -47,16 +48,21 @@ class Cancel implements CancelInterface
     public const DEFAULT_CANCEL_REASON = "Omniful Side";
     public const OMNIFUL_CANCEL_REASON = "omniful_cancel_reason";
     public const STATE_CANCELED = \Magento\Sales\Model\Order::STATE_CANCELED;
+    /**
+     * @var Data
+     */
+    private $helper;
 
     /**
      * Cancel constructor.
      *
-     * @param Logger                          $logger
-     * @param Order                           $orderManagement
-     * @param CreditmemoFactory               $creditmemoFactory
-     * @param CreditmemoService               $creditmemoService
-     * @param OrderRepositoryInterface        $orderRepository
-     * @param InvoiceRepositoryInterface      $invoiceRepository
+     * @param Logger $logger
+     * @param Order $orderManagement
+     * @param CreditmemoFactory $creditmemoFactory
+     * @param CreditmemoService $creditmemoService
+     * @param OrderRepositoryInterface $orderRepository
+     * @param Data $helper
+     * @param InvoiceRepositoryInterface $invoiceRepository
      * @param MagentoOrderManagementInterface $magentoOrderManagementInterface
      */
     public function __construct(
@@ -65,6 +71,7 @@ class Cancel implements CancelInterface
         CreditmemoFactory $creditmemoFactory,
         CreditmemoService $creditmemoService,
         OrderRepositoryInterface $orderRepository,
+        Data $helper,
         InvoiceRepositoryInterface $invoiceRepository,
         MagentoOrderManagementInterface $magentoOrderManagementInterface
     ) {
@@ -75,6 +82,7 @@ class Cancel implements CancelInterface
         $this->creditmemoFactory = $creditmemoFactory;
         $this->invoiceRepository = $invoiceRepository;
         $this->magentoOrderManagementInterface = $magentoOrderManagementInterface;
+        $this->helper = $helper;
     }
 
     /**
@@ -168,33 +176,38 @@ class Cancel implements CancelInterface
             // Save the order
             $this->orderRepository->save($order);
             $orderData = $this->orderManagement->getOrderData($order);
-            $responseData[] = [
-                "httpCode" => 200,
-                "status" => true,
-                "message" => "Success",
-                "data" => $orderData,
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                "Success",
+                200,
+                true,
+                $orderData,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (LocalizedException $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => __(
-                    "Could not cancel the order: %1",
+            return $this->helper->getResponseStatus(
+                __(
+                    "Could not refund the order: %1",
                     $e->getMessage()
                 ),
-            ];
-            return $responseData;
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (\Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => __(
+            return $this->helper->getResponseStatus(
+                __(
                     "An error occurred while canceling the order. %1",
                     $e->getMessage()
                 ),
-            ];
-            return $responseData;
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 }
