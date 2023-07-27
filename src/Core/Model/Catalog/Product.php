@@ -125,8 +125,8 @@ class Product implements ProductInterface
     public function getProducts()
     {
         try {
-            $page = (int)$this->request->getParam("page") ?: 1;
-            $limit = (int)$this->request->getParam("limit") ?: 200;
+            $page = (int) $this->request->getParam("page") ?: 1;
+            $limit = (int) $this->request->getParam("limit") ?: 200;
             $searchCriteria = $this->createSearchCriteria($page, $limit);
             $searchResults = $this->productRepository->getList($searchCriteria);
             $products = $searchResults->getItems();
@@ -196,8 +196,8 @@ class Product implements ProductInterface
             $category = $this->categoryRepository->get($categoryId);
             if ($category) {
                 $categories[] = [
-                    "id" => (int)$category->getId(),
-                    "name" => (string)$category->getName(),
+                    "id" => (int) $category->getId(),
+                    "name" => (string) $category->getName(),
                 ];
             }
         }
@@ -221,11 +221,11 @@ class Product implements ProductInterface
             ->getValue();
 
         $prices = [
-            "regular_price" => (float)$regularPrice,
-            "sale_price" => (float)$salePrice,
-            "price" => (float)$price,
-            "msrp_price" => (float)$msrpPrice,
-            "qty" => (float)$product->getQty(),
+            "regular_price" => (float) $regularPrice,
+            "sale_price" => (float) $salePrice,
+            "price" => (float) $price,
+            "msrp_price" => (float) $msrpPrice,
+            "qty" => (float) $product->getQty(),
         ];
 
         $variationDetails = $this->getProductVariations($product->getId());
@@ -244,8 +244,8 @@ class Product implements ProductInterface
 
         foreach ($galleryImages as $galleryImage) {
             $galleryUrls[] = [
-                "url" => (string)$galleryImage->getUrl(),
-                "alt" => (string)$galleryImage->getLabel(),
+                "url" => (string) $galleryImage->getUrl(),
+                "alt" => (string) $galleryImage->getLabel(),
             ];
         }
 
@@ -255,38 +255,38 @@ class Product implements ProductInterface
         );
 
         return [
-            "id" => (int)$product->getId(),
-            "sku" => (string)$product->getSku(),
+            "id" => (int) $product->getId(),
+            "sku" => (string) $product->getSku(),
             "barcode" => $product->getCustomAttribute(
                 "omniful_barcode_attribute"
             )
-                ? (string)$product
-                    ->getCustomAttribute("omniful_barcode_attribute")
-                    ->getValue()
-                : null,
-            "stock_quantity" => (float)$stockItem->getQty(),
-            "name" => (string)$product->getName(),
-            "description" => (string)$product->getDescription(),
-            "short_description" => (string)$product->getShortDescription(),
-            "date_created" => (string)$product->getCreatedAt(),
-            "date_modified" => (string)$product->getUpdatedAt(),
+            ? (string) $product
+                ->getCustomAttribute("omniful_barcode_attribute")
+                ->getValue()
+            : null,
+            "stock_quantity" => (float) $stockItem->getQty(),
+            "name" => (string) $product->getName(),
+            "description" => (string) $product->getDescription(),
+            "short_description" => (string) $product->getShortDescription(),
+            "date_created" => (string) $product->getCreatedAt(),
+            "date_modified" => (string) $product->getUpdatedAt(),
             "categories" => $categories,
-            "tags" => (array)$product->getTagIds(),
+            "tags" => (array) $product->getTagIds(),
             "attributes" => $this->getProductAttributesWithOptions(
                 $product->getId()
             ),
             "variations" => $variationDetails,
             "prices" => $prices,
             "gallery_images" => [
-                "full" => (string)$imageUrl,
-                "thumbnail" => (string)$thumbnailUrl,
-                "images" => (array)$galleryUrls,
+                "full" => (string) $imageUrl,
+                "thumbnail" => (string) $thumbnailUrl,
+                "images" => (array) $galleryUrls,
             ],
-            "tax_class" => (int)$product->getTaxClassId(),
-            "manage_stock" => (bool)$product->getManageStock(),
-            "in_stock" => (bool)$stockItem->getIsInStock(),
-            "backorders_allowed" => (bool)$stockItem->getBackOrder(),
-            "weight" => (float)$product->getWeight(),
+            "tax_class" => (int) $product->getTaxClassId(),
+            "manage_stock" => (bool) $product->getManageStock(),
+            "in_stock" => (bool) $stockItem->getIsInStock(),
+            "backorders_allowed" => (bool) $stockItem->getBackOrder(),
+            "weight" => (float) $product->getWeight(),
         ];
     }
 
@@ -320,25 +320,25 @@ class Product implements ProductInterface
 
                     // Get variation details
                     $variationDetail = [
-                        "id" => (int)$variation->getId(),
-                        "sku" => (string)$variation->getSku(),
+                        "id" => (int) $variation->getId(),
+                        "sku" => (string) $variation->getSku(),
                         "barcode" => $variation->getCustomAttribute(
                             "omniful_barcode_attribute"
                         )
-                            ? (string)$variation
-                                ->getCustomAttribute(
-                                    "omniful_barcode_attribute"
-                                )
-                                ->getValue()
-                            : null,
-                        "regular_price" => (float)$variation->getPrice(),
-                        "sale_price" => (float)$variation->getSpecialPrice(),
-                        "price" => (float)$variation->getFinalPrice(),
-                        "stock_quantity" => (float)$stockItem->getQty(),
-                        "in_stock" => (bool)$stockItem->getIsInStock(),
-                        "backorders_allowed" => (bool)$stockItem->getBackOrder(),
+                        ? (string) $variation
+                            ->getCustomAttribute(
+                                "omniful_barcode_attribute"
+                            )
+                            ->getValue()
+                        : null,
+                        "regular_price" => (float) $variation->getPrice(),
+                        "sale_price" => (float) $variation->getSpecialPrice(),
+                        "price" => (float) $variation->getFinalPrice(),
+                        "stock_quantity" => (float) $stockItem->getQty(),
+                        "in_stock" => (bool) $stockItem->getIsInStock(),
+                        "backorders_allowed" => (bool) $stockItem->getBackOrder(),
                         "attributes" => $this->getProductAttributesWithOptions($variation->getId()),
-                        "thumbnail" => (string)$thumbnailUrl,
+                        "thumbnail" => (string) $thumbnailUrl,
                     ];
 
                     // Add the variation details to the array
@@ -374,8 +374,8 @@ class Product implements ProductInterface
             foreach ($attributes as $attribute) {
                 if ($attribute->getFrontendInput() === "select") {
                     $attributeData = [
-                        "name" => (string)$attribute->getAttributeCode(),
-                        "label" => (string)$attribute->getDefaultFrontendLabel(),
+                        "name" => (string) $attribute->getAttributeCode(),
+                        "label" => (string) $attribute->getDefaultFrontendLabel(),
                         "options" => $this->getAttributeOptions($attribute),
                     ];
                     $productAttributes[] = $attributeData;
@@ -417,7 +417,7 @@ class Product implements ProductInterface
     {
         try {
             if (is_numeric($identifier)) {
-                $productId = (int)$identifier;
+                $productId = (int) $identifier;
                 $product = $this->loadProductById($productId);
                 $productData = $this->getProductData($product);
             } else {
@@ -457,6 +457,7 @@ class Product implements ProductInterface
      */
     public function loadProductById($productId)
     {
+        // TODO: need to load by store id
         return $this->productFactory->create()->load($productId);
     }
 
@@ -562,7 +563,8 @@ class Product implements ProductInterface
                 $product = $this->productRepository->get($productData["sku"]);
                 $stockData = ["qty" => $productData["qty"]];
 
-                if (isset($productData["status"])
+                if (
+                    isset($productData["status"])
                     && $productData["status"] === "out_of_stock"
                 ) {
                     $stockData["is_in_stock"] = false;
@@ -605,7 +607,8 @@ class Product implements ProductInterface
     {
         try {
             foreach ($products as $productData) {
-                if (isset($productData["status"])
+                if (
+                    isset($productData["status"])
                     && $productData["status"] === "out_of_stock"
                 ) {
                     $stockData = false;

@@ -66,7 +66,7 @@ class OrderSaveAfter implements ObserverInterface
     }
 
     /**
-     * Triggers when an order is saved and performs necessary actions based on order status
+     * Triggers when an order is saved and sending webhook message to omniful
      *
      * @param Observer $observer
      * @return void
@@ -84,6 +84,11 @@ class OrderSaveAfter implements ObserverInterface
 
             // Determine the event name based on order status changes
             $eventName = $this->getEventName($order);
+            $headers = [
+                "website_code" => $order->getStore()->getWebsite()->getCode(),
+                "store_code" => $order->getStore()->getCode(),
+                "store_view_code" => $order->getStore()->getName(),
+            ];
 
             // Connect to the adapter
             $this->adapter->connect();
@@ -92,10 +97,11 @@ class OrderSaveAfter implements ObserverInterface
             if ($eventName !== "") {
                 $payload = $this->orderManagement->getOrderData($order);
                 // Log the successful publication of the order event
-                 $this->logger->info('Order event published successfully');
+                $this->logger->info('Order event published successfully');
                 return $this->adapter->publishMessage(
                     $eventName,
-                    $payload
+                    $payload,
+                    $headers
                 );
             }
         } catch (\Exception $e) {
@@ -113,11 +119,13 @@ class OrderSaveAfter implements ObserverInterface
     {
         $eventName = "";
 
-        if ($order->getOrigData("status") === null
+        if (
+            $order->getOrigData("status") === null
             && $order->getStatus() !== Order::STATE_CANCELED
         ) {
             $eventName = self::ORDER_CREATED_EVENT_NAME;
-        } elseif ($order->getStatus() !== Order::STATE_CANCELED
+        } elseif (
+            $order->getStatus() !== Order::STATE_CANCELED
             && $order->getStatus() !== $order->getOrigData("status")
             && in_array($order->getStatus(), self::ALLOWED_STATUSES)
         ) {

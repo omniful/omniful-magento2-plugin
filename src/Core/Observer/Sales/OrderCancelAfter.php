@@ -50,7 +50,7 @@ class OrderCancelAfter implements ObserverInterface
     }
 
     /**
-     * Triggers when an order is canceled and initiates the adapter order cancel function
+     * Triggers when an order is canceled and sending webhook message to omniful
      *
      * @param Observer $observer
      * @return void
@@ -60,20 +60,28 @@ class OrderCancelAfter implements ObserverInterface
         $order = $observer->getOrder();
         try {
             if ($order->getStatus() == "canceled") {
+                $eventName = self::EVENT_NAME;
+                $headers = [
+                    "website_code" => $order->getStore()->getWebsite()->getCode(),
+                    "store_code" => $order->getStore()->getCode(),
+                    "store_view_code" => $order->getStore()->getName(),
+                ];
+
                 // CONNECT FIRST
                 $this->adapter->connect();
                 // PUSH CANCEL ORDER EVENT
                 $payload = $this->orderManagement->getOrderData($order);
                 $response = $this->adapter->publishMessage(
-                    self::EVENT_NAME,
-                    $payload
+                    $eventName,
+                    $payload,
+                    $headers
                 );
                 // LOG MESSAGE
-                 $this->logger->info('Order Canceled successfully');
+                $this->logger->info('Order Canceled successfully');
                 return $response;
             }
         } catch (\Exception $e) {
-             $this->logger->info($e->getMessage());
+            $this->logger->info($e->getMessage());
         }
     }
 }

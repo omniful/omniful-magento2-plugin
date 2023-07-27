@@ -48,13 +48,6 @@
                         <field id="active">1</field>
                     </depends>
                 </field>
-                <field id="access_token" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="0">
-                    <label>Access Token</label>
-                    <validate>required-entry</validate>
-                    <depends>
-                        <field id="active">1</field>
-                    </depends>
-                </field>
                 <field id="webhook_token" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Webhook Token</label>
                     <validate>required-entry</validate>
