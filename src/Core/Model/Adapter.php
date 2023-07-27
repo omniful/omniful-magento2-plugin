@@ -37,11 +37,6 @@ class Adapter
     /**
      * @var string|null
      */
-    protected $accessToken;
-
-    /**
-     * @var string|null
-     */
     protected $workspaceId;
 
     /**
@@ -99,7 +94,6 @@ class Adapter
         $this->domain = null;
         $this->timestamp = null;
         $this->webhookUrl = null;
-        $this->accessToken = null;
         $this->workspaceId = null;
         $this->webhookToken = null;
 
@@ -114,7 +108,6 @@ class Adapter
             }
 
             $this->webhookUrl = $this->coreHelper->getWebhookUrl();
-            $this->accessToken = $this->coreHelper->getAccessToken();
             $this->workspaceId = $this->coreHelper->getWorkspaceId();
             $this->webhookToken = $this->coreHelper->getWebhookToken();
         } catch (\Magento\Framework\Exception\LocalizedException $e) {
@@ -129,7 +122,7 @@ class Adapter
             "X-Device-Info" => $xDeviceInfo ?? "",
             "X-Webhook-Token" => $this->webhookToken,
             "X-Omniful-Merchant" => $this->workspaceId,
-            "Authorization" => "Bearer " . $this->accessToken,
+            "store_view_code" => 'default',
         ];
     }
 
@@ -137,11 +130,10 @@ class Adapter
      * Cancel order method
      *
      * @param string $event
-     * @param array  $payload
-     *
-     * @return mixed
+     * @param array $payload
+     * @param array $additionalHeaders
      */
-    public function publishMessage($event, $payload)
+    public function publishMessage($event, $payload, $additionalHeaders = [])
     {
         $payload = [
             "event_name" => $event,
@@ -159,8 +151,9 @@ class Adapter
         $loggingData = [
             "endPoint" => $endPoint,
             "payload" => json_encode($payload),
-            "headers" => $this->headers,
+            "headers" => array_merge($this->headers, $additionalHeaders),
         ];
+        $this->headers = array_merge($this->headers, $additionalHeaders);
         $this->logger->info("LoggingData: " . json_encode($loggingData));
         $this->curl->setHeaders($this->headers);
         $response = $this->curl->post($endPoint, json_encode($payload));

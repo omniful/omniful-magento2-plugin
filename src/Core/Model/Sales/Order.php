@@ -10,6 +10,8 @@ use Magento\Framework\App\RequestInterface;
 use Omniful\Core\Model\Sales\Shipment as ShipmentManagement;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
 use Omniful\Core\Helper\Countries;
+use Omniful\Core\Helper\Data;
+use Magento\Framework\Stdlib\DateTime\Timezone;
 
 class Order implements OrderInterface
 {
@@ -33,12 +35,22 @@ class Order implements OrderInterface
      * @var CollectionFactory
      */
     protected $orderCollectionFactory;
+    /**
+     * @var Data
+     */
+    private $helper;
+    /**
+     * @var Timezone
+     */
+    private $stdTimezone;
 
     /**
      * Order constructor.
      *
      * @param RequestInterface $request
      * @param Countries $countriesHelper
+     * @param Data $helper
+     * @param Timezone $stdTimezone
      * @param Shipment $shipmentManagement
      * @param CollectionFactory $orderCollectionFactory
      * @param OrderRepositoryInterface $orderRepository
@@ -46,6 +58,8 @@ class Order implements OrderInterface
     public function __construct(
         RequestInterface $request,
         Countries $countriesHelper,
+        Data $helper,
+        Timezone $stdTimezone,
         ShipmentManagement $shipmentManagement,
         CollectionFactory $orderCollectionFactory,
         OrderRepositoryInterface $orderRepository
@@ -55,6 +69,8 @@ class Order implements OrderInterface
         $this->orderRepository = $orderRepository;
         $this->shipmentManagement = $shipmentManagement;
         $this->orderCollectionFactory = $orderCollectionFactory;
+        $this->helper = $helper;
+        $this->stdTimezone = $stdTimezone;
     }
 
     /**
@@ -66,16 +82,15 @@ class Order implements OrderInterface
     {
         $page = (int) $this->request->getParam('page') ?: 1;
         $limit = (int) $this->request->getParam('limit') ?: 200;
-
-        // Default status values to be filtered
-        $statuses = $this->request->getHeader('statuses') ?:
-            ['pending', 'processing', 'complete', 'holded', 'pending_payment'];
-
+        $currentDate = $this->stdTimezone->date()->format('Y-m-d');
+        $createdAtMin = $this->request->getParam('CreatedAtMin') ?: $currentDate;
+        $createdAtMax = $this->request->getParam('CreatedAtMax') ?: '01-01-1900';
+        $status = $this->request->getParam('status');
         $orderCollection = $this->orderCollectionFactory->create();
-        $orderCollection->addFieldToFilter('status', ['in' => $statuses]);
+        $orderCollection->addFieldToFilter('status', ['in' => $status])
+            ->addAttributeToFilter('created_at', ['from'=>$createdAtMin, 'to'=>$createdAtMax]);
         $orderCollection->setPageSize($limit);
         $orderCollection->setCurPage($page);
-
         $orderData = [];
         foreach ($orderCollection as $order) {
             $orderData[] = $this->getOrderData($order);
@@ -89,16 +104,14 @@ class Order implements OrderInterface
             'total_count' => $totalOrders,
             'total_pages' => ceil($totalOrders / $limit),
         ];
-
-        $responseData[] = [
-            'httpCode' => 200,
-            'status' => true,
-            'message' => 'Success',
-            'data' => $orderData,
-            'page_info' => $pageInfo,
-        ];
-
-        return $responseData;
+        return $this->helper->getResponseStatus(
+            "Success",
+            200,
+            true,
+            $orderData,
+            $pageInfo,
+            $nestedArray = true
+        );
     }
 
     /**
@@ -114,17 +127,15 @@ class Order implements OrderInterface
         if (!$order) {
             throw new NoSuchEntityException(__('Order not found.'));
         }
-
         $orderData = $this->getOrderData($order);
-
-        $responseData[] = [
-            'httpCode' => 200,
-            'status' => true,
-            'message' => 'Success',
-            'data' => $orderData,
-        ];
-
-        return $responseData;
+        return $this->helper->getResponseStatus(
+            "Success",
+            200,
+            true,
+            $orderData,
+            $pageData = null,
+            $nestedArray = true
+        );
     }
 
     /**
@@ -276,13 +287,14 @@ class Order implements OrderInterface
                 'shipments' => $shipmentTracking,
             ];
         } catch (NoSuchEntityException $e) {
-            $responseData[] = [
-                'httpCode' => 500,
-                'status' => false,
-                'message' => __('Order not found.'),
-            ];
-
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __('Order not found.'),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 

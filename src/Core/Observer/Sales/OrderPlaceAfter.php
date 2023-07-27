@@ -8,8 +8,9 @@ use Omniful\Core\Model\Adapter;
 use Omniful\Core\Logger\Logger;
 use Omniful\Core\Model\Sales\Order as OrderManagement;
 
-class OrderSaveAfter implements ObserverInterface
+class OrderPlaceAfter implements ObserverInterface
 {
+    public const ORDER_CREATED_EVENT_NAME = "order.created";
 
     /**
      * @var Logger
@@ -25,7 +26,7 @@ class OrderSaveAfter implements ObserverInterface
     protected $orderManagement;
 
     /**
-     * OrderSaveAfter constructor.
+     * OrderPlaceAfter constructor.
      *
      * @param Logger                $logger
      * @param Adapter               $adapter
@@ -42,7 +43,7 @@ class OrderSaveAfter implements ObserverInterface
     }
 
     /**
-     * Triggers when an order is saved and performs necessary actions based on order status
+     * Triggers when an order is saved and sending webhook message to omniful
      *
      * @param Observer $observer
      * @return void
@@ -51,8 +52,12 @@ class OrderSaveAfter implements ObserverInterface
     {
         $order = $observer->getEvent()->getOrder();
         try {
-            // Determine the event name based on order status changes
-            $eventName = 'order.created';
+            $eventName = self::ORDER_CREATED_EVENT_NAME;
+            $headers = [
+                "website_code" => $order->getStore()->getWebsite()->getCode(),
+                "store_code" => $order->getStore()->getCode(),
+                "store_view_code" => $order->getStore()->getName(),
+            ];
 
             // Connect to the adapter
             $this->adapter->connect();
@@ -64,7 +69,8 @@ class OrderSaveAfter implements ObserverInterface
                 $this->logger->info('Order event published successfully');
                 return $this->adapter->publishMessage(
                     $eventName,
-                    $payload
+                    $payload,
+                    $headers
                 );
             }
         } catch (\Exception $e) {

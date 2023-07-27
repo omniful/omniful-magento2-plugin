@@ -22,7 +22,6 @@
 
     <!-- Product Bunch Update/Import After -->
     <event name="catalog_product_import_bunch_save_after">
-        <observer name="adminhtml_omniful_handle_catalog_product_import_bunch_save_after" instance="Omniful\Core\Observer\Catalog\ProductSaveAfter" />
+        <observer name="adminhtml_omniful_handle_catalog_product_import_bunch_save_after" instance="Omniful\Core\Observer\Catalog\ProductImportSaveAfter" />
     </event>
-
 </config>

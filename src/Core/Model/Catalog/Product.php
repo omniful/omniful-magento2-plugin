@@ -21,6 +21,7 @@ use Magento\Eav\Api\Data\AttributeInterface;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\InventoryApi\Api\SourceItemsSaveInterface;
 use Magento\InventoryApi\Api\Data\SourceItemInterface;
+use Omniful\Core\Helper\Data;
 
 class Product implements ProductInterface
 {
@@ -72,6 +73,10 @@ class Product implements ProductInterface
      * @var SourceItemInterface
      */
     private $sourceItem;
+    /**
+     * @var Data
+     */
+    private $helper;
 
     /**
      * Product constructor.
@@ -80,6 +85,7 @@ class Product implements ProductInterface
      * @param StockRegistryInterface $stockRegistry
      * @param Configurable $configurableProductType
      * @param File $file
+     * @param Data $helper
      * @param AttributeRepositoryInterface $attributeRepository
      * @param CategoryRepositoryInterface $categoryRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
@@ -94,6 +100,7 @@ class Product implements ProductInterface
         StockRegistryInterface $stockRegistry,
         Configurable $configurableProductType,
         File $file,
+        Data $helper,
         AttributeRepositoryInterface $attributeRepository,
         CategoryRepositoryInterface $categoryRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
@@ -115,6 +122,7 @@ class Product implements ProductInterface
         $this->request = $request;
         $this->sourceItemsSave = $sourceItemsSave;
         $this->sourceItem = $sourceItem;
+        $this->helper = $helper;
     }
 
     /**
@@ -125,8 +133,8 @@ class Product implements ProductInterface
     public function getProducts()
     {
         try {
-            $page = (int)$this->request->getParam("page") ?: 1;
-            $limit = (int)$this->request->getParam("limit") ?: 200;
+            $page = (int) $this->request->getParam("page") ?: 1;
+            $limit = (int) $this->request->getParam("limit") ?: 200;
             $searchCriteria = $this->createSearchCriteria($page, $limit);
             $searchResults = $this->productRepository->getList($searchCriteria);
             $products = $searchResults->getItems();
@@ -141,21 +149,23 @@ class Product implements ProductInterface
                 "total_count" => $totalProducts,
                 "total_pages" => ceil($totalProducts / $limit),
             ];
-            $responseData[] = [
-                "httpCode" => 200,
-                "status" => true,
-                "message" => "Success",
-                "data" => $productData,
-                "page_info" => $pageInfo,
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                "Success",
+                200,
+                true,
+                $productData,
+                $pageInfo,
+                $nestedArray = true
+            );
         } catch (Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => $e->getMessage(),
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 
@@ -196,8 +206,8 @@ class Product implements ProductInterface
             $category = $this->categoryRepository->get($categoryId);
             if ($category) {
                 $categories[] = [
-                    "id" => (int)$category->getId(),
-                    "name" => (string)$category->getName(),
+                    "id" => (int) $category->getId(),
+                    "name" => (string) $category->getName(),
                 ];
             }
         }
@@ -221,11 +231,11 @@ class Product implements ProductInterface
             ->getValue();
 
         $prices = [
-            "regular_price" => (float)$regularPrice,
-            "sale_price" => (float)$salePrice,
-            "price" => (float)$price,
-            "msrp_price" => (float)$msrpPrice,
-            "qty" => (float)$product->getQty(),
+            "regular_price" => (float) $regularPrice,
+            "sale_price" => (float) $salePrice,
+            "price" => (float) $price,
+            "msrp_price" => (float) $msrpPrice,
+            "qty" => (float) $product->getQty(),
         ];
 
         $variationDetails = $this->getProductVariations($product->getId());
@@ -244,8 +254,8 @@ class Product implements ProductInterface
 
         foreach ($galleryImages as $galleryImage) {
             $galleryUrls[] = [
-                "url" => (string)$galleryImage->getUrl(),
-                "alt" => (string)$galleryImage->getLabel(),
+                "url" => (string) $galleryImage->getUrl(),
+                "alt" => (string) $galleryImage->getLabel(),
             ];
         }
 
@@ -255,38 +265,38 @@ class Product implements ProductInterface
         );
 
         return [
-            "id" => (int)$product->getId(),
-            "sku" => (string)$product->getSku(),
+            "id" => (int) $product->getId(),
+            "sku" => (string) $product->getSku(),
             "barcode" => $product->getCustomAttribute(
                 "omniful_barcode_attribute"
             )
-                ? (string)$product
-                    ->getCustomAttribute("omniful_barcode_attribute")
-                    ->getValue()
-                : null,
-            "stock_quantity" => (float)$stockItem->getQty(),
-            "name" => (string)$product->getName(),
-            "description" => (string)$product->getDescription(),
-            "short_description" => (string)$product->getShortDescription(),
-            "date_created" => (string)$product->getCreatedAt(),
-            "date_modified" => (string)$product->getUpdatedAt(),
+            ? (string) $product
+                ->getCustomAttribute("omniful_barcode_attribute")
+                ->getValue()
+            : null,
+            "stock_quantity" => (float) $stockItem->getQty(),
+            "name" => (string) $product->getName(),
+            "description" => (string) $product->getDescription(),
+            "short_description" => (string) $product->getShortDescription(),
+            "date_created" => (string) $product->getCreatedAt(),
+            "date_modified" => (string) $product->getUpdatedAt(),
             "categories" => $categories,
-            "tags" => (array)$product->getTagIds(),
+            "tags" => (array) $product->getTagIds(),
             "attributes" => $this->getProductAttributesWithOptions(
                 $product->getId()
             ),
             "variations" => $variationDetails,
             "prices" => $prices,
             "gallery_images" => [
-                "full" => (string)$imageUrl,
-                "thumbnail" => (string)$thumbnailUrl,
-                "images" => (array)$galleryUrls,
+                "full" => (string) $imageUrl,
+                "thumbnail" => (string) $thumbnailUrl,
+                "images" => (array) $galleryUrls,
             ],
-            "tax_class" => (int)$product->getTaxClassId(),
-            "manage_stock" => (bool)$product->getManageStock(),
-            "in_stock" => (bool)$stockItem->getIsInStock(),
-            "backorders_allowed" => (bool)$stockItem->getBackOrder(),
-            "weight" => (float)$product->getWeight(),
+            "tax_class" => (int) $product->getTaxClassId(),
+            "manage_stock" => (bool) $product->getManageStock(),
+            "in_stock" => (bool) $stockItem->getIsInStock(),
+            "backorders_allowed" => (bool) $stockItem->getBackOrder(),
+            "weight" => (float) $product->getWeight(),
         ];
     }
 
@@ -320,25 +330,25 @@ class Product implements ProductInterface
 
                     // Get variation details
                     $variationDetail = [
-                        "id" => (int)$variation->getId(),
-                        "sku" => (string)$variation->getSku(),
+                        "id" => (int) $variation->getId(),
+                        "sku" => (string) $variation->getSku(),
                         "barcode" => $variation->getCustomAttribute(
                             "omniful_barcode_attribute"
                         )
-                            ? (string)$variation
-                                ->getCustomAttribute(
-                                    "omniful_barcode_attribute"
-                                )
-                                ->getValue()
-                            : null,
-                        "regular_price" => (float)$variation->getPrice(),
-                        "sale_price" => (float)$variation->getSpecialPrice(),
-                        "price" => (float)$variation->getFinalPrice(),
-                        "stock_quantity" => (float)$stockItem->getQty(),
-                        "in_stock" => (bool)$stockItem->getIsInStock(),
-                        "backorders_allowed" => (bool)$stockItem->getBackOrder(),
+                        ? (string) $variation
+                            ->getCustomAttribute(
+                                "omniful_barcode_attribute"
+                            )
+                            ->getValue()
+                        : null,
+                        "regular_price" => (float) $variation->getPrice(),
+                        "sale_price" => (float) $variation->getSpecialPrice(),
+                        "price" => (float) $variation->getFinalPrice(),
+                        "stock_quantity" => (float) $stockItem->getQty(),
+                        "in_stock" => (bool) $stockItem->getIsInStock(),
+                        "backorders_allowed" => (bool) $stockItem->getBackOrder(),
                         "attributes" => $this->getProductAttributesWithOptions($variation->getId()),
-                        "thumbnail" => (string)$thumbnailUrl,
+                        "thumbnail" => (string) $thumbnailUrl,
                     ];
 
                     // Add the variation details to the array
@@ -349,13 +359,14 @@ class Product implements ProductInterface
 
             return [];
         } catch (Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => $e->getMessage(),
-            ];
-
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 
@@ -374,8 +385,8 @@ class Product implements ProductInterface
             foreach ($attributes as $attribute) {
                 if ($attribute->getFrontendInput() === "select") {
                     $attributeData = [
-                        "name" => (string)$attribute->getAttributeCode(),
-                        "label" => (string)$attribute->getDefaultFrontendLabel(),
+                        "name" => (string) $attribute->getAttributeCode(),
+                        "label" => (string) $attribute->getDefaultFrontendLabel(),
                         "options" => $this->getAttributeOptions($attribute),
                     ];
                     $productAttributes[] = $attributeData;
@@ -417,7 +428,7 @@ class Product implements ProductInterface
     {
         try {
             if (is_numeric($identifier)) {
-                $productId = (int)$identifier;
+                $productId = (int) $identifier;
                 $product = $this->loadProductById($productId);
                 $productData = $this->getProductData($product);
             } else {
@@ -425,27 +436,34 @@ class Product implements ProductInterface
                 $product = $this->productRepository->get($productSku);
                 $productData = $this->getProductData($product);
             }
-            $responseData[] = [
-                "httpCode" => 200,
-                "status" => true,
-                "message" => "Success",
-                "data" => $productData,
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                "Success",
+                200,
+                true,
+                $productData,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (NoSuchEntityException $e) {
-            $responseData[] = [
-                "httpCode" => 404,
-                "status" => false,
-                "message" => "Product not found",
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __(
+                    "Product not found"
+                ),
+                404,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => $e->getMessage(),
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 
@@ -457,6 +475,7 @@ class Product implements ProductInterface
      */
     public function loadProductById($productId)
     {
+        // TODO: need to load by store id
         return $this->productFactory->create()->load($productId);
     }
 
@@ -479,27 +498,34 @@ class Product implements ProductInterface
             $product->setStockData($stockData);
             $this->productRepository->save($product);
             $productData = $this->getProductData($product);
-            $responseData[] = [
-                "httpCode" => 200,
-                "status" => true,
-                "message" => "Success",
-                "data" => $productData,
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                "Success",
+                200,
+                true,
+                $productData,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (NoSuchEntityException $e) {
-            $responseData[] = [
-                "httpCode" => 404,
-                "status" => false,
-                "message" => "Product not found",
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __(
+                    "Product not found"
+                ),
+                404,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => $e->getMessage(),
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 
@@ -525,27 +551,34 @@ class Product implements ProductInterface
             $this->sourceItem->setStatus($stockData);
             $this->sourceItemsSave->execute([$this->sourceItem]);
             $productData = $this->getProductData($product);
-            $responseData[] = [
-                "httpCode" => 200,
-                "status" => true,
-                "message" => "Success",
-                "data" => $productData,
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                "Success",
+                200,
+                true,
+                $productData,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (NoSuchEntityException $e) {
-            $responseData[] = [
-                "httpCode" => 404,
-                "status" => false,
-                "message" => "Product not found",
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __(
+                    "CategoProductry not found"
+                ),
+                404,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => $e->getMessage(),
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 
@@ -572,26 +605,34 @@ class Product implements ProductInterface
                 $product->setStockData($stockData);
                 $this->productRepository->save($product);
             }
-            $responseData[] = [
-                "httpCode" => 200,
-                "status" => true,
-                "message" => "Success",
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                "Success",
+                200,
+                true,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (NoSuchEntityException $e) {
-            $responseData[] = [
-                "httpCode" => 404,
-                "status" => false,
-                "message" => "Product not found",
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __(
+                    "Product not found"
+                ),
+                404,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => $e->getMessage(),
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 
@@ -618,26 +659,34 @@ class Product implements ProductInterface
                 $this->sourceItem->setStatus($stockData);
                 $this->sourceItemsSave->execute([$this->sourceItem]);
             }
-            $responseData[] = [
-                "httpCode" => 200,
-                "status" => true,
-                "message" => "Success",
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                "Success",
+                200,
+                true,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (NoSuchEntityException $e) {
-            $responseData[] = [
-                "httpCode" => 404,
-                "status" => false,
-                "message" => "Product not found",
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __(
+                    "Product not found"
+                ),
+                404,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => $e->getMessage(),
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 }

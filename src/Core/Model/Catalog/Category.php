@@ -2,20 +2,23 @@
 
 namespace Omniful\Core\Model\Catalog;
 
+use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Store\Model\StoreManagerInterface;
 use Omniful\Core\Api\Catalog\CategoryInterface;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollection;
 use Omniful\Core\Helper\CacheManager;
+use Omniful\Core\Helper\Data;
 
 class Category implements CategoryInterface
 {
     public const SUB_CAT_DATA_INDEXER_CACHE_ID = "sub_category_data_cache_";
     /**
-     * @var \Magento\Catalog\Api\CategoryRepositoryInterface
+     * @var CategoryRepositoryInterface
      */
     private $categoryRepository;
     /**
-     * @var \Magento\Store\Model\StoreManagerInterface
+     * @var StoreManagerInterface
      */
     protected $storeManager;
     /**
@@ -30,21 +33,27 @@ class Category implements CategoryInterface
      * @var CategoryCollection
      */
     protected $categoryCollection;
+    /**
+     * @var Data
+     */
+    private $helper;
 
     /**
      * Category constructor.
      *
-     * @param CacheManager                                     $cacheManager
-     * @param CategoryCollection                               $categoryCollection
-     * @param \Magento\Store\Model\StoreManagerInterface       $storeManager
-     * @param \Magento\Catalog\Api\CategoryRepositoryInterface $categoryRepository
-     * @param CategoryCollection                               $categoryCollectionFactory
+     * @param CacheManager $cacheManager
+     * @param CategoryCollection $categoryCollection
+     * @param Data $helper
+     * @param StoreManagerInterface $storeManager
+     * @param CategoryRepositoryInterface $categoryRepository
+     * @param CategoryCollection $categoryCollectionFactory
      */
     public function __construct(
         CacheManager $cacheManager,
         CategoryCollection $categoryCollection,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
-        \Magento\Catalog\Api\CategoryRepositoryInterface $categoryRepository,
+        Data $helper,
+        StoreManagerInterface $storeManager,
+        CategoryRepositoryInterface $categoryRepository,
         \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $categoryCollectionFactory
     ) {
         $this->cacheManager = $cacheManager;
@@ -52,6 +61,7 @@ class Category implements CategoryInterface
         $this->categoryCollection = $categoryCollection;
         $this->categoryRepository = $categoryRepository;
         $this->categoryCollectionFactory = $categoryCollectionFactory;
+        $this->helper = $helper;
     }
 
     /**
@@ -88,23 +98,23 @@ class Category implements CategoryInterface
 
                 $categoryData[] = $this->getCategoryData($category);
             }
-
-            $responseData[] = [
-                "httpCode" => 200,
-                "status" => true,
-                "message" => "Success",
-                "data" => $categoryData,
-            ];
-
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                "Success",
+                200,
+                true,
+                $categoryData,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (\Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => $e->getMessage(),
-            ];
-
-            return [$responseData];
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 
@@ -120,34 +130,46 @@ class Category implements CategoryInterface
             $category = $this->categoryRepository->get($id);
 
             if ($category->getId()) {
-                $responseData[] = [
-                    "httpCode" => 200,
-                    "status" => true,
-                    "message" => "Success",
-                    "data" => $this->getCategoryData($category),
-                ];
+                return $this->helper->getResponseStatus(
+                    "Success",
+                    200,
+                    true,
+                    $this->getCategoryData($category),
+                    $pageData = null,
+                    $nestedArray = true
+                );
             } else {
-                $responseData[] = [
-                    "httpCode" => 404,
-                    "status" => false,
-                    "message" => "Category not found",
-                ];
+                return $this->helper->getResponseStatus(
+                    __(
+                        "Category not found"
+                    ),
+                    404,
+                    false,
+                    $data = null,
+                    $pageData = null,
+                    $nestedArray = true
+                );
             }
-            return $responseData;
         } catch (NoSuchEntityException $e) {
-            $responseData[] = [
-                "httpCode" => 404,
-                "status" => false,
-                "message" => "Category not found",
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __(
+                    "Category not found"
+                ),
+                404,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (\Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => $e->getMessage(),
-            ];
-            return $responseData;
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 

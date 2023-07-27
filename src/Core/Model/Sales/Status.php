@@ -8,6 +8,7 @@ use Omniful\Core\Model\Sales\Order as OrderManagement;
 use Omniful\Core\Api\Sales\StatusInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Service\InvoiceService;
+use Omniful\Core\Helper\Data;
 
 class Status implements StatusInterface
 {
@@ -29,22 +30,29 @@ class Status implements StatusInterface
      * @var OrderRepositoryInterface
      */
     protected $orderRepository;
+    /**
+     * @var Data
+     */
+    private $helper;
 
     /**
      * Status constructor.
      *
      * @param \Omniful\Core\Model\Sales\Order $orderManagement
      * @param InvoiceService $invoiceService
+     * @param Data $helper
      * @param OrderRepositoryInterface $orderRepository
      */
     public function __construct(
         OrderManagement $orderManagement,
         InvoiceService $invoiceService,
+        Data $helper,
         OrderRepositoryInterface $orderRepository
     ) {
         $this->invoiceService = $invoiceService;
         $this->orderRepository = $orderRepository;
         $this->orderManagement = $orderManagement;
+        $this->helper = $helper;
     }
 
     /**
@@ -62,8 +70,6 @@ class Status implements StatusInterface
         $hubId = null,
         string $comment = null
     ): array {
-        $responseData = [];
-
         try {
             $order = $this->orderRepository->get($id);
 
@@ -119,22 +125,26 @@ class Status implements StatusInterface
             }
             $order->save();
             $orderData = $this->orderManagement->getOrderData($order);
-            $responseData[] = [
-                "httpCode" => 200,
-                "status" => true,
-                "message" => "Success",
-                "data" => $orderData,
-            ];
+            return $this->helper->getResponseStatus(
+                "Success",
+                200,
+                true,
+                $orderData,
+                $pageData = null,
+                $nestedArray = true
+            );
         } catch (\Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => __(
+            return $this->helper->getResponseStatus(
+                __(
                     "Failed to update order status: " . $e->getMessage()
                 ),
-            ];
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
-        return $responseData;
     }
 
     /**
