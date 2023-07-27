@@ -85,7 +85,7 @@ class Info implements InfoInterface
             $orderStatuses = $this->getOrderStatuses();
 
             // Retrieve all stock sources
-            $stockSources = $this->stockSources->getStockSources();
+            $stockSources = $this->stockSources->getStockSourcesData();
 
             $responseData = [
                 "data" => [
