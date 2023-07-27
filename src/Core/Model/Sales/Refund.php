@@ -13,6 +13,7 @@ use Omniful\Core\Logger\Logger;
 use Magento\Sales\Api\CreditmemoRepositoryInterface;
 use Omniful\Core\Model\Sales\Order as OrderManagement;
 use Magento\Sales\Api\OrderItemRepositoryInterface;
+use Omniful\Core\Helper\Data;
 
 class Refund implements RefundInterface
 {
@@ -57,19 +58,24 @@ class Refund implements RefundInterface
      * @var ItemFactory
      */
     protected $creditmemoItemFactory;
+    /**
+     * @var Data
+     */
+    private $helper;
 
     /**
      * Refund constructor.
      *
-     * @param Logger                        $logger
-     * @param OrderService                  $orderService
-     * @param Order                         $orderManagement
-     * @param ItemFactory                   $creditmemoItemFactory
-     * @param CreditmemoFactory             $creditmemoFactory
-     * @param InvoiceManagement             $invoiceManagement
-     * @param CreditmemoService             $creditmemoService
-     * @param OrderRepositoryInterface      $orderRepository
-     * @param OrderItemRepositoryInterface  $orderItemRepository
+     * @param Logger $logger
+     * @param OrderService $orderService
+     * @param Order $orderManagement
+     * @param ItemFactory $creditmemoItemFactory
+     * @param CreditmemoFactory $creditmemoFactory
+     * @param InvoiceManagement $invoiceManagement
+     * @param CreditmemoService $creditmemoService
+     * @param Data $helper
+     * @param OrderRepositoryInterface $orderRepository
+     * @param OrderItemRepositoryInterface $orderItemRepository
      * @param CreditmemoRepositoryInterface $creditmemoRepository
      */
     public function __construct(
@@ -80,6 +86,7 @@ class Refund implements RefundInterface
         CreditmemoFactory $creditmemoFactory,
         InvoiceManagement $invoiceManagement,
         CreditmemoService $creditmemoService,
+        Data $helper,
         OrderRepositoryInterface $orderRepository,
         OrderItemRepositoryInterface $orderItemRepository,
         CreditmemoRepositoryInterface $creditmemoRepository
@@ -94,6 +101,7 @@ class Refund implements RefundInterface
         $this->orderItemRepository = $orderItemRepository;
         $this->creditmemoRepository = $creditmemoRepository;
         $this->creditmemoItemFactory = $creditmemoItemFactory;
+        $this->helper = $helper;
     }
 
     /**
@@ -105,8 +113,6 @@ class Refund implements RefundInterface
      */
     public function processRefund(int $id, $items): array
     {
-        $responseData = [];
-
         try {
             // Load the order
             $order = $this->orderRepository->get($id);
@@ -166,12 +172,14 @@ class Refund implements RefundInterface
                     $orderData = $this->orderManagement->getOrderData($order);
 
                     // Add the response data
-                    $responseData[] = [
-                        "httpCode" => 200,
-                        "status" => true,
-                        "message" => "Success",
-                        "data" => $orderData,
-                    ];
+                    return $this->helper->getResponseStatus(
+                        "Success",
+                        200,
+                        true,
+                        $orderData,
+                        $pageData = null,
+                        $nestedArray = true
+                    );
                 } else {
                     throw new \Magento\Framework\Exception\AlreadyExistsException(
                         __(
@@ -182,20 +190,18 @@ class Refund implements RefundInterface
                     );
                 }
             }
-
-            // Return the response data
-            return $responseData;
         } catch (\Exception $e) {
-            $responseData[] = [
-                "httpCode" => 500,
-                "status" => false,
-                "message" => __(
+            return $this->helper->getResponseStatus(
+                __(
                     "Could not refund the order: %1",
                     $e->getMessage()
                 ),
-            ];
-
-            return $responseData;
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
         }
     }
 

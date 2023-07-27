@@ -122,6 +122,7 @@ class Adapter
             "X-Device-Info" => $xDeviceInfo ?? "",
             "X-Webhook-Token" => $this->webhookToken,
             "X-Omniful-Merchant" => $this->workspaceId,
+            "store_view_code" => 'default',
         ];
     }
 
@@ -129,9 +130,8 @@ class Adapter
      * Cancel order method
      *
      * @param string $event
-     * @param array  $payload
-     *
-     * @return mixed
+     * @param array $payload
+     * @param array $additionalHeaders
      */
     public function publishMessage($event, $payload, $additionalHeaders = [])
     {
@@ -153,6 +153,7 @@ class Adapter
             "payload" => json_encode($payload),
             "headers" => array_merge($this->headers, $additionalHeaders),
         ];
+        $this->headers = array_merge($this->headers, $additionalHeaders);
         $this->logger->info("LoggingData: " . json_encode($loggingData));
         $this->curl->setHeaders($this->headers);
         $response = $this->curl->post($endPoint, json_encode($payload));

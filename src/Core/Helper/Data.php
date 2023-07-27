@@ -1,6 +1,6 @@
 <?php
 
-namespace Omniful\Core\Model\Store;
+namespace Omniful\Core\Helper;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\UrlInterface;
@@ -9,15 +9,20 @@ use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Store\Model\ScopeInterface;
 
-
 class Data extends AbstractHelper
 {
+
+    public const XML_PATH_ENABLE_MODULE = 'omniful_core/general/active';
+    public const XML_PATH_DISABLE_SHIP_BUTTON = 'omniful_core/general/disable_ship_button';
+    public const XML_PATH_DISABLE_ORDER_STATUS_DROPDOWN = 'omniful_core/general/disable_order_status_dropdown';
+    public const XML_PATH_WEB_HOOK_URL = 'omniful_core/general/webhook_url';
+    public const XML_PATH_WORK_SPACE_ID = 'omniful_core/general/workspace_id';
+    public const XML_PATH_WEB_HOOK_TOKEN = 'omniful_core/general/webhook_token';
 
     public const SUCCESS_HTTP_CODE = 200;
     public const FAILED_HTTP_CODE = 204;
     public const ERROR_HTTP_CODE = 500;
     public const EMPTY_CONTENT_CONTAINS = "No Data are available.";
-
 
     /**
      * @var ScopeConfigInterface
@@ -28,6 +33,14 @@ class Data extends AbstractHelper
      * @var UrlInterface
      */
     protected $urlBuilder;
+    /**
+     * @var StoreManagerInterface
+     */
+    public $storeManager;
+    /**
+     * @var CollectionFactory
+     */
+    public $statusCollectionFactory;
 
     /**
      * Info constructor.
@@ -56,7 +69,8 @@ class Data extends AbstractHelper
      */
     public function getIsActive()
     {
-        return (bool) $this->getConfigValue('omniful_core/general/active');
+        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
+        return $this->scopeConfig->getValue(self::XML_PATH_ENABLE_MODULE, $storeScope);
     }
 
     /**
@@ -66,7 +80,8 @@ class Data extends AbstractHelper
      */
     public function isOrderShipButtonDisabled()
     {
-        return (bool) $this->getConfigValue('omniful_core/general/disable_ship_button');
+        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
+        return $this->scopeConfig->getValue(self::XML_PATH_DISABLE_SHIP_BUTTON, $storeScope);
     }
 
     /**
@@ -76,7 +91,8 @@ class Data extends AbstractHelper
      */
     public function isOrderStatusDropdownDisabled()
     {
-        return (bool) $this->getConfigValue('omniful_core/general/disable_order_status_dropdown');
+        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
+        return $this->scopeConfig->getValue(self::XML_PATH_DISABLE_ORDER_STATUS_DROPDOWN, $storeScope);
     }
 
     /**
@@ -86,7 +102,8 @@ class Data extends AbstractHelper
      */
     public function getWebhookUrl()
     {
-        return $this->getConfigValue('omniful_core/general/webhook_url');
+        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
+        return $this->scopeConfig->getValue(self::XML_PATH_WEB_HOOK_URL, $storeScope);
     }
 
     /**
@@ -96,7 +113,8 @@ class Data extends AbstractHelper
      */
     public function getWorkspaceId()
     {
-        return $this->getConfigValue('omniful_core/general/workspace_id');
+        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
+        return $this->scopeConfig->getValue(self::XML_PATH_WORK_SPACE_ID, $storeScope);
     }
 
     /**
@@ -106,7 +124,8 @@ class Data extends AbstractHelper
      */
     public function getWebhookToken()
     {
-        return $this->getConfigValue('omniful_core/general/webhook_token');
+        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
+        return $this->scopeConfig->getValue(self::XML_PATH_WEB_HOOK_TOKEN, $storeScope);
     }
 
     /**
@@ -190,7 +209,7 @@ class Data extends AbstractHelper
      *
      * @return array|null
      */
-    private function getAllowedCountries(): ?array
+    public function getAllowedCountries(): ?array
     {
         return explode(',', $this->getConfigValue('general/country/allow'));
     }
@@ -200,7 +219,7 @@ class Data extends AbstractHelper
      *
      * @return array
      */
-    private function getStoreUrls(): array
+    public function getStoreUrls(): array
     {
         $storeUrls = [];
         $stores = $this->storeManager->getStores();
@@ -223,7 +242,7 @@ class Data extends AbstractHelper
      * @param string $path
      * @return mixed|null
      */
-    private function getConfigValue(string $path)
+    public function getConfigValue(string $path)
     {
         return $this->scopeConfig->getValue(
             $path,

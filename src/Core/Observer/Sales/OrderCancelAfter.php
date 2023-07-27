@@ -62,9 +62,9 @@ class OrderCancelAfter implements ObserverInterface
             if ($order->getStatus() == "canceled") {
                 $eventName = self::EVENT_NAME;
                 $headers = [
-                    "website_code" => $order->getStore()->getWebsite()->getCode(),
-                    "store_code" => $order->getStore()->getCode(),
-                    "store_view_code" => $order->getStore()->getName(),
+                    "website-code" => $order->getStore()->getWebsite()->getCode(),
+                    "store-code" => $order->getStore()->getCode(),
+                    "store-view-code" => $order->getStore()->getName(),
                 ];
 
                 // CONNECT FIRST

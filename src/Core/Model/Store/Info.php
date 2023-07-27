@@ -4,11 +4,12 @@ namespace Omniful\Core\Model\Store;
 
 use Omniful\Core\Helper\Data as CoreHelper;
 use Magento\InventoryApi\Api\Data\StockSourceInterface;
-use Magento\InventoryApi\Api\StockSourceRepositoryInterface;
 use Magento\Sales\Model\ResourceModel\Order\Status\CollectionFactory;
 use Omniful\Core\Api\Store\InfoInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
+use Omniful\Core\Api\Stock\StockSourcesInterface;
+use Omniful\Core\Helper\Data;
 
 class Info implements InfoInterface
 {
@@ -16,11 +17,6 @@ class Info implements InfoInterface
      * @var StoreManagerInterface
      */
     protected $storeManager;
-
-    /**
-     * @var StockSourceRepositoryInterface
-     */
-    protected $stockSourceRepository;
 
     /**
      * @var CollectionFactory
@@ -36,27 +32,39 @@ class Info implements InfoInterface
      * @var StockSourceRepositoryInterface
      */
     protected $searchCriteriaBuilder;
+    /**
+     * @var StockSources
+     */
+    private $stockSources;
+    /**
+     * @var Data
+     */
+    private $helper;
 
     /**
      * Info constructor.
      *
+     * @param CoreHelper $coreHelper
+     * @param Data $helper
+     * @param StockSourcesInterface $stockSources
      * @param StoreManagerInterface $storeManager
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
-     * @param StockSourceRepositoryInterface $stockSourceRepository
      * @param CollectionFactory $statusCollectionFactory
      */
     public function __construct(
         CoreHelper $coreHelper,
+        Data $helper,
+        StockSourcesInterface $stockSources,
         StoreManagerInterface $storeManager,
         SearchCriteriaBuilder $searchCriteriaBuilder,
-        CollectionFactory $statusCollectionFactory,
-        StockSourceRepositoryInterface $stockSourceRepository
+        CollectionFactory $statusCollectionFactory
     ) {
         $this->coreHelper = $coreHelper;
         $this->storeManager = $storeManager;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
-        $this->stockSourceRepository = $stockSourceRepository;
         $this->statusCollectionFactory = $statusCollectionFactory;
+        $this->stockSources = $stockSources;
+        $this->helper = $helper;
     }
 
     /**
@@ -77,7 +85,7 @@ class Info implements InfoInterface
             $orderStatuses = $this->getOrderStatuses();
 
             // Retrieve all stock sources
-            $stockSources = $this->getStockSources();
+            $stockSources = $this->stockSources->getStockSources();
 
             $responseData = [
                 "data" => [
@@ -124,7 +132,7 @@ class Info implements InfoInterface
         $storeDetails['sales'] = [
             'default_payment_method' => $this->coreHelper->getConfigValue('payment/default'),
             'default_shipping_method' => $this->coreHelper->getConfigValue('shipping/origin/shipping_method'),
-            'allowed_countries' => $this->getAllowedCountries(),
+            'allowed_countries' => $this->helper->getAllowedCountries(),
         ];
 
         // Catalog-related Settings
@@ -134,7 +142,7 @@ class Info implements InfoInterface
         ];
 
         // Store URLs
-        $storeDetails['urls'] = $this->getStoreUrls();
+        $storeDetails['urls'] = $this->helper->getStoreUrls();
 
         return $storeDetails;
     }
@@ -210,30 +218,5 @@ class Info implements InfoInterface
             ];
         }
         return $orderStatuses;
-    }
-
-    /**
-     * Retrieve all stock sources
-     *
-     * @return array
-     */
-    private function getStockSources(): array
-    {
-        $stockSources = [];
-
-        try {
-            // Build the search criteria to fetch all stock sources
-            $searchCriteria = $this->searchCriteriaBuilder->create();
-            $allSources = $this->stockSourceRepository->getList($searchCriteria);
-
-            /** @var StockSourceInterface $source */
-            foreach ($allSources->getItems() as $source) {
-                $stockSources[] = $source->getSourceCode();
-            }
-        } catch (\Exception $e) {
-            // Handle exceptions here, if needed
-        }
-
-        return $stockSources;
     }
 }

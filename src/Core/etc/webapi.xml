@@ -9,7 +9,7 @@
     </route>
 
     <!-- Update Config -->
-    <route url="/V2/config/value/update" method="POST">
+    <route url="/V2/store/config" method="PUT">
         <service class="Omniful\Core\Api\Config\UpdateConfigInterface" method="updateConfig"/>
         <resources>
             <resource ref="Magento_Catalog::products" />
