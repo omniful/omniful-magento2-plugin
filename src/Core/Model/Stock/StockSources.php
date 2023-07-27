@@ -45,7 +45,7 @@ class StockSources implements StockSourcesInterface
      *
      * @return string[]
      */
-    public function getStockSources()
+    public function getStockSources(): array
     {
         try {
             $stockSources = $this->getStockSourcesData();

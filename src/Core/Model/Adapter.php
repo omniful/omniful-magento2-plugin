@@ -143,21 +143,15 @@ class Adapter
             "data" => $payload,
         ];
 
-        $this->logger->info("Payload: " . json_encode($payload));
-        $this->headers["X-Event-Name"] = $event;
-
         $endPoint = $this->webhookUrl;
-
-        file_put_contents(BP . '/var/log/headers.log', print_r($additionalHeaders, true)."\n", FILE_APPEND);
-        file_put_contents(BP . '/var/log/headers.log', print_r($this->headers, true)."\n", FILE_APPEND);
-        file_put_contents(BP . '/var/log/headers.log', print_r(array_merge($this->headers, $additionalHeaders), true)."\n", FILE_APPEND);
+        $this->headers["X-Event-Name"] = $event;
+        $this->headers = array_merge($this->headers, $additionalHeaders);
 
         $loggingData = [
             "endPoint" => $endPoint,
             "payload" => json_encode($payload),
-            "headers" => array_merge($this->headers, $additionalHeaders),
+            "headers" => $this->headers,
         ];
-        $this->headers = array_merge($this->headers, $additionalHeaders);
 
         $this->logger->info("LoggingData: " . json_encode($loggingData));
         $this->curl->setHeaders($this->headers);

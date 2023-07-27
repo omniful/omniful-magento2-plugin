@@ -66,7 +66,7 @@ class ConfigurationsManagement implements ConfigurationsInterface
      *
      * @return mixed|void
      */
-    public function getOmnifulConfigs()
+    public function getOmnifulConfigs(): array
     {
         try {
             $configData = $this->getConfigData();
@@ -99,7 +99,7 @@ class ConfigurationsManagement implements ConfigurationsInterface
      *
      * @return mixed|void
      */
-    public function updateConfig()
+    public function updateConfig(): array
     {
         try {
             $params = $this->request->getBodyParams();
