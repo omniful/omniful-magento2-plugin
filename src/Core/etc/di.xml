@@ -15,7 +15,7 @@
     <preference for="Omniful\Core\Api\Catalog\CategoryInterface" type="Omniful\Core\Model\Catalog\Category" />
 
     <!-- Update Config -->
-    <preference for="Omniful\Core\Api\Config\UpdateConfigInterface" type="Omniful\Core\Model\Config\UpdateConfig" />
+    <preference for="Omniful\Core\Api\Config\ConfigurationsInterface" type="Omniful\Core\Model\Config\ConfigurationsManagement" />
 
     <!-- STOCK SOURCE -->
     <preference for="Omniful\Core\Api\Stock\StockSourcesInterface" type="Omniful\Core\Model\Stock\StockSources" />

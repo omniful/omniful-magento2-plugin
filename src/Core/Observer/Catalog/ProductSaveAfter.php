@@ -69,13 +69,18 @@ class ProductSaveAfter implements ObserverInterface
             $eventName = $this->isNewProduct($product)
                 ? self::PRODUCT_CREATED_EVENT_NAME
                 : self::PRODUCT_UPDATED_EVENT_NAME;
+            $headers = [
+                "x-website-code" => $product->getStore()->getWebsite()->getCode(),
+                "x-store-code" => $product->getStore()->getCode(),
+                "x-store-view-code" => $product->getStore()->getName(),
+            ];
 
             // Connect to the adapter
             $this->adapter->connect();
 
             // Publish the event
             $payload = $this->productManagement->getProductData($product);
-            $response = $this->adapter->publishMessage($eventName, $payload);
+            $response = $this->adapter->publishMessage($eventName, $payload, $headers);
 
             if (!$response) {
                 return false;

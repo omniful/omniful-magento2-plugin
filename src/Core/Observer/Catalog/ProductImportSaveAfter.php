@@ -74,6 +74,11 @@ class ProductImportSaveAfter implements ObserverInterface
             if ($productIds) {
                 foreach ($productIds as $productId) {
                     $product = $this->productManagement->loadProductById($productId);
+                    $headers = [
+                        "x-website-code" => $product->getStore()->getWebsite()->getCode(),
+                        "x-store-code" => $product->getStore()->getCode(),
+                        "x-store-view-code" => $product->getStore()->getName(),
+                    ];
 
                     if ($product === null
                         || $product->getId() === null
@@ -84,7 +89,7 @@ class ProductImportSaveAfter implements ObserverInterface
                         $eventName = self::PRODUCT_UPDATED_EVENT_NAME;
                     }
                     $payload = $this->productManagement->getProductData($product);
-                    $response = $this->adapter->publishMessage($eventName, $payload);
+                    $response = $this->adapter->publishMessage($eventName, $payload, $headers);
                     if (!$response) {
                         return false;
                     }

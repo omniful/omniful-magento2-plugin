@@ -3,13 +3,10 @@
 namespace Omniful\Core\Model\Store;
 
 use Omniful\Core\Helper\Data as CoreHelper;
-use Magento\InventoryApi\Api\Data\StockSourceInterface;
 use Magento\Sales\Model\ResourceModel\Order\Status\CollectionFactory;
 use Omniful\Core\Api\Store\InfoInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\Framework\Api\SearchCriteriaBuilder;
 use Omniful\Core\Api\Stock\StockSourcesInterface;
-use Omniful\Core\Helper\Data;
 
 class Info implements InfoInterface
 {
@@ -29,42 +26,28 @@ class Info implements InfoInterface
     protected $coreHelper;
 
     /**
-     * @var StockSourceRepositoryInterface
+     * @var stockSourcesInterface
      */
-    protected $searchCriteriaBuilder;
-    /**
-     * @var StockSources
-     */
-    private $stockSources;
-    /**
-     * @var Data
-     */
-    private $helper;
+    private $stockSourcesInterface;
 
     /**
      * Info constructor.
      *
      * @param CoreHelper $coreHelper
-     * @param Data $helper
-     * @param StockSourcesInterface $stockSources
      * @param StoreManagerInterface $storeManager
-     * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param CollectionFactory $statusCollectionFactory
+     * @param StockSourcesInterface $stockSourcesInterface
      */
     public function __construct(
         CoreHelper $coreHelper,
-        Data $helper,
-        StockSourcesInterface $stockSources,
         StoreManagerInterface $storeManager,
-        SearchCriteriaBuilder $searchCriteriaBuilder,
-        CollectionFactory $statusCollectionFactory
+        CollectionFactory $statusCollectionFactory,
+        StockSourcesInterface $stockSourcesInterface
     ) {
         $this->coreHelper = $coreHelper;
         $this->storeManager = $storeManager;
-        $this->searchCriteriaBuilder = $searchCriteriaBuilder;
+        $this->stockSourcesInterface = $stockSourcesInterface;
         $this->statusCollectionFactory = $statusCollectionFactory;
-        $this->stockSources = $stockSources;
-        $this->helper = $helper;
     }
 
     /**
@@ -85,7 +68,7 @@ class Info implements InfoInterface
             $orderStatuses = $this->getOrderStatuses();
 
             // Retrieve all stock sources
-            $stockSources = $this->stockSources->getStockSourcesData();
+            $stockSources = $this->stockSourcesInterface->getStockSourcesData();
 
             $responseData = [
                 "data" => [
@@ -132,17 +115,14 @@ class Info implements InfoInterface
         $storeDetails['sales'] = [
             'default_payment_method' => $this->coreHelper->getConfigValue('payment/default'),
             'default_shipping_method' => $this->coreHelper->getConfigValue('shipping/origin/shipping_method'),
-            'allowed_countries' => $this->helper->getAllowedCountries(),
+            'allowed_countries' => $this->coreHelper->getAllowedCountries(),
         ];
 
         // Catalog-related Settings
         $storeDetails['catalog'] = [
-            'default_category' => $this->coreHelper->getConfigValue('catalog/category/root_id'),
-            'root_category' => $this->coreHelper->getConfigValue('catalog/category/root_id'),
+            'root_category' => (int) $this->coreHelper->getConfigValue('catalog/category/root_id'),
+            'default_category' => (int) $this->coreHelper->getConfigValue('catalog/category/root_id'),
         ];
-
-        // Store URLs
-        $storeDetails['urls'] = $this->helper->getStoreUrls();
 
         return $storeDetails;
     }

@@ -19,58 +19,56 @@ class Order implements OrderInterface
      * @var RequestInterface
      */
     protected $request;
+
     /**
      * @var OrderRepositoryInterface
      */
     protected $orderRepository;
+
     /**
      * @var Shipment
      */
     protected $shipmentManagement;
+
     /**
      * @var Countries
      */
     protected $countriesHelper;
+
     /**
      * @var CollectionFactory
      */
     protected $orderCollectionFactory;
+
     /**
      * @var Data
      */
     private $helper;
-    /**
-     * @var Timezone
-     */
-    private $stdTimezone;
 
     /**
      * Order constructor.
      *
+     * @param Data $helper
      * @param RequestInterface $request
      * @param Countries $countriesHelper
-     * @param Data $helper
-     * @param Timezone $stdTimezone
      * @param Shipment $shipmentManagement
      * @param CollectionFactory $orderCollectionFactory
      * @param OrderRepositoryInterface $orderRepository
      */
     public function __construct(
+        Data $helper,
         RequestInterface $request,
         Countries $countriesHelper,
-        Data $helper,
-        Timezone $stdTimezone,
         ShipmentManagement $shipmentManagement,
         CollectionFactory $orderCollectionFactory,
         OrderRepositoryInterface $orderRepository
     ) {
+        $this->helper = $helper;
         $this->request = $request;
         $this->countriesHelper = $countriesHelper;
         $this->orderRepository = $orderRepository;
         $this->shipmentManagement = $shipmentManagement;
         $this->orderCollectionFactory = $orderCollectionFactory;
-        $this->helper = $helper;
-        $this->stdTimezone = $stdTimezone;
     }
 
     /**
@@ -80,15 +78,26 @@ class Order implements OrderInterface
      */
     public function getOrders()
     {
+        $status = $this->request->getParam('status') ?: [
+            "pending",
+            "processing",
+            "complete",
+            "holded",
+            "pending_payment",
+        ];
         $page = (int) $this->request->getParam('page') ?: 1;
         $limit = (int) $this->request->getParam('limit') ?: 200;
-        $currentDate = $this->stdTimezone->date()->format('Y-m-d');
-        $createdAtMin = $this->request->getParam('CreatedAtMin') ?: $currentDate;
-        $createdAtMax = $this->request->getParam('CreatedAtMax') ?: '01-01-1900';
-        $status = $this->request->getParam('status');
+        $createdAtMin = $this->request->getParam('CreatedAtMin');
+        $createdAtMax = $this->request->getParam('CreatedAtMax');
+
         $orderCollection = $this->orderCollectionFactory->create();
-        $orderCollection->addFieldToFilter('status', ['in' => $status])
-            ->addAttributeToFilter('created_at', ['from'=>$createdAtMin, 'to'=>$createdAtMax]);
+
+        if ($createdAtMin && $createdAtMax) {
+            $orderCollection->addAttributeToFilter('created_at', ['from' => $createdAtMin, 'to' => $createdAtMax]);
+        }
+        ;
+
+        $orderCollection->addFieldToFilter('status', ['in' => $status]);
         $orderCollection->setPageSize($limit);
         $orderCollection->setCurPage($page);
         $orderData = [];
@@ -192,7 +201,7 @@ class Order implements OrderInterface
                     'product_id' => (int) $product->getId(),
                     'name' => (string) $product->getName(),
                     'barcode' => $product->getCustomAttribute('omniful_barcode_attribute') ?
-                        (string) $product->getCustomAttribute('omniful_barcode_attribute')->getValue() : null,
+                    (string) $product->getCustomAttribute('omniful_barcode_attribute')->getValue() : null,
                     'quantity' => (float) $item->getQtyOrdered(),
                     'price' => (float) $item->getPrice(),
                     'subtotal' => (float) $item->getRowTotal(),

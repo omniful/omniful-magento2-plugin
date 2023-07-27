@@ -85,9 +85,9 @@ class OrderSaveAfter implements ObserverInterface
             // Determine the event name based on order status changes
             $eventName = $this->getEventName($order);
             $headers = [
-                "website_code" => $order->getStore()->getWebsite()->getCode(),
-                "store_code" => $order->getStore()->getCode(),
-                "store_view_code" => $order->getStore()->getName(),
+                "x-website-code" => $order->getStore()->getWebsite()->getCode(),
+                "x-store-code" => $order->getStore()->getCode(),
+                "x-store-view-code" => $order->getStore()->getName(),
             ];
 
             // Connect to the adapter
