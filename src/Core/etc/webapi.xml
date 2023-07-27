@@ -51,8 +51,14 @@
             <resource ref="Magento_Catalog::products" />
         </resources>
     </route>
-    <route url="/V2/product/:identifier" method="GET">
-        <service class="Omniful\Core\Api\Catalog\ProductInterface" method="getProductByIdentifier" />
+    <route url="/V2/product/sku/:sku" method="GET">
+        <service class="Omniful\Core\Api\Catalog\ProductInterface" method="getProductBySku" />
+        <resources>
+            <resource ref="Magento_Catalog::products" />
+        </resources>
+    </route>
+    <route url="/V2/product/id/:id" method="GET">
+        <service class="Omniful\Core\Api\Catalog\ProductInterface" method="getProductById" />
         <resources>
             <resource ref="Magento_Catalog::products" />
         </resources>

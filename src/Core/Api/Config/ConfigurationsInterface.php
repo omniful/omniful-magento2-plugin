@@ -10,7 +10,9 @@ interface ConfigurationsInterface
     /**
      * UpdateConfig
      *
+     * @param array $configData An array containing the configuration data to be updated
+     *
      * @return mixed
      */
-    public function updateConfig();
+    public function updateConfig(array $configData);
 }
