@@ -137,7 +137,6 @@ class StockSources implements StockSourcesInterface
             $stockSources["name"] = $source->getName();
             $stockSources["source_code"] = $source->getSourceCode();
             $stockSources["description"] = $source->getDescription();
-            $stockSources["website_id"] = $source->getDescription();
             $stockSources["carrier_links"] = $source->getCarrierLinks();
             $stockSources["use_default_carrier_config"] = (bool)$source->getUseDefaultCarrierConfig();
             $stockSources["is_pickup_location_active"] = (bool)$source->getIs_pickupLocationActive();
