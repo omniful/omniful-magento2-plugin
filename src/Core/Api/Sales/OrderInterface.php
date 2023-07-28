@@ -10,15 +10,15 @@ interface OrderInterface
     /**
      * Get orders.
      *
-     * @return string[]
+     * @return string[] Array of orders.
      */
     public function getOrders();
 
     /**
      * Get order by ID.
      *
-     * @param  int $id
-     * @return string[]
+     * @param int $id The ID of the order.
+     * @return string[] Order data.
      */
     public function getOrderById(int $id);
 }

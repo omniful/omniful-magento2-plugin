@@ -1,6 +1,6 @@
 <?php
 
-namespace Omniful\Core\Observer;
+namespace Omniful\Core\Observer\Sales;
 
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
@@ -54,9 +54,9 @@ class OrderPlaceAfter implements ObserverInterface
         try {
             $eventName = self::ORDER_CREATED_EVENT_NAME;
             $headers = [
-                "website_code" => $order->getStore()->getWebsite()->getCode(),
-                "store_code" => $order->getStore()->getCode(),
-                "store_view_code" => $order->getStore()->getName(),
+                "x-website-code" => $order->getStore()->getWebsite()->getCode(),
+                "x-store-code" => $order->getStore()->getCode(),
+                "x-store-view-code" => $order->getStore()->getName(),
             ];
 
             // Connect to the adapter

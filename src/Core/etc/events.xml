@@ -1,6 +1,13 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <!-- Order Place After -->
     <event name="checkout_onepage_controller_success_action">
         <observer name="frontend_omniful_handle_sales_order_place_after" instance="Omniful\Core\Observer\Sales\OrderPlaceAfter" />
     </event>
+
+    <!-- Order Cancel After -->
+    <event name="order_cancel_after">
+        <observer name="adminhtml_omniful_handle_sales_order_cancel_after" instance="Omniful\Core\Observer\Sales\OrderCancelAfter" />
+    </event>
+
 </config>

@@ -45,26 +45,22 @@ class StockSources implements StockSourcesInterface
      *
      * @return string[]
      */
-    public function getStockSources()
+    public function getStockSources(): array
     {
         try {
             $stockSources = $this->getStockSourcesData();
+
             return $this->helper->getResponseStatus(
                 "Success",
                 200,
                 true,
                 $stockSources,
-                $pageData = null,
-                $nestedArray = true
             );
         } catch (\Exception $e) {
             return $this->helper->getResponseStatus(
                 __($e->getMessage()),
                 500,
-                false,
-                $data = null,
-                $pageData = null,
-                $nestedArray = true
+                false
             );
         }
     }
@@ -76,14 +72,39 @@ class StockSources implements StockSourcesInterface
      */
     public function getStockSourcesData()
     {
-        $stockSources = [];
+        $returnData = [];
         // Build the search criteria to fetch all stock sources
         $searchCriteria = $this->searchCriteriaBuilder->create();
         $allSources = $this->sourceRepository->getList($searchCriteria);
         /** @var StockSourceInterface $source */
+
         foreach ($allSources->getItems() as $source) {
-            $stockSources[] = $source->getSourceCode();
+            $stockSources["enabled"] = (bool) $source->getEnabled();
+            $stockSources["name"] = $source->getName();
+            $stockSources["source_code"] = $source->getSourceCode();
+            $stockSources["description"] = $source->getDescription();
+            $stockSources["carrier_links"] = $source->getCarrierLinks();
+            $stockSources["use_default_carrier_config"] = (bool) $source->getUseDefaultCarrierConfig();
+            $stockSources["is_pickup_location_active"] = (bool) $source->getIs_pickupLocationActive();
+
+            $stockAddressDetails["latitude"] = $source->getLatitude();
+            $stockAddressDetails["longitude"] = $source->getLongitude();
+            $stockAddressDetails["country_id"] = $source->getCountryId();
+            $stockAddressDetails["region_id"] = (int) $source->getRegionId();
+            $stockAddressDetails["region"] = $source->getRegion();
+            $stockAddressDetails["city"] = $source->getCity();
+            $stockAddressDetails["street"] = $source->getStreet();
+            $stockAddressDetails["postcode"] = $source->getPostcode();
+            $stockSources["address"] = $stockAddressDetails;
+
+            $stockContactDetails["fax"] = $source->getFax();
+            $stockContactDetails["email"] = $source->getEmail();
+            $stockContactDetails["phone"] = $source->getPhone();
+            $stockContactDetails["contact_name"] = $source->getContactName();
+            $stockSources["contact_info"] = $stockContactDetails;
+            $returnData[] = $stockSources;
         }
-        return $stockSources;
+
+        return $returnData;
     }
 }

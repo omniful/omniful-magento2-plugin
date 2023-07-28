@@ -10,61 +10,52 @@ interface ProductInterface
     /**
      * Get products.
      *
-     * @return string[][]
+     * @return string[][] An array of products.
      */
     public function getProducts();
 
     /**
      * Get product by identifier.
      *
-     * @param  string $identifier
-     * @return string[]
+     * @param string $identifier The identifier of the product.
+     * @return string[] An array containing the details of the product.
      */
-    public function getProductByIdentifier($identifier);
+    public function getProductByIdentifier(string $identifier);
 
     /**
      * Update product in Bulk
      *
-     * @param mixed $products
-     * @return mixed
+     * @param array $products An array of products to update.
+     * @return mixed The result of the bulk update operation.
      */
-    public function updateBulkProductsInventory($products);
+    public function updateBulkProductsInventory(array $products);
 
     /**
      * Update product by SKU
      *
-     * @param  string    $sku
-     * @param  int       $qty
-     * @param  bool|null $status
-     * @return mixed
+     * @param string $sku The SKU of the product.
+     * @param int $qty The quantity of the product to update.
+     * @param bool|null $status The status of the product (optional).
+     * @return mixed The result of the update operation.
      */
-    public function updateProductsInventory(
-        $sku,
-        int $qty,
-        bool $status = null
-    );
+    public function updateProductsInventory(string $sku, int $qty, ?bool $status = null);
 
     /**
-     * Update product by SKU
+     * Update product by SKU and source code
      *
-     * @param string $sku
-     * @param int $qty
-     * @param string $sourceCode
-     * @param string $status
-     * @return mixed
+     * @param string $sku The SKU of the product.
+     * @param int $qty The quantity of the product to update.
+     * @param string $sourceCode The source code of the inventory update.
+     * @param string $status The status of the product.
+     * @return mixed The result of the update operation.
      */
-    public function updateProductsInventorySource(
-        $sku,
-        int $qty,
-        $sourceCode,
-        $status
-    );
+    public function updateProductsInventorySource(string $sku, int $qty, string $sourceCode, string $status);
 
     /**
-     * Update product in Bulk
+     * Update product in Bulk by source code
      *
-     * @param mixed $products
-     * @return mixed
+     * @param array $products An array of products to update with source code.
+     * @return mixed The result of the bulk update operation.
      */
-    public function updateBulkProductsInventorySource($products);
+    public function updateBulkProductsInventorySource(array $products);
 }

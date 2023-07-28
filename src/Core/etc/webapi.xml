@@ -9,10 +9,16 @@
     </route>
 
     <!-- Update Config -->
-    <route url="/V2/store/config" method="PUT">
-        <service class="Omniful\Core\Api\Config\UpdateConfigInterface" method="updateConfig"/>
+    <route url="/V2/omniful/config" method="GET">
+        <service class="Omniful\Core\Api\Config\ConfigurationsInterface" method="getOmnifulConfigs"/>
         <resources>
-            <resource ref="Magento_Catalog::products" />
+            <resource ref="Magento_Config::config_admin" />
+        </resources>
+    </route>
+    <route url="/V2/store/config" method="PUT">
+        <service class="Omniful\Core\Api\Config\ConfigurationsInterface" method="updateConfig"/>
+        <resources>
+            <resource ref="Magento_Config::config_admin" />
         </resources>
     </route>
 
@@ -20,7 +26,7 @@
     <route url="/V2/stock/sources" method="GET">
         <service class="Omniful\Core\Api\Stock\StockSourcesInterface" method="getStockSources"/>
         <resources>
-            <resource ref="Magento_Catalog::products" />
+            <resource ref="Magento_Catalog::catalog_inventory" />
         </resources>
     </route>
 

@@ -6,34 +6,38 @@ use Magento\Framework\App\Cache\Type\Config;
 use Magento\Framework\App\Cache\TypeListInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Store\Model\StoreManagerInterface;
-use Omniful\Core\Api\Config\UpdateConfigInterface;
+use Omniful\Core\Api\Config\ConfigurationsInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Webapi\Rest\Request;
-use Omniful\Core\Helper\Data;
+use Omniful\Core\Helper\Data as CoreHelper;
 
-class UpdateConfig implements UpdateConfigInterface
+class ConfigurationsManagement implements ConfigurationsInterface
 {
     /**
      * @var WriterInterface
      */
     public $configWriter;
+
     /**
      * @var Request
      */
     public $request;
+
     /**
      * @var StoreManagerInterface
      */
     private $storeManager;
+
     /**
      * @var TypeListInterface
      */
     private $cacheTypeList;
+
     /**
-     * @var Data
+     * @var CoreHelper
      */
-    private $helper;
+    private $coreHelper;
 
     /**
      * UpdateConfig constructor.
@@ -44,17 +48,50 @@ class UpdateConfig implements UpdateConfigInterface
      * @param StoreManagerInterface $storeManager
      */
     public function __construct(
-        WriterInterface $configWriter,
         Request $request,
-        Data $helper,
+        CoreHelper $coreHelper,
+        WriterInterface $configWriter,
         TypeListInterface $cacheTypeList,
         StoreManagerInterface $storeManager
     ) {
         $this->request = $request;
+        $this->coreHelper = $coreHelper;
         $this->configWriter = $configWriter;
         $this->storeManager = $storeManager;
         $this->cacheTypeList = $cacheTypeList;
-        $this->helper = $helper;
+    }
+
+    /**
+     * getOmnifulConfigs
+     *
+     * @return mixed|void
+     */
+    public function getOmnifulConfigs(): array
+    {
+        try {
+            $configData = $this->getConfigData();
+
+            return $this->coreHelper->getResponseStatus(
+                "Success",
+                200,
+                true,
+                $configData
+            );
+        } catch (NoSuchEntityException $e) {
+            return $this->coreHelper->getResponseStatus(
+                __(
+                    "Config not found"
+                ),
+                404,
+                false
+            );
+        } catch (Exception $e) {
+            return $this->coreHelper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false
+            );
+        }
     }
 
     /**
@@ -62,16 +99,18 @@ class UpdateConfig implements UpdateConfigInterface
      *
      * @return mixed|void
      */
-    public function updateConfig()
+    public function updateConfig(): array
     {
         try {
             $params = $this->request->getBodyParams();
             $store = $this->storeManager->getStore();
             $path = 'omniful_core/general/';
+
             foreach ($params as $key => $value) {
                 $this->configWriter
                     ->save($path . $key, $value, $scope = $store->getCode(), $store->getId());
             }
+
             if (isset($params['enable_debugging'])) {
                 $this->configWriter->save(
                     'omniful_core/developer/enable_debugging',
@@ -81,34 +120,41 @@ class UpdateConfig implements UpdateConfigInterface
                 );
             }
             $this->cacheTypeList->cleanType(Config::TYPE_IDENTIFIER);
-            return $this->helper->getResponseStatus(
+
+            $configData = $this->getConfigData();
+
+            return $this->coreHelper->getResponseStatus(
                 "Success",
                 200,
                 true,
-                $data = null,
-                $pageData = null,
-                $nestedArray = true
+                $configData
             );
         } catch (NoSuchEntityException $e) {
-            return $this->helper->getResponseStatus(
+            return $this->coreHelper->getResponseStatus(
                 __(
                     "Config not found"
                 ),
                 404,
-                false,
-                $data = null,
-                $pageData = null,
-                $nestedArray = true
+                false
             );
         } catch (Exception $e) {
-            return $this->helper->getResponseStatus(
+            return $this->coreHelper->getResponseStatus(
                 __($e->getMessage()),
                 500,
-                false,
-                $data = null,
-                $pageData = null,
-                $nestedArray = true
+                false
             );
         }
+    }
+
+    function getConfigData()
+    {
+        $configData["active"] = (bool) $this->coreHelper->getIsActive();
+        $configData["webhook_url"] = $this->coreHelper->getWebhookUrl();
+        $configData["workspace_id"] = $this->coreHelper->getWorkspaceId();
+        $configData["webhook_token"] = $this->coreHelper->getWebhookToken();
+        $configData["disable_ship_button"] = (bool) $this->coreHelper->isOrderShipButtonDisabled();
+        $configData["disable_order_status_dropdown"] = (bool) $this->coreHelper->isOrderStatusDropdownDisabled();
+
+        return $configData;
     }
 }

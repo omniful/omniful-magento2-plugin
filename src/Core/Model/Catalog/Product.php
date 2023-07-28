@@ -429,11 +429,11 @@ class Product implements ProductInterface
         try {
             if (is_numeric($identifier)) {
                 $productId = (int) $identifier;
-                $product = $this->loadProductById($productId);
+                $product = $this->getProductById($productId);
                 $productData = $this->getProductData($product);
             } else {
                 $productSku = $identifier;
-                $product = $this->productRepository->get($productSku);
+                $product = $this->getProductBySku($productSku);
                 $productData = $this->getProductData($product);
             }
             return $this->helper->getResponseStatus(
@@ -468,15 +468,43 @@ class Product implements ProductInterface
     }
 
     /**
-     * Load product by ID
+     * Load a product by SKU
      *
      * @param int $productId
      * @return MagentoProduct
      */
-    public function loadProductById($productId)
+    public function getProductById($productId, $storeId = null)
     {
-        // TODO: need to load by store id
-        return $this->productFactory->create()->load($productId);
+        try {
+            // Load the product by ID
+            $product = $this->productRepository->getById($productId, false, $storeId);
+
+            // $product now contains the loaded product data for the specified store ID
+            return $product;
+        } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+            // Handle the exception if the product with the given ID is not found
+            return null;
+        }
+    }
+
+    /**
+     * Load a product by SKU
+     *
+     * @param int $productId
+     * @return MagentoProduct
+     */
+    public function getProductBySku($sku, $storeId = null)
+    {
+        try {
+            // Load the product by SKU
+            $product = $this->productRepository->get($sku, false, $storeId);
+
+            // $product now contains the loaded product data for the specified store ID
+            return $product;
+        } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
+            // Handle the exception if the product with the given SKU is not found
+            return null;
+        }
     }
 
     /**
@@ -595,7 +623,8 @@ class Product implements ProductInterface
                 $product = $this->productRepository->get($productData["sku"]);
                 $stockData = ["qty" => $productData["qty"]];
 
-                if (isset($productData["status"])
+                if (
+                    isset($productData["status"])
                     && $productData["status"] === "out_of_stock"
                 ) {
                     $stockData["is_in_stock"] = false;
@@ -646,7 +675,8 @@ class Product implements ProductInterface
     {
         try {
             foreach ($products as $productData) {
-                if (isset($productData["status"])
+                if (
+                    isset($productData["status"])
                     && $productData["status"] === "out_of_stock"
                 ) {
                     $stockData = false;
