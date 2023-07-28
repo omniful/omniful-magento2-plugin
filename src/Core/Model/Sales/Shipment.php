@@ -2,6 +2,7 @@
 
 namespace Omniful\Core\Model\Sales;
 
+use Magento\Framework\Webapi\Rest\Request;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Api\ShipmentRepositoryInterface;
 use Magento\Sales\Model\Order\ShipmentFactory;
@@ -73,6 +74,10 @@ class Shipment implements ShipmentInterface
      * @var Data
      */
     private $helper;
+    /**
+     * @var Http
+     */
+    private $request;
 
     /**
      * Shipment constructor.
@@ -80,6 +85,7 @@ class Shipment implements ShipmentInterface
      * @param Logger $logger
      * @param TrackFactory $trackFactory
      * @param ShipmentFactory $shipmentFactory
+     * @param Request $request
      * @param ScopeConfigInterface $scopeConfig
      * @param OrderConvertFactory $orderConvertFactory
      * @param Data $helper
@@ -91,6 +97,7 @@ class Shipment implements ShipmentInterface
         Logger $logger,
         TrackFactory $trackFactory,
         ShipmentFactory $shipmentFactory,
+        Request $request,
         ScopeConfigInterface $scopeConfig,
         OrderConvertFactory $orderConvertFactory,
         Data $helper,
@@ -107,6 +114,7 @@ class Shipment implements ShipmentInterface
         $this->orderConvertFactory = $orderConvertFactory;
         $this->shipmentTrackFactory = $shipmentTrackFactory;
         $this->helper = $helper;
+        $this->request = $request;
     }
 
     /**
@@ -141,7 +149,6 @@ class Shipment implements ShipmentInterface
         try {
             $order = $this->orderRepository->get($id);
             $status = $order->getStatus();
-
             // Check if the order status allows adding tracking information
             if (in_array($status, self::IGNORED_STATUSES)) {
                 $errorMessage = self::INVALID_STATUS_ERROR_MESSAGE;
@@ -163,13 +170,11 @@ class Shipment implements ShipmentInterface
             $shipment = $this->orderConvertFactory
                 ->create()
                 ->toShipment($order);
-
             foreach ($order->getAllItems() as $orderItem) {
                 // Check if order item has qty to ship or is virtual
                 if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
                     continue;
                 }
-
                 $qtyShipped = $orderItem->getQtyToShip();
                 $shipmentItem = $this->orderConvertFactory
                     ->create()
@@ -201,8 +206,9 @@ class Shipment implements ShipmentInterface
 
             // Add the comment to the shipment
             $shipment->addComment(__($comment));
-
             $shipment->addTrack($track);
+            $sourceCode = $this->request->getBodyParams();
+            $shipment->getExtensionAttributes()->setSourceCode($sourceCode['source_code']);
             $shipment->save();
             $shipment->getOrder()->save();
 
