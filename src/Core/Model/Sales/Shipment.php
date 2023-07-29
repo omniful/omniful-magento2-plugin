@@ -138,12 +138,15 @@ class Shipment implements ShipmentInterface
         bool $override_exist_data = false
     ) {
         // Validate input data
-        if (empty($tracking_number)
-            || empty($tracking_link)
-            || empty($shipping_label_pdf)
+        if (
+            empty($tracking_number) ||
+            empty($tracking_link) ||
+            empty($shipping_label_pdf)
         ) {
             $errorMessage = self::INVALID_DATA_ERROR_MESSAGE;
-            throw new \Magento\Framework\Exception\LocalizedException(__($errorMessage));
+            throw new \Magento\Framework\Exception\LocalizedException(
+                __($errorMessage)
+            );
         }
 
         try {
@@ -152,13 +155,17 @@ class Shipment implements ShipmentInterface
             // Check if the order status allows adding tracking information
             if (in_array($status, self::IGNORED_STATUSES)) {
                 $errorMessage = self::INVALID_STATUS_ERROR_MESSAGE;
-                throw new \Magento\Framework\Exception\LocalizedException(__($errorMessage, $status));
+                throw new \Magento\Framework\Exception\LocalizedException(
+                    __($errorMessage, $status)
+                );
             }
 
             // Validate tracking link
             if (!preg_match(self::URL_PATTERN, $tracking_link)) {
                 $errorMessage = self::INVALID_LINK_ERROR_MESSAGE;
-                throw new \Magento\Framework\Exception\LocalizedException(__($errorMessage));
+                throw new \Magento\Framework\Exception\LocalizedException(
+                    __($errorMessage)
+                );
             }
 
             if (!$order->canShip() && !$override_exist_data) {
@@ -192,7 +199,8 @@ class Shipment implements ShipmentInterface
                 $itemsWeight += $item->getWeight() * $item->getQtyOrdered();
             }
 
-            $comment = "a Carrier has been assigned to that shipment via Omniful Core";
+            $comment =
+                "a Carrier has been assigned to that shipment via Omniful Core";
             $track = $this->shipmentTrackFactory
                 ->create()
                 ->setQty($itemCount)
@@ -208,7 +216,9 @@ class Shipment implements ShipmentInterface
             $shipment->addComment(__($comment));
             $shipment->addTrack($track);
             $sourceCode = $this->request->getBodyParams();
-            $shipment->getExtensionAttributes()->setSourceCode($sourceCode['source_code']);
+            $shipment
+                ->getExtensionAttributes()
+                ->setSourceCode($sourceCode["source_code"]);
             $shipment->save();
             $shipment->getOrder()->save();
 
@@ -241,10 +251,7 @@ class Shipment implements ShipmentInterface
         } catch (\Exception $e) {
             $errorMessage = self::EXCEPTION_ERROR_MESSAGE;
             return $this->helper->getResponseStatus(
-                __(
-                    $errorMessage,
-                    $e->getMessage()
-                ),
+                __($errorMessage, $e->getMessage()),
                 500,
                 false,
                 $data = null,

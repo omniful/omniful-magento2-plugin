@@ -101,27 +101,49 @@ class Info implements InfoInterface
         $storeDetails = [];
 
         // General Store Information
-        $storeDetails['general'] = [
-            'store_name' => $this->coreHelper->getConfigValue('general/store_information/name'),
-            'store_email' => $this->coreHelper->getConfigValue('trans_email/ident_general/email'),
-            'store_phone' => $this->coreHelper->getConfigValue('general/store_information/phone'),
-            'store_currency_code' => $this->coreHelper->getConfigValue('currency/options/base'),
-            'store_country' => $this->coreHelper->getConfigValue('general/store_information/country_id'),
-            'store_timezone' => $this->coreHelper->getConfigValue('general/locale/timezone'),
-            'store_locale' => $this->coreHelper->getConfigValue('general/locale/code'),
+        $storeDetails["general"] = [
+            "store_name" => $this->coreHelper->getConfigValue(
+                "general/store_information/name"
+            ),
+            "store_email" => $this->coreHelper->getConfigValue(
+                "trans_email/ident_general/email"
+            ),
+            "store_phone" => $this->coreHelper->getConfigValue(
+                "general/store_information/phone"
+            ),
+            "store_currency_code" => $this->coreHelper->getConfigValue(
+                "currency/options/base"
+            ),
+            "store_country" => $this->coreHelper->getConfigValue(
+                "general/store_information/country_id"
+            ),
+            "store_timezone" => $this->coreHelper->getConfigValue(
+                "general/locale/timezone"
+            ),
+            "store_locale" => $this->coreHelper->getConfigValue(
+                "general/locale/code"
+            ),
         ];
 
         // Sales-related Settings
-        $storeDetails['sales'] = [
-            'default_payment_method' => $this->coreHelper->getConfigValue('payment/default'),
-            'default_shipping_method' => $this->coreHelper->getConfigValue('shipping/origin/shipping_method'),
-            'allowed_countries' => $this->coreHelper->getAllowedCountries(),
+        $storeDetails["sales"] = [
+            "default_payment_method" => $this->coreHelper->getConfigValue(
+                "payment/default"
+            ),
+            "default_shipping_method" => $this->coreHelper->getConfigValue(
+                "shipping/origin/shipping_method"
+            ),
+            "allowed_countries" => $this->coreHelper->getAllowedCountries(),
         ];
 
         // Catalog-related Settings
-        $storeDetails['catalog'] = [
-            'root_category' => (int) $this->coreHelper->getConfigValue('catalog/category/root_id'),
-            'default_category' => (int) $this->coreHelper->getConfigValue('catalog/category/root_id'),
+        $storeDetails["catalog"] = [
+            "root_category" => (int) $this->coreHelper->getConfigValue(
+                "catalog/category/root_id"
+            ),
+            "default_category" => (int) $this->coreHelper->getConfigValue(
+                "catalog/category/root_id"
+            ),
         ];
 
         return $storeDetails;
@@ -156,7 +178,9 @@ class Info implements InfoInterface
                         "store_name" => (string) $store->getName(),
                         "store_code" => (string) $store->getCode(),
                         "store_group_id" => (int) $store->getGroupId(),
-                        "store_group_name" => (string) $store->getGroup()->getName(),
+                        "store_group_name" => (string) $store
+                            ->getGroup()
+                            ->getName(),
                         "store_views" => [], // Initialize an empty array to store related store views
                     ];
 
@@ -175,7 +199,7 @@ class Info implements InfoInterface
                 }
             }
 
-            $allStores['websites'][] = $websiteData;
+            $allStores["websites"][] = $websiteData;
         }
 
         return $allStores;

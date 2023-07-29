@@ -417,7 +417,9 @@ class Countries
         ];
 
         if (array_key_exists($code, $countryArray)) {
-            $countryData["name"] = ucwords(strtolower($countryArray[$code]["name"]));
+            $countryData["name"] = ucwords(
+                strtolower($countryArray[$code]["name"])
+            );
             $countryData["code"] = $countryArray[$code]["code"];
             return $countryData;
         }

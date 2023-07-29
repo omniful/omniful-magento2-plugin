@@ -38,26 +38,18 @@ class AddTrackingColumns implements PatchInterface
         $this->schemaSetup->startSetup();
         $connection = $this->schemaSetup->getConnection();
         $table = $this->schemaSetup->getTable(self::TABLE_NAME);
-        $connection->addColumn(
-            $table,
-            self::COLUMN_TRACING_LINK,
-            [
+        $connection->addColumn($table, self::COLUMN_TRACING_LINK, [
             "type" => Table::TYPE_TEXT,
             "length" => self::COLUMN_LENGTH,
             "nullable" => true,
             "comment" => self::COLUMN_COMMENT_TRACING_LINK,
-            ]
-        );
-        $connection->addColumn(
-            $table,
-            self::COLUMN_SHIPPING_LABEL_PDF,
-            [
+        ]);
+        $connection->addColumn($table, self::COLUMN_SHIPPING_LABEL_PDF, [
             "type" => Table::TYPE_TEXT,
             "length" => self::COLUMN_LENGTH,
             "nullable" => true,
             "comment" => self::COLUMN_COMMENT_SHIPPING_LABEL_PDF,
-            ]
-        );
+        ]);
         $this->schemaSetup->endSetup();
     }
 

@@ -48,12 +48,10 @@ class AddOmnifulProductBarcodeAttribute implements DataPatchInterface
     {
         /**
          * @var EavSetup $eavSetup
-        */
-        $eavSetup = $this->eavSetupFactory->create(
-            [
+         */
+        $eavSetup = $this->eavSetupFactory->create([
             "setup" => $this->moduleDataSetup,
-            ]
-        );
+        ]);
 
         $eavSetup->addAttribute(
             \Magento\Catalog\Model\Product::ENTITY,
