@@ -18,7 +18,7 @@ class FormPlugin
         // Add custom carrier option
         $result[] = [
             "label" => __("Omniful Express"),
-            "value" => "omniful_express",
+            "value" => __("omniful_express"),
         ];
 
         return $result;

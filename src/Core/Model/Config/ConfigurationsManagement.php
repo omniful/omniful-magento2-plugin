@@ -10,6 +10,7 @@ use Omniful\Core\Api\Config\ConfigurationsInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Webapi\Rest\Request;
+use Omniful\Core\Helper\CacheManager as CacheManagerHelper;
 use Omniful\Core\Helper\Data as CoreHelper;
 
 class ConfigurationsManagement implements ConfigurationsInterface
@@ -38,12 +39,17 @@ class ConfigurationsManagement implements ConfigurationsInterface
      * @var CoreHelper
      */
     private $coreHelper;
+    /**
+     * @var CacheManagerHelper
+     */
+    private $cacheManagerHelper;
 
     /**
      * UpdateConfig constructor.
-     * @param WriterInterface $configWriter
      * @param Request $request
-     * @param Data $helper
+     * @param CoreHelper $coreHelper
+     * @param WriterInterface $configWriter
+     * @param CacheManagerHelper $cacheManagerHelper
      * @param TypeListInterface $cacheTypeList
      * @param StoreManagerInterface $storeManager
      */
@@ -51,6 +57,7 @@ class ConfigurationsManagement implements ConfigurationsInterface
         Request $request,
         CoreHelper $coreHelper,
         WriterInterface $configWriter,
+        CacheManagerHelper $cacheManagerHelper,
         TypeListInterface $cacheTypeList,
         StoreManagerInterface $storeManager
     ) {
@@ -59,20 +66,21 @@ class ConfigurationsManagement implements ConfigurationsInterface
         $this->configWriter = $configWriter;
         $this->storeManager = $storeManager;
         $this->cacheTypeList = $cacheTypeList;
+        $this->cacheManagerHelper = $cacheManagerHelper;
     }
 
     /**
-     * getOmnifulConfigs
+     * Get Omniful Configs
      *
      * @return mixed|void
      */
-    public function getOmnifulConfigs(): array
+    public function getOmnifulConfigs()
     {
         try {
             $configData = $this->getConfigData();
 
             return $this->coreHelper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $configData
@@ -97,7 +105,7 @@ class ConfigurationsManagement implements ConfigurationsInterface
      *
      * @return mixed|void
      */
-    public function updateConfig(): array
+    public function updateConfig()
     {
         try {
             $params = $this->request->getBodyParams();
@@ -126,7 +134,7 @@ class ConfigurationsManagement implements ConfigurationsInterface
             $configData = $this->getConfigData();
 
             return $this->coreHelper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $configData
@@ -146,7 +154,13 @@ class ConfigurationsManagement implements ConfigurationsInterface
         }
     }
 
-    function getConfigData()
+    /**
+     * Get Config Data
+     *
+     * @return bool|mixed
+     * @throws NoSuchEntityException
+     */
+    public function getConfigData()
     {
         $configData["active"] = (bool) $this->coreHelper->getIsActive();
         $configData["webhook_url"] = $this->coreHelper->getWebhookUrl();
@@ -158,7 +172,6 @@ class ConfigurationsManagement implements ConfigurationsInterface
         $configData[
             "disable_order_status_dropdown"
         ] = (bool) $this->coreHelper->isOrderStatusDropdownDisabled();
-
         return $configData;
     }
 }

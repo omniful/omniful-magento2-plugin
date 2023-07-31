@@ -14,6 +14,10 @@ interface StatusInterface
      * @param string      $status The new status for the order.
      * @param mixed       $hubId The ID of the hub (optional).
      * @param string|null $comment The comment for the status update (optional).
+     * @param  int         $id
+     * @param  string      $status
+     * @param  mixed       $hubId
+     * @param  string|null $comment
      * @return mixed
      */
     public function processUpdateOrder(
@@ -23,3 +27,4 @@ interface StatusInterface
         string $comment = null
     );
 }
+

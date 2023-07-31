@@ -39,6 +39,16 @@ class AddOmnifulHubIdToOrder implements
     }
 
     /**
+     * Get Dependencies
+     *
+     * @return array|string[]
+     */
+    public static function getDependencies()
+    {
+        return [];
+    }
+
+    /**
      * Apply
      *
      * @return AddOmnifulHubIdToOrder|void
@@ -47,11 +57,10 @@ class AddOmnifulHubIdToOrder implements
     {
         $this->moduleDataSetup->startSetup();
         $connection = $this->moduleDataSetup->getConnection();
-        if (
-            !$connection->tableColumnExists(
-                $this->getTableName(),
-                self::COLUMN_NAME
-            )
+        if (!$connection->tableColumnExists(
+            $this->getTableName(),
+            self::COLUMN_NAME
+        )
         ) {
             $connection->addColumn(
                 $this->getTableName(),
@@ -59,45 +68,15 @@ class AddOmnifulHubIdToOrder implements
                 self::COLUMN_DEFINITIONS
             );
         }
-        if (
-            !$connection->tableColumnExists(
-                $this->getGridTableName(),
-                self::COLUMN_NAME
-            )
+        if (!$connection->tableColumnExists(
+            $this->getGridTableName(),
+            self::COLUMN_NAME
+        )
         ) {
             $connection->addColumn(
                 $this->getGridTableName(),
                 self::COLUMN_NAME,
                 self::COLUMN_DEFINITIONS
-            );
-        }
-        $this->moduleDataSetup->endSetup();
-    }
-
-    /**
-     * Revert
-     */
-    public function revert()
-    {
-        $this->moduleDataSetup->startSetup();
-        $connection = $this->moduleDataSetup->getConnection();
-        if (
-            $connection->tableColumnExists(
-                $this->getTableName(),
-                self::COLUMN_NAME
-            )
-        ) {
-            $connection->dropColumn($this->getTableName(), self::COLUMN_NAME);
-        }
-        if (
-            $connection->tableColumnExists(
-                $this->getGridTableName(),
-                self::COLUMN_NAME
-            )
-        ) {
-            $connection->dropColumn(
-                $this->getGridTableName(),
-                self::COLUMN_NAME
             );
         }
         $this->moduleDataSetup->endSetup();
@@ -124,13 +103,30 @@ class AddOmnifulHubIdToOrder implements
     }
 
     /**
-     * Get Dependencies
-     *
-     * @return array|string[]
+     * Revert
      */
-    public static function getDependencies()
+    public function revert()
     {
-        return [];
+        $this->moduleDataSetup->startSetup();
+        $connection = $this->moduleDataSetup->getConnection();
+        if ($connection->tableColumnExists(
+            $this->getTableName(),
+            self::COLUMN_NAME
+        )
+        ) {
+            $connection->dropColumn($this->getTableName(), self::COLUMN_NAME);
+        }
+        if ($connection->tableColumnExists(
+            $this->getGridTableName(),
+            self::COLUMN_NAME
+        )
+        ) {
+            $connection->dropColumn(
+                $this->getGridTableName(),
+                self::COLUMN_NAME
+            );
+        }
+        $this->moduleDataSetup->endSetup();
     }
 
     /**

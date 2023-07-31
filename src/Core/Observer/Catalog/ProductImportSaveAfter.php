@@ -87,8 +87,7 @@ class ProductImportSaveAfter implements ObserverInterface
                         "x-store-view-code" => $product->getStore()->getName(),
                     ];
 
-                    if (
-                        $product === null ||
+                    if ($product === null ||
                         $product->getId() === null ||
                         $product->getCreatedAt() == $product->getUpdatedAt()
                     ) {
@@ -111,7 +110,9 @@ class ProductImportSaveAfter implements ObserverInterface
                 return true;
             }
         } catch (Exception $e) {
-            $this->logger->info("Error while updating: " . $e->getMessage());
+            $this->logger->info(
+                __("Error while updating: " . $e->getMessage())
+            );
         }
     }
 

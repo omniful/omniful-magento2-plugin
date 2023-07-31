@@ -1,0 +1,90 @@
+Success,Success
+"Category not found","Category not found"
+"Product not found","Product not found"
+"CategoProductry not found","CategoProductry not found"
+"Config not found","Config not found"
+"The order cannot be canceled because it is already complete.","The order cannot be canceled because it is already complete."
+"The order is already canceled.","The order is already canceled."
+"Could not refund the order: %1","Could not refund the order: %1"
+"An error occurred while canceling the order. %1","An error occurred while canceling the order. %1"
+Subtotal,Subtotal
+Shipping,Shipping
+Tax,Tax
+Discount,Discount
+Total,Total
+"Total Refunded","Total Refunded"
+"Total Paid","Total Paid"
+"Total Due","Total Due"
+"Order not found.","Order not found."
+"Could not create invoice for Order ID: %1","Could not create invoice for Order ID: %1"
+"Invoice ID: "" . . "" is already refunded.","Invoice ID: "" . . "" is already refunded."
+"You can't create a shipment.","You can't create a shipment."
+Custom,Custom
+"Cannot update status. Order does not have any shipments.","Cannot update status. Order does not have any shipments."
+"Invoice created automatically.","Invoice created automatically."
+"""Failed to update order status: "" .","""Failed to update order status: "" ."
+"""Error while updating: "" .","""Error while updating: "" ."
+"""Error while updating product: "" .","""Error while updating product: "" ."
+"Pixicommerce CheckoutCom Verify","Pixicommerce CheckoutCom Verify"
+"Order Canceled successfully","Order Canceled successfully"
+"Order event published successfully","Order event published successfully"
+"Omniful Express","Omniful Express"
+omniful_express,omniful_express
+Carrier,Carrier
+"Tracking Number","Tracking Number"
+Action,Action
+Delete,Delete
+"Are you sure?","Are you sure?"
+"Payment &amp; Shipping Method","Payment &amp; Shipping Method"
+"Payment Information","Payment Information"
+"The order was placed using %1.","The order was placed using %1."
+"Shipping and Tracking Information","Shipping and Tracking Information"
+"Total Shipping Charges","Total Shipping Charges"
+"Incl. Tax","Incl. Tax"
+"Items Shipped","Items Shipped"
+"Order Total","Order Total"
+"Shipment History","Shipment History"
+Status,Status
+Comment,Comment
+"Notify Customer by Email","Notify Customer by Email"
+"Visible on Storefront","Visible on Storefront"
+Customer,Customer
+"Notification Not Applicable","Notification Not Applicable"
+Notified,Notified
+"Not Notified","Not Notified"
+"Order & Account Information","Order & Account Information"
+"The order confirmation email was sent","The order confirmation email was sent"
+"The order confirmation email is not sent","The order confirmation email is not sent"
+"Order # %1","Order # %1"
+"Order Date","Order Date"
+"Order Date (%1)","Order Date (%1)"
+"Order Status","Order Status"
+"Purchased From","Purchased From"
+"Link to the New Order","Link to the New Order"
+"Link to the Previous Order","Link to the Previous Order"
+"Placed from IP","Placed from IP"
+"%1 / %2 rate:","%1 / %2 rate:"
+"Account Information","Account Information"
+"Edit Customer","Edit Customer"
+"Customer Name","Customer Name"
+Email,Email
+"Customer Group","Customer Group"
+"Assigned Hub ID","Assigned Hub ID"
+"Fulfillment Status","Fulfillment Status"
+"Cancel Order Reason","Cancel Order Reason"
+"Address Information","Address Information"
+"Billing Address","Billing Address"
+"Shipping Address","Shipping Address"
+"Shipping &amp; Handling Information","Shipping &amp; Handling Information"
+"Track Shipment","Track Shipment"
+"No shipping information available","No shipping information available"
+Omniful,Omniful
+"General Settings","General Settings"
+"Enable Module","Enable Module"
+"Disable Ship Button","Disable Ship Button"
+"Disable Order Status Dropdown","Disable Order Status Dropdown"
+"Webhook Url","Webhook Url"
+"Workspace Id","Workspace Id"
+"Webhook Token","Webhook Token"
+"Developer Settings","Developer Settings"
+"Enable Debugging","Enable Debugging"

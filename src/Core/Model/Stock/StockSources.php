@@ -8,6 +8,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\InventoryApi\Api\Data\StockSourceInterface;
 use Omniful\Core\Api\Stock\StockSourcesInterface;
+use Omniful\Core\Helper\CacheManager as CacheManagerHelper;
 use Magento\InventoryApi\Api\SourceRepositoryInterface;
 use Omniful\Core\Helper\Data as CoreHelper;
 use Magento\Store\Model\ResourceModel\Website\CollectionFactory as WebsiteCollectionFactory;
@@ -46,6 +47,10 @@ class StockSources implements StockSourcesInterface
      * @var GetAssignedStockIdForWebsite
      */
     private $getAssignedStockIdForWebsite;
+    /**
+     * @var CacheManagerHelper
+     */
+    private $cacheManagerHelper;
 
     /**
      * StockSources constructor.
@@ -53,6 +58,7 @@ class StockSources implements StockSourcesInterface
      * @param CoreHelper $coreHelper
      * @param SourceRepositoryInterface $sourceRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param CacheManagerHelper $cacheManagerHelper
      * @param GetStockSourceLinksInterface $getStockSourceLinks
      * @param WebsiteCollectionFactory $websiteCollectionFactory
      * @param GetAssignedStockIdForWebsite $getAssignedStockIdForWebsite
@@ -61,6 +67,7 @@ class StockSources implements StockSourcesInterface
         CoreHelper $coreHelper,
         SourceRepositoryInterface $sourceRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
+        CacheManagerHelper $cacheManagerHelper,
         GetStockSourceLinksInterface $getStockSourceLinks,
         WebsiteCollectionFactory $websiteCollectionFactory,
         GetAssignedStockIdForWebsite $getAssignedStockIdForWebsite
@@ -71,6 +78,7 @@ class StockSources implements StockSourcesInterface
         $this->websiteCollectionFactory = $websiteCollectionFactory;
         $this->getStockSourceLinks = $getStockSourceLinks;
         $this->getAssignedStockIdForWebsite = $getAssignedStockIdForWebsite;
+        $this->cacheManagerHelper = $cacheManagerHelper;
     }
 
     /**
@@ -84,7 +92,7 @@ class StockSources implements StockSourcesInterface
             $stockSources = $this->getStockSourcesData();
 
             return $this->coreHelper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $stockSources
@@ -118,10 +126,7 @@ class StockSources implements StockSourcesInterface
                 ->addFilter(StockSourceLinkInterface::STOCK_ID, $stockId)
                 ->create();
 
-            foreach (
-                $this->getStockSourceLinks->execute($searchCriteria)->getItems()
-                as $source
-            ) {
+            foreach ($this->getStockSourceLinks->execute($searchCriteria)->getItems() as $source) {
                 $sourceData[] = $this->sourceRepository->get(
                     $source->getSourceCode()
                 );
@@ -142,21 +147,17 @@ class StockSources implements StockSourcesInterface
     public function getData($sourceItems)
     {
         foreach ($sourceItems as $source) {
-            $stockSources["enabled"] = (bool) $source->getEnabled();
+            $stockSources["enabled"] = (bool)$source->getEnabled();
             $stockSources["name"] = $source->getName();
             $stockSources["source_code"] = $source->getSourceCode();
             $stockSources["description"] = $source->getDescription();
             $stockSources["carrier_links"] = $source->getCarrierLinks();
-            $stockSources[
-                "use_default_carrier_config"
-            ] = (bool) $source->getUseDefaultCarrierConfig();
-            $stockSources[
-                "is_pickup_location_active"
-            ] = (bool) $source->getIs_pickupLocationActive();
+            $stockSources["use_default_carrier_config"] = (bool)$source->getUseDefaultCarrierConfig();
+            $stockSources["is_pickup_location_active"] = (bool)$source->getIs_pickupLocationActive();
             $stockAddressDetails["latitude"] = $source->getLatitude();
             $stockAddressDetails["longitude"] = $source->getLongitude();
             $stockAddressDetails["country_id"] = $source->getCountryId();
-            $stockAddressDetails["region_id"] = (int) $source->getRegionId();
+            $stockAddressDetails["region_id"] = (int)$source->getRegionId();
             $stockAddressDetails["region"] = $source->getRegion();
             $stockAddressDetails["city"] = $source->getCity();
             $stockAddressDetails["street"] = $source->getStreet();

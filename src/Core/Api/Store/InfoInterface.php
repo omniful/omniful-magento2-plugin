@@ -21,6 +21,8 @@ interface InfoInterface
      *  - 'business_hours' (string): The store business hours.
      *  - 'social_media' (array): An associative array containing social media links.
      *    Example: ['facebook' => 'https://facebook.com/store', 'twitter' => 'https://twitter.com/store']
+     * @return array
      */
-    public function getStoreInfo(): array;
+    public function getStoreInfo();
 }
+

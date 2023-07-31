@@ -26,7 +26,7 @@
     <route url="/V2/stock/sources" method="GET">
         <service class="Omniful\Core\Api\Stock\StockSourcesInterface" method="getStockSources"/>
         <resources>
-            <resource ref="Magento_Catalog::catalog_inventory" />
+            <resource ref="Magento_Config::catalog_inventory" />
         </resources>
     </route>
 

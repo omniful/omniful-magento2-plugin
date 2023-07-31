@@ -12,7 +12,7 @@ interface CategoryInterface
      *
      * @return string[] An array of category names.
      */
-    public function getCategories(): array;
+    public function getCategories();
 
     /**
      * Get category by ID.
@@ -20,5 +20,5 @@ interface CategoryInterface
      * @param  int $id The ID of the category to retrieve.
      * @return string[] An array containing the details of the category.
      */
-    public function getCategoryById(int $id): array;
+    public function getCategoryById(int $id);
 }
