@@ -13,10 +13,8 @@ class FormPlugin
      * @param  array $result
      * @return array
      */
-    public function afterGetCarriersOptions(
-        Form $subject,
-        $result
-    ) {
+    public function afterGetCarriersOptions(Form $subject, $result)
+    {
         // Add custom carrier option
         $result[] = [
             "label" => __("Omniful Express"),

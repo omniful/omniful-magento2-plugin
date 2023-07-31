@@ -38,7 +38,11 @@ interface ProductInterface
      * @param bool|null $status The status of the product (optional).
      * @return mixed The result of the update operation.
      */
-    public function updateProductsInventory(string $sku, int $qty, ?bool $status = null);
+    public function updateProductsInventory(
+        string $sku,
+        int $qty,
+        ?bool $status = null
+    );
 
     /**
      * Update product by SKU and source code
@@ -49,7 +53,12 @@ interface ProductInterface
      * @param string $status The status of the product.
      * @return mixed The result of the update operation.
      */
-    public function updateProductsInventorySource(string $sku, int $qty, string $sourceCode, string $status);
+    public function updateProductsInventorySource(
+        string $sku,
+        int $qty,
+        string $sourceCode,
+        string $status
+    );
 
     /**
      * Update product in Bulk by source code

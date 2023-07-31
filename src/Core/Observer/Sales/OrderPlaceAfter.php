@@ -54,7 +54,10 @@ class OrderPlaceAfter implements ObserverInterface
         try {
             $eventName = self::ORDER_CREATED_EVENT_NAME;
             $headers = [
-                "x-website-code" => $order->getStore()->getWebsite()->getCode(),
+                "x-website-code" => $order
+                    ->getStore()
+                    ->getWebsite()
+                    ->getCode(),
                 "x-store-code" => $order->getStore()->getCode(),
                 "x-store-view-code" => $order->getStore()->getName(),
             ];
@@ -66,7 +69,7 @@ class OrderPlaceAfter implements ObserverInterface
             if ($eventName !== "") {
                 $payload = $this->orderManagement->getOrderData($order);
                 // Log the successful publication of the order event
-                $this->logger->info('Order event published successfully');
+                $this->logger->info("Order event published successfully");
                 return $this->adapter->publishMessage(
                     $eventName,
                     $payload,

@@ -102,7 +102,9 @@ class Cancel implements CancelInterface
             $order = $this->orderRepository->get($orderId);
 
             // Check if the order state is "complete", and throw an error if it is
-            if ($order->getState() ===\Magento\Sales\Model\Order::STATE_COMPLETE
+            if (
+                $order->getState() ===
+                \Magento\Sales\Model\Order::STATE_COMPLETE
             ) {
                 throw new LocalizedException(
                     __(
@@ -186,10 +188,7 @@ class Cancel implements CancelInterface
             );
         } catch (LocalizedException $e) {
             return $this->helper->getResponseStatus(
-                __(
-                    "Could not refund the order: %1",
-                    $e->getMessage()
-                ),
+                __("Could not refund the order: %1", $e->getMessage()),
                 500,
                 false,
                 $data = null,

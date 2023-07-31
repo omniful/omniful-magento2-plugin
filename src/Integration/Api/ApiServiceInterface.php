@@ -24,9 +24,7 @@ interface ApiServiceInterface
      * @param Integration $integration
      * @return mixed
      */
-    public function getIntegrationAccessToken(
-        Integration $integration
-    );
+    public function getIntegrationAccessToken(Integration $integration);
 
     /**
      * Create Access Token
@@ -35,9 +33,7 @@ interface ApiServiceInterface
      * @throws \Exception
      * @return $this|ApiServiceInterface
      */
-    public function createAccessToken(
-        Integration $integration
-    );
+    public function createAccessToken(Integration $integration);
 
     /**
      * Setup Integration

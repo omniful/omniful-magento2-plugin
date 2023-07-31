@@ -70,7 +70,10 @@ class ProductSaveAfter implements ObserverInterface
                 ? self::PRODUCT_CREATED_EVENT_NAME
                 : self::PRODUCT_UPDATED_EVENT_NAME;
             $headers = [
-                "x-website-code" => $product->getStore()->getWebsite()->getCode(),
+                "x-website-code" => $product
+                    ->getStore()
+                    ->getWebsite()
+                    ->getCode(),
                 "x-store-code" => $product->getStore()->getCode(),
                 "x-store-view-code" => $product->getStore()->getName(),
             ];
@@ -80,7 +83,11 @@ class ProductSaveAfter implements ObserverInterface
 
             // Publish the event
             $payload = $this->productManagement->getProductData($product);
-            $response = $this->adapter->publishMessage($eventName, $payload, $headers);
+            $response = $this->adapter->publishMessage(
+                $eventName,
+                $payload,
+                $headers
+            );
 
             if (!$response) {
                 return false;
@@ -88,7 +95,9 @@ class ProductSaveAfter implements ObserverInterface
 
             return true;
         } catch (\Exception $e) {
-            $this->logger->info("Error while updating product: " . $e->getMessage());
+            $this->logger->info(
+                "Error while updating product: " . $e->getMessage()
+            );
         }
     }
 
@@ -100,6 +109,7 @@ class ProductSaveAfter implements ObserverInterface
      */
     private function isNewProduct(ProductModel $product): bool
     {
-        return $product->getId() === null || $product->getCreatedAt() == $product->getUpdatedAt();
+        return $product->getId() === null ||
+            $product->getCreatedAt() == $product->getUpdatedAt();
     }
 }
