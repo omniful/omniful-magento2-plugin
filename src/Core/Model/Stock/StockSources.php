@@ -92,7 +92,7 @@ class StockSources implements StockSourcesInterface
             $stockSources = $this->getStockSourcesData();
 
             return $this->coreHelper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $stockSources
@@ -114,14 +114,9 @@ class StockSources implements StockSourcesInterface
      */
     public function getStockSourcesData()
     {
-        $storeId = $this->coreHelper->getStoreId();
-        $cacheIdentifier = $this->cacheManagerHelper ::STOCK_SOURCE_CODE.$storeId;
-        if ($this->cacheManagerHelper->isDataAvailableInCache($cacheIdentifier)) {
-            return $this->cacheManagerHelper->getDataFromCache($cacheIdentifier);
-        }
         $websiteCollection = $this->websiteCollectionFactory->create();
         $returnData = [];
-        foreach ($websiteCollection as $website){
+        foreach ($websiteCollection as $website) {
             $sourceData = [];
             $stockId = $this->getAssignedStockIdForWebsite->execute(
                 $website->getCode()
@@ -131,10 +126,7 @@ class StockSources implements StockSourcesInterface
                 ->addFilter(StockSourceLinkInterface::STOCK_ID, $stockId)
                 ->create();
 
-            foreach (
-                $this->getStockSourceLinks->execute($searchCriteria)->getItems()
-                as $source
-            ) {
+            foreach ($this->getStockSourceLinks->execute($searchCriteria)->getItems() as $source) {
                 $sourceData[] = $this->sourceRepository->get(
                     $source->getSourceCode()
                 );
@@ -143,12 +135,8 @@ class StockSources implements StockSourcesInterface
                 );
             }
         }
-        if ($cacheIdentifier) {
-            $this->cacheManagerHelper->saveDataToCache($cacheIdentifier, $returnData);
-        }
         return $returnData;
     }
-
 
     /**
      * Get Data
@@ -159,21 +147,17 @@ class StockSources implements StockSourcesInterface
     public function getData($sourceItems)
     {
         foreach ($sourceItems as $source) {
-            $stockSources["enabled"] = (bool) $source->getEnabled();
+            $stockSources["enabled"] = (bool)$source->getEnabled();
             $stockSources["name"] = $source->getName();
             $stockSources["source_code"] = $source->getSourceCode();
             $stockSources["description"] = $source->getDescription();
             $stockSources["carrier_links"] = $source->getCarrierLinks();
-            $stockSources[
-                "use_default_carrier_config"
-            ] = (bool) $source->getUseDefaultCarrierConfig();
-            $stockSources[
-                "is_pickup_location_active"
-            ] = (bool) $source->getIs_pickupLocationActive();
+            $stockSources["use_default_carrier_config"] = (bool)$source->getUseDefaultCarrierConfig();
+            $stockSources["is_pickup_location_active"] = (bool)$source->getIs_pickupLocationActive();
             $stockAddressDetails["latitude"] = $source->getLatitude();
             $stockAddressDetails["longitude"] = $source->getLongitude();
             $stockAddressDetails["country_id"] = $source->getCountryId();
-            $stockAddressDetails["region_id"] = (int) $source->getRegionId();
+            $stockAddressDetails["region_id"] = (int)$source->getRegionId();
             $stockAddressDetails["region"] = $source->getRegion();
             $stockAddressDetails["city"] = $source->getCity();
             $stockAddressDetails["street"] = $source->getStreet();

@@ -99,7 +99,7 @@ class Category implements CategoryInterface
                 $categoryData[] = $this->getCategoryData($category);
             }
             return $this->helper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $categoryData,
@@ -131,7 +131,7 @@ class Category implements CategoryInterface
 
             if ($category->getId()) {
                 return $this->helper->getResponseStatus(
-                    "Success",
+                    __("Success"),
                     200,
                     true,
                     $this->getCategoryData($category),

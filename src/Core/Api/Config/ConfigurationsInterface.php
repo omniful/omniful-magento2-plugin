@@ -7,12 +7,6 @@ namespace Omniful\Core\Api\Config;
  */
 interface ConfigurationsInterface
 {
-    /**
-     * UpdateConfig
-     *
-     * @return mixed
-     */
-    public function updateConfig();
 
     /**
      * Get Omniful Config
@@ -20,4 +14,11 @@ interface ConfigurationsInterface
      * @return mixed
      */
     public function updateConfig();
+
+    /**
+     * Get Omniful Configs
+     *
+     * @return mixed|void
+     */
+    public function getOmnifulConfigs();
 }

@@ -78,8 +78,7 @@ class Status implements StatusInterface
             }
 
             // Check if status is "ready_to_ship" or "shipped" or "delivered"
-            if (
-                $status === self::STATUS_READY_TO_SHIP ||
+            if ($status === self::STATUS_READY_TO_SHIP ||
                 $status === self::STATUS_SHIPPED ||
                 $status === self::STATUS_DELIVERED
             ) {
@@ -127,7 +126,7 @@ class Status implements StatusInterface
             $order->save();
             $orderData = $this->orderManagement->getOrderData($order);
             return $this->helper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $orderData,

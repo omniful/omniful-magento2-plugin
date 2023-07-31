@@ -272,9 +272,4 @@ class Data extends AbstractHelper
     {
         return $this->scopeConfig->getValue($path, ScopeInterface::SCOPE_STORE);
     }
-
-    public function getStoreId()
-    {
-        return $this->storeManager->getStore()->getId();
-    }
 }

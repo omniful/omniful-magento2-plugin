@@ -69,7 +69,7 @@ class OrderPlaceAfter implements ObserverInterface
             if ($eventName !== "") {
                 $payload = $this->orderManagement->getOrderData($order);
                 // Log the successful publication of the order event
-                $this->logger->info("Order event published successfully");
+                $this->logger->info(__("Order event published successfully"));
                 return $this->adapter->publishMessage(
                     $eventName,
                     $payload,
@@ -77,7 +77,7 @@ class OrderPlaceAfter implements ObserverInterface
                 );
             }
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error(__($e->getMessage()));
         }
     }
 }

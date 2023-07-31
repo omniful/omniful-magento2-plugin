@@ -102,8 +102,7 @@ class Cancel implements CancelInterface
             $order = $this->orderRepository->get($orderId);
 
             // Check if the order state is "complete", and throw an error if it is
-            if (
-                $order->getState() ===
+            if ($order->getState() ===
                 \Magento\Sales\Model\Order::STATE_COMPLETE
             ) {
                 throw new LocalizedException(
@@ -179,7 +178,7 @@ class Cancel implements CancelInterface
             $this->orderRepository->save($order);
             $orderData = $this->orderManagement->getOrderData($order);
             return $this->helper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $orderData,

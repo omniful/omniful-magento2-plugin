@@ -113,7 +113,7 @@ class AddCustomOrderStatuses implements DataPatchInterface
             $status->save();
         } catch (\Exception $e) {
             // Do nothing
-            return $e->getMessage();
+            return __($e->getMessage());
         }
 
         $this->moduleDataSetup->endSetup();

@@ -5,7 +5,6 @@ namespace Omniful\Core\Model\Catalog;
 use Exception;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\App\ObjectManager;
-use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Catalog\Api\Data\ProductInterfaceFactory;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Omniful\Core\Api\Catalog\ProductInterface;
@@ -15,7 +14,6 @@ use Magento\Framework\App\Request\Http;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Catalog\Model\Product as MagentoProduct;
-use Magento\Framework\Filesystem\Io\File;
 use Magento\Eav\Api\AttributeRepositoryInterface;
 use Magento\Eav\Api\Data\AttributeInterface;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
@@ -55,17 +53,9 @@ class Product implements ProductInterface
      */
     private $productRepository;
     /**
-     * @var ProductMetadataInterface
-     */
-    private $productMetadata;
-    /**
      * @var ProductInterfaceFactory
      */
     private $productFactory;
-    /**
-     * @var File
-     */
-    private $file;
     /**
      * @var SourceItemsSaveInterface
      */
@@ -89,13 +79,11 @@ class Product implements ProductInterface
      * @param Http $request
      * @param StockRegistryInterface $stockRegistry
      * @param Configurable $configurableProductType
-     * @param File $file
      * @param Data $helper
      * @param AttributeRepositoryInterface $attributeRepository
      * @param CategoryRepositoryInterface $categoryRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param ProductRepositoryInterface $productRepository
-     * @param ProductMetadataInterface $productMetadata
      * @param CacheManagerHelper $cacheManagerHelper
      * @param SourceItemsSaveInterface $sourceItemsSave
      * @param SourceItemInterface $sourceItem
@@ -105,13 +93,11 @@ class Product implements ProductInterface
         Http $request,
         StockRegistryInterface $stockRegistry,
         Configurable $configurableProductType,
-        File $file,
         Data $helper,
         AttributeRepositoryInterface $attributeRepository,
         CategoryRepositoryInterface $categoryRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
         ProductRepositoryInterface $productRepository,
-        ProductMetadataInterface $productMetadata,
         CacheManagerHelper $cacheManagerHelper,
         SourceItemsSaveInterface $sourceItemsSave,
         SourceItemInterface $sourceItem,
@@ -121,8 +107,6 @@ class Product implements ProductInterface
         $this->attributeRepository = $attributeRepository;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->productRepository = $productRepository;
-        $this->file = $file;
-        $this->productMetadata = $productMetadata;
         $this->productFactory = $productFactory;
         $this->configurableProductType = $configurableProductType;
         $this->categoryRepository = $categoryRepository;
@@ -158,7 +142,7 @@ class Product implements ProductInterface
                 "total_pages" => ceil($totalProducts / $limit),
             ];
             return $this->helper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $productData,
@@ -208,12 +192,6 @@ class Product implements ProductInterface
         $galleryUrls = [];
         $variationDetails = [];
         $categories = [];
-        $storeId = $this->helper->getStoreId();
-        $cacheIdentifier = $this->cacheManagerHelper ::PRODUCT_DATA.$storeId;
-        if ($this->cacheManagerHelper->isDataAvailableInCache($cacheIdentifier)) {
-            return $this->cacheManagerHelper->getDataFromCache($cacheIdentifier);
-        }
-
         $productCategories = $product->getCategoryIds();
 
         foreach ($productCategories as $categoryId) {
@@ -278,7 +256,7 @@ class Product implements ProductInterface
             $product->getSku()
         );
 
-        $productCategoriesData = [
+        return [
             "id" => (int) $product->getId(),
             "sku" => (string) $product->getSku(),
             "barcode" => $product->getCustomAttribute(
@@ -312,11 +290,6 @@ class Product implements ProductInterface
             "backorders_allowed" => (bool) $stockItem->getBackOrder(),
             "weight" => (float) $product->getWeight(),
         ];
-
-        if ($cacheIdentifier) {
-            $this->cacheManagerHelper->saveDataToCache($cacheIdentifier, $productCategoriesData);
-        }
-        return $productCategoriesData;
     }
 
     /**
@@ -458,7 +431,7 @@ class Product implements ProductInterface
                 $productData = $this->getProductData($product);
             }
             return $this->helper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $productData,
@@ -518,7 +491,7 @@ class Product implements ProductInterface
             $this->productRepository->save($product);
             $productData = $this->getProductData($product);
             return $this->helper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $productData,
@@ -569,7 +542,7 @@ class Product implements ProductInterface
             $this->sourceItemsSave->execute([$this->sourceItem]);
             $productData = $this->getProductData($product);
             return $this->helper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $productData,
@@ -621,7 +594,7 @@ class Product implements ProductInterface
                 $this->productRepository->save($product);
             }
             return $this->helper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $data = null,
@@ -673,7 +646,7 @@ class Product implements ProductInterface
                 $this->sourceItemsSave->execute([$this->sourceItem]);
             }
             return $this->helper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $data = null,

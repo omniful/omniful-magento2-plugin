@@ -176,7 +176,7 @@ class Refund implements RefundInterface
 
                     // Add the response data
                     return $this->helper->getResponseStatus(
-                        "Success",
+                        __("Success"),
                         200,
                         true,
                         $orderData,

@@ -80,7 +80,7 @@ class ConfigurationsManagement implements ConfigurationsInterface
             $configData = $this->getConfigData();
 
             return $this->coreHelper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $configData
@@ -98,30 +98,6 @@ class ConfigurationsManagement implements ConfigurationsInterface
                 false
             );
         }
-    }
-
-    /**
-     * Get Config Data
-     *
-     * @return mixed
-     */
-    public function getConfigData()
-    {
-        $storeId = $this->coreHelper->getStoreId();
-        $cacheIdentifier = $this->cacheManagerHelper ::CONFIG_DATA.$storeId;
-        if ($this->cacheManagerHelper->isDataAvailableInCache($cacheIdentifier)) {
-            return $this->cacheManagerHelper->getDataFromCache($cacheIdentifier);
-        }
-        $configData["active"] = (bool)$this->coreHelper->getIsActive();
-        $configData["webhook_url"] = $this->coreHelper->getWebhookUrl();
-        $configData["workspace_id"] = $this->coreHelper->getWorkspaceId();
-        $configData["webhook_token"] = $this->coreHelper->getWebhookToken();
-        $configData["disable_ship_button"] = (bool)$this->coreHelper->isOrderShipButtonDisabled();
-        $configData["disable_order_status_dropdown"] = (bool)$this->coreHelper->isOrderStatusDropdownDisabled();
-        if ($cacheIdentifier) {
-            $this->cacheManagerHelper->saveDataToCache($cacheIdentifier, $configData);
-        }
-        return $configData;
     }
 
     /**
@@ -158,7 +134,7 @@ class ConfigurationsManagement implements ConfigurationsInterface
             $configData = $this->getConfigData();
 
             return $this->coreHelper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $configData
@@ -178,7 +154,13 @@ class ConfigurationsManagement implements ConfigurationsInterface
         }
     }
 
-    function getConfigData()
+    /**
+     * Get Config Data
+     *
+     * @return bool|mixed
+     * @throws NoSuchEntityException
+     */
+    public function getConfigData()
     {
         $configData["active"] = (bool) $this->coreHelper->getIsActive();
         $configData["webhook_url"] = $this->coreHelper->getWebhookUrl();
@@ -190,7 +172,6 @@ class ConfigurationsManagement implements ConfigurationsInterface
         $configData[
             "disable_order_status_dropdown"
         ] = (bool) $this->coreHelper->isOrderStatusDropdownDisabled();
-
         return $configData;
     }
 }

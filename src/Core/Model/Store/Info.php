@@ -105,11 +105,6 @@ class Info implements InfoInterface
     private function getStoreDetails(): array
     {
         $storeDetails = [];
-        $storeId = $this->coreHelper->getStoreId();
-        $cacheIdentifier = $this->cacheManagerHelper ::STORE_INFO_DETAILS.$storeId;
-        if ($this->cacheManagerHelper->isDataAvailableInCache($cacheIdentifier)) {
-            return $this->cacheManagerHelper->getDataFromCache($cacheIdentifier);
-        }
         // General Store Information
         $storeDetails["general"] = [
             "store_name" => $this->coreHelper->getConfigValue(
@@ -155,10 +150,6 @@ class Info implements InfoInterface
                 "catalog/category/root_id"
             ),
         ];
-
-        if ($cacheIdentifier) {
-            $this->cacheManagerHelper->saveDataToCache($cacheIdentifier, $storeDetails);
-        }
         return $storeDetails;
     }
 
@@ -169,11 +160,6 @@ class Info implements InfoInterface
      */
     private function getAllStoresInfo(): array
     {
-        $storeId = $this->coreHelper->getStoreId();
-        $cacheIdentifier = $this->cacheManagerHelper ::ALL_STORE_INFO.$storeId;
-        if ($this->cacheManagerHelper->isDataAvailableInCache($cacheIdentifier)) {
-            return $this->cacheManagerHelper->getDataFromCache($cacheIdentifier);
-        }
         $websites = $this->storeManager->getWebsites();
         $stores = $this->storeManager->getStores();
         $storeViews = $this->storeManager->getStores(true);
@@ -219,9 +205,6 @@ class Info implements InfoInterface
 
             $allStores["websites"][] = $websiteData;
         }
-        if ($cacheIdentifier) {
-            $this->cacheManagerHelper->saveDataToCache($cacheIdentifier, $allStores);
-        }
         return $allStores;
     }
 
@@ -233,11 +216,6 @@ class Info implements InfoInterface
     private function getOrderStatuses(): array
     {
         $orderStatuses = [];
-        $storeId = $this->coreHelper->getStoreId();
-        $cacheIdentifier = $this->cacheManagerHelper ::ORDER_STATUSES.$storeId;
-        if ($this->cacheManagerHelper->isDataAvailableInCache($cacheIdentifier)) {
-            return $this->cacheManagerHelper->getDataFromCache($cacheIdentifier);
-        }
         $statusCollection = $this->statusCollectionFactory->create();
         $statuses = $statusCollection->toOptionArray();
         foreach ($statuses as $status) {
@@ -245,9 +223,6 @@ class Info implements InfoInterface
                 "title" => $status["label"],
                 "code" => $status["value"],
             ];
-        }
-        if ($cacheIdentifier) {
-            $this->cacheManagerHelper->saveDataToCache($cacheIdentifier, $orderStatuses);
         }
         return $orderStatuses;
     }

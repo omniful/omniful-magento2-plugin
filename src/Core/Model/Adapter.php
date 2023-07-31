@@ -161,7 +161,6 @@ class Adapter
             "headers" => array_merge($this->headers, $additionalHeaders),
         ];
         $this->headers = array_merge($this->headers, $additionalHeaders);
-
         $this->logger->info("LoggingData: " . json_encode($loggingData));
         $this->curl->setHeaders($this->headers);
         $response = $this->curl->post($endPoint, json_encode($payload));
