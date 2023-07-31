@@ -6,6 +6,7 @@ use Omniful\Core\Helper\Data as CoreHelper;
 use Magento\Sales\Model\ResourceModel\Order\Status\CollectionFactory;
 use Omniful\Core\Api\Store\InfoInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Omniful\Core\Helper\CacheManager as CacheManagerHelper;
 use Omniful\Core\Api\Stock\StockSourcesInterface;
 
 class Info implements InfoInterface
@@ -29,18 +30,24 @@ class Info implements InfoInterface
      * @var stockSourcesInterface
      */
     private $stockSourcesInterface;
+    /**
+     * @var CacheManagerHelper
+     */
+    private $cacheManagerHelper;
 
     /**
      * Info constructor.
      *
      * @param CoreHelper $coreHelper
      * @param StoreManagerInterface $storeManager
+     * @param CacheManagerHelper $cacheManagerHelper
      * @param CollectionFactory $statusCollectionFactory
      * @param StockSourcesInterface $stockSourcesInterface
      */
     public function __construct(
         CoreHelper $coreHelper,
         StoreManagerInterface $storeManager,
+        CacheManagerHelper $cacheManagerHelper,
         CollectionFactory $statusCollectionFactory,
         StockSourcesInterface $stockSourcesInterface
     ) {
@@ -48,6 +55,7 @@ class Info implements InfoInterface
         $this->storeManager = $storeManager;
         $this->stockSourcesInterface = $stockSourcesInterface;
         $this->statusCollectionFactory = $statusCollectionFactory;
+        $this->cacheManagerHelper = $cacheManagerHelper;
     }
 
     /**
@@ -70,7 +78,7 @@ class Info implements InfoInterface
             // Retrieve all stock sources
             $stockSources = $this->stockSourcesInterface->getStockSourcesData();
 
-            $responseData = [
+            return [
                 "data" => [
                     "store_info" => $storeDetails,
                     "all_stores" => $allStores,
@@ -78,16 +86,14 @@ class Info implements InfoInterface
                     "order_statuses" => $orderStatuses,
                 ],
             ];
-            return $responseData;
         } catch (\Exception $e) {
-            $responseData = [
+            return [
                 "data" => null,
                 "error" => [
                     "code" => 500,
                     "message" => (string) $e->getMessage(),
                 ],
             ];
-            return $responseData;
         }
     }
 
@@ -99,7 +105,11 @@ class Info implements InfoInterface
     private function getStoreDetails(): array
     {
         $storeDetails = [];
-
+        $storeId = $this->coreHelper->getStoreId();
+        $cacheIdentifier = $this->cacheManagerHelper ::STORE_INFO_DETAILS.$storeId;
+        if ($this->cacheManagerHelper->isDataAvailableInCache($cacheIdentifier)) {
+            return $this->cacheManagerHelper->getDataFromCache($cacheIdentifier);
+        }
         // General Store Information
         $storeDetails['general'] = [
             'store_name' => $this->coreHelper->getConfigValue('general/store_information/name'),
@@ -124,6 +134,9 @@ class Info implements InfoInterface
             'default_category' => (int) $this->coreHelper->getConfigValue('catalog/category/root_id'),
         ];
 
+        if ($cacheIdentifier) {
+            $this->cacheManagerHelper->saveDataToCache($cacheIdentifier, $storeDetails);
+        }
         return $storeDetails;
     }
 
@@ -134,6 +147,11 @@ class Info implements InfoInterface
      */
     private function getAllStoresInfo(): array
     {
+        $storeId = $this->coreHelper->getStoreId();
+        $cacheIdentifier = $this->cacheManagerHelper ::ALL_STORE_INFO.$storeId;
+        if ($this->cacheManagerHelper->isDataAvailableInCache($cacheIdentifier)) {
+            return $this->cacheManagerHelper->getDataFromCache($cacheIdentifier);
+        }
         $websites = $this->storeManager->getWebsites();
         $stores = $this->storeManager->getStores();
         $storeViews = $this->storeManager->getStores(true);
@@ -177,7 +195,9 @@ class Info implements InfoInterface
 
             $allStores['websites'][] = $websiteData;
         }
-
+        if ($cacheIdentifier) {
+            $this->cacheManagerHelper->saveDataToCache($cacheIdentifier, $allStores);
+        }
         return $allStores;
     }
 
@@ -189,6 +209,11 @@ class Info implements InfoInterface
     private function getOrderStatuses(): array
     {
         $orderStatuses = [];
+        $storeId = $this->coreHelper->getStoreId();
+        $cacheIdentifier = $this->cacheManagerHelper ::ORDER_STATUSES.$storeId;
+        if ($this->cacheManagerHelper->isDataAvailableInCache($cacheIdentifier)) {
+            return $this->cacheManagerHelper->getDataFromCache($cacheIdentifier);
+        }
         $statusCollection = $this->statusCollectionFactory->create();
         $statuses = $statusCollection->toOptionArray();
         foreach ($statuses as $status) {
@@ -196,6 +221,9 @@ class Info implements InfoInterface
                 "title" => $status["label"],
                 "code" => $status["value"],
             ];
+        }
+        if ($cacheIdentifier) {
+            $this->cacheManagerHelper->saveDataToCache($cacheIdentifier, $orderStatuses);
         }
         return $orderStatuses;
     }

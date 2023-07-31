@@ -47,7 +47,6 @@ class AddOmnifulCancelReasonToOrder implements
     {
         $this->moduleDataSetup->startSetup();
         $connection = $this->moduleDataSetup->getConnection();
-
         if (!$connection->tableColumnExists(
             $this->getTableName(),
             self::COLUMN_NAME
@@ -71,7 +70,6 @@ class AddOmnifulCancelReasonToOrder implements
                 self::COLUMN_DEFINITIONS
             );
         }
-
         $this->moduleDataSetup->endSetup();
     }
 

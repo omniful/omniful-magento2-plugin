@@ -249,4 +249,9 @@ class Data extends AbstractHelper
             ScopeInterface::SCOPE_STORE
         );
     }
+
+    public function getStoreId()
+    {
+        return $this->storeManager->getStore()->getId();
+    }
 }

@@ -8,6 +8,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\InventoryApi\Api\Data\StockSourceInterface;
 use Omniful\Core\Api\Stock\StockSourcesInterface;
+use Omniful\Core\Helper\CacheManager as CacheManagerHelper;
 use Magento\InventoryApi\Api\SourceRepositoryInterface;
 use Omniful\Core\Helper\Data as CoreHelper;
 use Magento\Store\Model\ResourceModel\Website\CollectionFactory as WebsiteCollectionFactory;
@@ -46,6 +47,10 @@ class StockSources implements StockSourcesInterface
      * @var GetAssignedStockIdForWebsite
      */
     private $getAssignedStockIdForWebsite;
+    /**
+     * @var CacheManagerHelper
+     */
+    private $cacheManagerHelper;
 
     /**
      * StockSources constructor.
@@ -53,6 +58,7 @@ class StockSources implements StockSourcesInterface
      * @param CoreHelper $coreHelper
      * @param SourceRepositoryInterface $sourceRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
+     * @param CacheManagerHelper $cacheManagerHelper
      * @param GetStockSourceLinksInterface $getStockSourceLinks
      * @param WebsiteCollectionFactory $websiteCollectionFactory
      * @param GetAssignedStockIdForWebsite $getAssignedStockIdForWebsite
@@ -61,6 +67,7 @@ class StockSources implements StockSourcesInterface
         CoreHelper $coreHelper,
         SourceRepositoryInterface $sourceRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
+        CacheManagerHelper $cacheManagerHelper,
         GetStockSourceLinksInterface $getStockSourceLinks,
         WebsiteCollectionFactory $websiteCollectionFactory,
         GetAssignedStockIdForWebsite $getAssignedStockIdForWebsite
@@ -71,6 +78,7 @@ class StockSources implements StockSourcesInterface
         $this->websiteCollectionFactory = $websiteCollectionFactory;
         $this->getStockSourceLinks = $getStockSourceLinks;
         $this->getAssignedStockIdForWebsite = $getAssignedStockIdForWebsite;
+        $this->cacheManagerHelper = $cacheManagerHelper;
     }
 
     /**
@@ -106,9 +114,14 @@ class StockSources implements StockSourcesInterface
      */
     public function getStockSourcesData()
     {
+        $storeId = $this->coreHelper->getStoreId();
+        $cacheIdentifier = $this->cacheManagerHelper ::STOCK_SOURCE_CODE.$storeId;
+        if ($this->cacheManagerHelper->isDataAvailableInCache($cacheIdentifier)) {
+            return $this->cacheManagerHelper->getDataFromCache($cacheIdentifier);
+        }
         $websiteCollection = $this->websiteCollectionFactory->create();
         $returnData = [];
-        foreach ($websiteCollection as $website) {
+        foreach ($websiteCollection as $website){
             $sourceData = [];
             $stockId = $this->getAssignedStockIdForWebsite->execute($website->getCode());
 
@@ -121,8 +134,12 @@ class StockSources implements StockSourcesInterface
                 $returnData[$website->getCode()][] = $this->getData($sourceData);
             }
         }
+        if ($cacheIdentifier) {
+            $this->cacheManagerHelper->saveDataToCache($cacheIdentifier, $returnData);
+        }
         return $returnData;
     }
+
 
     /**
      * Get Data

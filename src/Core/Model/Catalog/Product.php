@@ -21,6 +21,7 @@ use Magento\Eav\Api\Data\AttributeInterface;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\InventoryApi\Api\SourceItemsSaveInterface;
 use Magento\InventoryApi\Api\Data\SourceItemInterface;
+use Omniful\Core\Helper\CacheManager as CacheManagerHelper;
 use Omniful\Core\Helper\Data;
 
 class Product implements ProductInterface
@@ -77,6 +78,10 @@ class Product implements ProductInterface
      * @var Data
      */
     private $helper;
+    /**
+     * @var CacheManagerHelper
+     */
+    private $cacheManagerHelper;
 
     /**
      * Product constructor.
@@ -91,6 +96,7 @@ class Product implements ProductInterface
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param ProductRepositoryInterface $productRepository
      * @param ProductMetadataInterface $productMetadata
+     * @param CacheManagerHelper $cacheManagerHelper
      * @param SourceItemsSaveInterface $sourceItemsSave
      * @param SourceItemInterface $sourceItem
      * @param ProductInterfaceFactory $productFactory
@@ -106,6 +112,7 @@ class Product implements ProductInterface
         SearchCriteriaBuilder $searchCriteriaBuilder,
         ProductRepositoryInterface $productRepository,
         ProductMetadataInterface $productMetadata,
+        CacheManagerHelper $cacheManagerHelper,
         SourceItemsSaveInterface $sourceItemsSave,
         SourceItemInterface $sourceItem,
         ProductInterfaceFactory $productFactory
@@ -123,6 +130,7 @@ class Product implements ProductInterface
         $this->sourceItemsSave = $sourceItemsSave;
         $this->sourceItem = $sourceItem;
         $this->helper = $helper;
+        $this->cacheManagerHelper = $cacheManagerHelper;
     }
 
     /**
@@ -200,6 +208,12 @@ class Product implements ProductInterface
         $galleryUrls = [];
         $variationDetails = [];
         $categories = [];
+        $storeId = $this->helper->getStoreId();
+        $cacheIdentifier = $this->cacheManagerHelper ::PRODUCT_DATA.$storeId;
+        if ($this->cacheManagerHelper->isDataAvailableInCache($cacheIdentifier)) {
+            return $this->cacheManagerHelper->getDataFromCache($cacheIdentifier);
+        }
+
         $productCategories = $product->getCategoryIds();
 
         foreach ($productCategories as $categoryId) {
@@ -264,7 +278,7 @@ class Product implements ProductInterface
             $product->getSku()
         );
 
-        return [
+        $productCategoriesData = [
             "id" => (int) $product->getId(),
             "sku" => (string) $product->getSku(),
             "barcode" => $product->getCustomAttribute(
@@ -298,6 +312,11 @@ class Product implements ProductInterface
             "backorders_allowed" => (bool) $stockItem->getBackOrder(),
             "weight" => (float) $product->getWeight(),
         ];
+
+        if ($cacheIdentifier) {
+            $this->cacheManagerHelper->saveDataToCache($cacheIdentifier, $productCategoriesData);
+        }
+        return $productCategoriesData;
     }
 
     /**
@@ -429,11 +448,11 @@ class Product implements ProductInterface
         try {
             if (is_numeric($identifier)) {
                 $productId = (int) $identifier;
-                $product = $this->getProductById($productId);
+                $product = $this->loadProductById($productId);
                 $productData = $this->getProductData($product);
             } else {
                 $productSku = $identifier;
-                $product = $this->getProductBySku($productSku);
+                $product = $this->productRepository->get($productSku);
                 $productData = $this->getProductData($product);
             }
             return $this->helper->getResponseStatus(
@@ -468,43 +487,15 @@ class Product implements ProductInterface
     }
 
     /**
-     * Load a product by SKU
+     * Load product by ID
      *
      * @param int $productId
      * @return MagentoProduct
      */
-    public function getProductById($productId, $storeId = null)
+    public function loadProductById($productId)
     {
-        try {
-            // Load the product by ID
-            $product = $this->productRepository->getById($productId, false, $storeId);
-
-            // $product now contains the loaded product data for the specified store ID
-            return $product;
-        } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
-            // Handle the exception if the product with the given ID is not found
-            return null;
-        }
-    }
-
-    /**
-     * Load a product by SKU
-     *
-     * @param int $productId
-     * @return MagentoProduct
-     */
-    public function getProductBySku($sku, $storeId = null)
-    {
-        try {
-            // Load the product by SKU
-            $product = $this->productRepository->get($sku, false, $storeId);
-
-            // $product now contains the loaded product data for the specified store ID
-            return $product;
-        } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
-            // Handle the exception if the product with the given SKU is not found
-            return null;
-        }
+        // TODO: need to load by store id
+        return $this->productFactory->create()->load($productId);
     }
 
     /**
@@ -623,8 +614,7 @@ class Product implements ProductInterface
                 $product = $this->productRepository->get($productData["sku"]);
                 $stockData = ["qty" => $productData["qty"]];
 
-                if (
-                    isset($productData["status"])
+                if (isset($productData["status"])
                     && $productData["status"] === "out_of_stock"
                 ) {
                     $stockData["is_in_stock"] = false;
@@ -675,8 +665,7 @@ class Product implements ProductInterface
     {
         try {
             foreach ($products as $productData) {
-                if (
-                    isset($productData["status"])
+                if (isset($productData["status"])
                     && $productData["status"] === "out_of_stock"
                 ) {
                     $stockData = false;

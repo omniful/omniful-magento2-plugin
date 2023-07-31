@@ -1,29 +1,37 @@
 <?php
 
-namespace Omniful\Core\Api\Catalog;
+namespace Omniful\Core\Api;
 
 /**
- * ProductInterface for third party modules
+ * ProductManagementInterface for third party modules
  */
-interface ProductInterface
+interface ProductManagementInterface
 {
     /**
-     * Get products.
+     * Get product list
      *
-     * @return string[][]
+     * @return string[]
      */
     public function getProducts();
 
     /**
-     * Get product by identifier.
+     * Get product by sku
      *
-     * @param  string $identifier
+     * @param  string $sku
      * @return string[]
      */
-    public function getProductByIdentifier($identifier);
+    public function getProductBySku($sku);
 
     /**
-     * Update product in Bulk
+     * Get product by id
+     *
+     * @param  int $id
+     * @return string[]
+     */
+    public function getProductById(int $id);
+
+    /**
+     * Update Bulk Products Inventory
      *
      * @param mixed $products
      * @return mixed
@@ -31,12 +39,12 @@ interface ProductInterface
     public function updateBulkProductsInventory($products);
 
     /**
-     * Update product by SKU
+     * Update Product Inventory
      *
-     * @param  string    $sku
-     * @param  int       $qty
-     * @param  bool|null $status
-     * @return mixed
+     * @param  string $sku
+     * @param  int    $qty
+     * @param  bool   $status
+     * @return string[]
      */
     public function updateProductsInventory(
         $sku,
@@ -61,7 +69,7 @@ interface ProductInterface
     );
 
     /**
-     * Update product in Bulk
+     * Update Bulk Products Inventory
      *
      * @param mixed $products
      * @return mixed

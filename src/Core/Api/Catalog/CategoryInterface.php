@@ -8,17 +8,17 @@ namespace Omniful\Core\Api\Catalog;
 interface CategoryInterface
 {
     /**
-     * Get categories.
+     * Get orders.
      *
-     * @return string[] An array of category names.
+     * @return string[]
      */
-    public function getCategories(): array;
+    public function getCategories();
 
     /**
      * Get category by ID.
      *
-     * @param  int $id The ID of the category to retrieve.
-     * @return string[] An array containing the details of the category.
+     * @param  int $id
+     * @return string[]
      */
-    public function getCategoryById(int $id): array;
+    public function getCategoryById(int $id);
 }

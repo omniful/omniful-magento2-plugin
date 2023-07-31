@@ -25,6 +25,12 @@ class CacheManager
     public const CURRENCY_FROM_CACHE_ID = "omniful_currency_cache_";
     public const SCOPE_CONFIG_CACHE_ID = "omniful_scope_config_cache_";
     public const MEDIA_BASE_URL_CACHE_ID = "omniful_base_url_media_cache_";
+    public const STOCK_SOURCE_CODE = "omniful_stock_source_code_";
+    public const STORE_INFO_DETAILS = "omniful_store_info_details_";
+    public const ALL_STORE_INFO = "omniful_all_store_info_";
+    public const ORDER_STATUSES = "omniful_order_statuses_";
+    public const CONFIG_DATA = "omniful_config_data_";
+    public const PRODUCT_DATA = "omniful_product_data_";
 
     /**
      * Serializer instance

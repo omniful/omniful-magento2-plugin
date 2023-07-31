@@ -95,7 +95,6 @@ class Order implements OrderInterface
         if ($createdAtMin && $createdAtMax) {
             $orderCollection->addAttributeToFilter('created_at', ['from' => $createdAtMin, 'to' => $createdAtMax]);
         }
-        ;
 
         $orderCollection->addFieldToFilter('status', ['in' => $status]);
         $orderCollection->setPageSize($limit);

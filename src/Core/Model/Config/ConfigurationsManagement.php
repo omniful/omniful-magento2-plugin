@@ -10,6 +10,7 @@ use Omniful\Core\Api\Config\ConfigurationsInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Webapi\Rest\Request;
+use Omniful\Core\Helper\CacheManager as CacheManagerHelper;
 use Omniful\Core\Helper\Data as CoreHelper;
 
 class ConfigurationsManagement implements ConfigurationsInterface
@@ -38,12 +39,17 @@ class ConfigurationsManagement implements ConfigurationsInterface
      * @var CoreHelper
      */
     private $coreHelper;
+    /**
+     * @var CacheManagerHelper
+     */
+    private $cacheManagerHelper;
 
     /**
      * UpdateConfig constructor.
-     * @param WriterInterface $configWriter
      * @param Request $request
-     * @param Data $helper
+     * @param CoreHelper $coreHelper
+     * @param WriterInterface $configWriter
+     * @param CacheManagerHelper $cacheManagerHelper
      * @param TypeListInterface $cacheTypeList
      * @param StoreManagerInterface $storeManager
      */
@@ -51,6 +57,7 @@ class ConfigurationsManagement implements ConfigurationsInterface
         Request $request,
         CoreHelper $coreHelper,
         WriterInterface $configWriter,
+        CacheManagerHelper $cacheManagerHelper,
         TypeListInterface $cacheTypeList,
         StoreManagerInterface $storeManager
     ) {
@@ -59,14 +66,15 @@ class ConfigurationsManagement implements ConfigurationsInterface
         $this->configWriter = $configWriter;
         $this->storeManager = $storeManager;
         $this->cacheTypeList = $cacheTypeList;
+        $this->cacheManagerHelper = $cacheManagerHelper;
     }
 
     /**
-     * getOmnifulConfigs
+     * Get Omniful Configs
      *
      * @return mixed|void
      */
-    public function getOmnifulConfigs(): array
+    public function getOmnifulConfigs()
     {
         try {
             $configData = $this->getConfigData();
@@ -95,11 +103,35 @@ class ConfigurationsManagement implements ConfigurationsInterface
     }
 
     /**
+     * Get Config Data
+     *
+     * @return mixed
+     */
+    public function getConfigData()
+    {
+        $storeId = $this->coreHelper->getStoreId();
+        $cacheIdentifier = $this->cacheManagerHelper ::CONFIG_DATA.$storeId;
+        if ($this->cacheManagerHelper->isDataAvailableInCache($cacheIdentifier)) {
+            return $this->cacheManagerHelper->getDataFromCache($cacheIdentifier);
+        }
+        $configData["active"] = (bool)$this->coreHelper->getIsActive();
+        $configData["webhook_url"] = $this->coreHelper->getWebhookUrl();
+        $configData["workspace_id"] = $this->coreHelper->getWorkspaceId();
+        $configData["webhook_token"] = $this->coreHelper->getWebhookToken();
+        $configData["disable_ship_button"] = (bool)$this->coreHelper->isOrderShipButtonDisabled();
+        $configData["disable_order_status_dropdown"] = (bool)$this->coreHelper->isOrderStatusDropdownDisabled();
+        if ($cacheIdentifier) {
+            $this->cacheManagerHelper->saveDataToCache($cacheIdentifier, $configData);
+        }
+        return $configData;
+    }
+
+    /**
      * UpdateConfig
      *
      * @return mixed|void
      */
-    public function updateConfig(): array
+    public function updateConfig()
     {
         try {
             $params = $this->request->getBodyParams();
@@ -144,17 +176,5 @@ class ConfigurationsManagement implements ConfigurationsInterface
                 false
             );
         }
-    }
-
-    function getConfigData()
-    {
-        $configData["active"] = (bool) $this->coreHelper->getIsActive();
-        $configData["webhook_url"] = $this->coreHelper->getWebhookUrl();
-        $configData["workspace_id"] = $this->coreHelper->getWorkspaceId();
-        $configData["webhook_token"] = $this->coreHelper->getWebhookToken();
-        $configData["disable_ship_button"] = (bool) $this->coreHelper->isOrderShipButtonDisabled();
-        $configData["disable_order_status_dropdown"] = (bool) $this->coreHelper->isOrderStatusDropdownDisabled();
-
-        return $configData;
     }
 }

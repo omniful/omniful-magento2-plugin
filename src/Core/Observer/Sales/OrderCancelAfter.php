@@ -58,8 +58,6 @@ class OrderCancelAfter implements ObserverInterface
     public function execute(Observer $observer)
     {
         $order = $observer->getOrder();
-        file_put_contents(BP . '/var/log/plog.log', print_r('Pixicommerce CheckoutCom Verify', true)."\n", FILE_APPEND);
-
         try {
             if ($order->getStatus() == "canceled") {
                 $eventName = self::EVENT_NAME;
