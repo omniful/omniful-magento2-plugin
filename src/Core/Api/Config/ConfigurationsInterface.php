@@ -7,19 +7,18 @@ namespace Omniful\Core\Api\Config;
  */
 interface ConfigurationsInterface
 {
-    /**
-     * getOmnifulConfigs
-     *
-     * @param array $configData An array containing the configuration data to be updated
-     *
-     * @return string[] An array containing the details of the config.
-     */
-    public function getOmnifulConfigs();
 
     /**
-     * UpdateConfig
+     * Get Omniful Config
      *
-     * @return string[] An array containing the details of the config.
+     * @return mixed
      */
     public function updateConfig();
+
+    /**
+     * Get Omniful Configs
+     *
+     * @return mixed|void
+     */
+    public function getOmnifulConfigs();
 }

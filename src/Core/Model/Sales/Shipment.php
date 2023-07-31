@@ -138,8 +138,7 @@ class Shipment implements ShipmentInterface
         bool $override_exist_data = false
     ) {
         // Validate input data
-        if (
-            empty($tracking_number) ||
+        if (empty($tracking_number) ||
             empty($tracking_link) ||
             empty($shipping_label_pdf)
         ) {
@@ -241,7 +240,7 @@ class Shipment implements ShipmentInterface
             $addedMessage = self::TRACKING_INFO_ADDED_MESSAGE;
 
             return $this->helper->getResponseStatus(
-                $addedMessage,
+                __($addedMessage),
                 200,
                 true,
                 $data = null,

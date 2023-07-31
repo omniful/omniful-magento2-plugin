@@ -69,15 +69,16 @@ class ProductSaveAfter implements ObserverInterface
             $eventName = $this->isNewProduct($product)
                 ? self::PRODUCT_CREATED_EVENT_NAME
                 : self::PRODUCT_UPDATED_EVENT_NAME;
+
+            $code = $product->getStore()->getCode();
             $headers = [
-                "x-website-code" => $product
+                "x-website-code" => $code == 'admin' ? 'default' : $product
                     ->getStore()
                     ->getWebsite()
                     ->getCode(),
-                "x-store-code" => $product->getStore()->getCode(),
-                "x-store-view-code" => $product->getStore()->getName(),
+                "x-store-code" => $code == 'admin' ? 'default' : $product->getStore()->getCode(),
+                "x-store-view-code" => $code == 'admin' ? 'default' : $product->getStore()->getName(),
             ];
-
             // Connect to the adapter
             $this->adapter->connect();
 
@@ -96,7 +97,7 @@ class ProductSaveAfter implements ObserverInterface
             return true;
         } catch (\Exception $e) {
             $this->logger->info(
-                "Error while updating product: " . $e->getMessage()
+                __("Error while updating product: " . $e->getMessage())
             );
         }
     }

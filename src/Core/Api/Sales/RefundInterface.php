@@ -10,8 +10,8 @@ interface RefundInterface
     /**
      * Update order status
      *
-     * @param int   $id The ID of the order to process the refund for.
-     * @param mixed $items The items to be refunded.
+     * @param  int   $id
+     * @param  mixed $items
      * @return mixed
      */
     public function processRefund(int $id, $items);

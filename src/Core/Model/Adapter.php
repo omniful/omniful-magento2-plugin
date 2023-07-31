@@ -143,16 +143,24 @@ class Adapter
             "data" => $payload,
         ];
 
-        $endPoint = $this->webhookUrl;
+        $this->logger->info("Payload: " . json_encode($payload));
         $this->headers["X-Event-Name"] = $event;
-        $this->headers = array_merge($this->headers, $additionalHeaders);
+
+        $endPoint = $this->webhookUrl;
+
+        $writer = new \Zend_Log_Writer_Stream(BP . '/var/log/headers.log');
+        $logger = new \Zend_Log();
+        $logger->addWriter($writer);
+        $logger->info(print_r($additionalHeaders, true));
+        $logger->info(print_r($this->headers, true));
+        $logger->info(print_r(array_merge($this->headers, $additionalHeaders), true));
 
         $loggingData = [
             "endPoint" => $endPoint,
             "payload" => json_encode($payload),
-            "headers" => $this->headers,
+            "headers" => array_merge($this->headers, $additionalHeaders),
         ];
-
+        $this->headers = array_merge($this->headers, $additionalHeaders);
         $this->logger->info("LoggingData: " . json_encode($loggingData));
         $this->curl->setHeaders($this->headers);
         $response = $this->curl->post($endPoint, json_encode($payload));

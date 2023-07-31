@@ -69,7 +69,7 @@ class Category implements CategoryInterface
      *
      * @return array|string[]
      */
-    public function getCategories(): array
+    public function getCategories()
     {
         try {
             $storeId = $this->storeManager->getStore()->getId();
@@ -89,7 +89,7 @@ class Category implements CategoryInterface
 
             /**
              * @var \Magento\Catalog\Model\Category $category
-             */
+            */
             foreach ($categories as $category) {
                 $categoryId = $category->getId();
                 if ($categoryId == $defaultCategoryId) {
@@ -99,7 +99,7 @@ class Category implements CategoryInterface
                 $categoryData[] = $this->getCategoryData($category);
             }
             return $this->helper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $categoryData,
@@ -124,14 +124,14 @@ class Category implements CategoryInterface
      * @param int $id
      * @return mixed|string[]
      */
-    public function getCategoryById(int $id): array
+    public function getCategoryById(int $id)
     {
         try {
             $category = $this->categoryRepository->get($id);
 
             if ($category->getId()) {
                 return $this->helper->getResponseStatus(
-                    "Success",
+                    __("Success"),
                     200,
                     true,
                     $this->getCategoryData($category),

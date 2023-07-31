@@ -6,6 +6,7 @@ use Omniful\Core\Helper\Data as CoreHelper;
 use Magento\Sales\Model\ResourceModel\Order\Status\CollectionFactory;
 use Omniful\Core\Api\Store\InfoInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Omniful\Core\Helper\CacheManager as CacheManagerHelper;
 use Omniful\Core\Api\Stock\StockSourcesInterface;
 
 class Info implements InfoInterface
@@ -29,18 +30,24 @@ class Info implements InfoInterface
      * @var stockSourcesInterface
      */
     private $stockSourcesInterface;
+    /**
+     * @var CacheManagerHelper
+     */
+    private $cacheManagerHelper;
 
     /**
      * Info constructor.
      *
      * @param CoreHelper $coreHelper
      * @param StoreManagerInterface $storeManager
+     * @param CacheManagerHelper $cacheManagerHelper
      * @param CollectionFactory $statusCollectionFactory
      * @param StockSourcesInterface $stockSourcesInterface
      */
     public function __construct(
         CoreHelper $coreHelper,
         StoreManagerInterface $storeManager,
+        CacheManagerHelper $cacheManagerHelper,
         CollectionFactory $statusCollectionFactory,
         StockSourcesInterface $stockSourcesInterface
     ) {
@@ -48,6 +55,7 @@ class Info implements InfoInterface
         $this->storeManager = $storeManager;
         $this->stockSourcesInterface = $stockSourcesInterface;
         $this->statusCollectionFactory = $statusCollectionFactory;
+        $this->cacheManagerHelper = $cacheManagerHelper;
     }
 
     /**
@@ -70,7 +78,7 @@ class Info implements InfoInterface
             // Retrieve all stock sources
             $stockSources = $this->stockSourcesInterface->getStockSourcesData();
 
-            $responseData = [
+            return [
                 "data" => [
                     "store_info" => $storeDetails,
                     "all_stores" => $allStores,
@@ -78,16 +86,14 @@ class Info implements InfoInterface
                     "order_statuses" => $orderStatuses,
                 ],
             ];
-            return $responseData;
         } catch (\Exception $e) {
-            $responseData = [
+            return [
                 "data" => null,
                 "error" => [
                     "code" => 500,
                     "message" => (string) $e->getMessage(),
                 ],
             ];
-            return $responseData;
         }
     }
 
@@ -99,7 +105,6 @@ class Info implements InfoInterface
     private function getStoreDetails(): array
     {
         $storeDetails = [];
-
         // General Store Information
         $storeDetails["general"] = [
             "store_name" => $this->coreHelper->getConfigValue(
@@ -145,7 +150,6 @@ class Info implements InfoInterface
                 "catalog/category/root_id"
             ),
         ];
-
         return $storeDetails;
     }
 
@@ -201,7 +205,6 @@ class Info implements InfoInterface
 
             $allStores["websites"][] = $websiteData;
         }
-
         return $allStores;
     }
 

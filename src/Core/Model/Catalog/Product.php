@@ -5,7 +5,6 @@ namespace Omniful\Core\Model\Catalog;
 use Exception;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\App\ObjectManager;
-use Magento\Framework\App\ProductMetadataInterface;
 use Magento\Catalog\Api\Data\ProductInterfaceFactory;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Omniful\Core\Api\Catalog\ProductInterface;
@@ -15,12 +14,12 @@ use Magento\Framework\App\Request\Http;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
 use Magento\Catalog\Model\Product as MagentoProduct;
-use Magento\Framework\Filesystem\Io\File;
 use Magento\Eav\Api\AttributeRepositoryInterface;
 use Magento\Eav\Api\Data\AttributeInterface;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\InventoryApi\Api\SourceItemsSaveInterface;
 use Magento\InventoryApi\Api\Data\SourceItemInterface;
+use Omniful\Core\Helper\CacheManager as CacheManagerHelper;
 use Omniful\Core\Helper\Data;
 
 class Product implements ProductInterface
@@ -54,17 +53,9 @@ class Product implements ProductInterface
      */
     private $productRepository;
     /**
-     * @var ProductMetadataInterface
-     */
-    private $productMetadata;
-    /**
      * @var ProductInterfaceFactory
      */
     private $productFactory;
-    /**
-     * @var File
-     */
-    private $file;
     /**
      * @var SourceItemsSaveInterface
      */
@@ -77,6 +68,10 @@ class Product implements ProductInterface
      * @var Data
      */
     private $helper;
+    /**
+     * @var CacheManagerHelper
+     */
+    private $cacheManagerHelper;
 
     /**
      * Product constructor.
@@ -84,13 +79,12 @@ class Product implements ProductInterface
      * @param Http $request
      * @param StockRegistryInterface $stockRegistry
      * @param Configurable $configurableProductType
-     * @param File $file
      * @param Data $helper
      * @param AttributeRepositoryInterface $attributeRepository
      * @param CategoryRepositoryInterface $categoryRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param ProductRepositoryInterface $productRepository
-     * @param ProductMetadataInterface $productMetadata
+     * @param CacheManagerHelper $cacheManagerHelper
      * @param SourceItemsSaveInterface $sourceItemsSave
      * @param SourceItemInterface $sourceItem
      * @param ProductInterfaceFactory $productFactory
@@ -99,13 +93,12 @@ class Product implements ProductInterface
         Http $request,
         StockRegistryInterface $stockRegistry,
         Configurable $configurableProductType,
-        File $file,
         Data $helper,
         AttributeRepositoryInterface $attributeRepository,
         CategoryRepositoryInterface $categoryRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
         ProductRepositoryInterface $productRepository,
-        ProductMetadataInterface $productMetadata,
+        CacheManagerHelper $cacheManagerHelper,
         SourceItemsSaveInterface $sourceItemsSave,
         SourceItemInterface $sourceItem,
         ProductInterfaceFactory $productFactory
@@ -114,8 +107,6 @@ class Product implements ProductInterface
         $this->attributeRepository = $attributeRepository;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->productRepository = $productRepository;
-        $this->file = $file;
-        $this->productMetadata = $productMetadata;
         $this->productFactory = $productFactory;
         $this->configurableProductType = $configurableProductType;
         $this->categoryRepository = $categoryRepository;
@@ -123,6 +114,7 @@ class Product implements ProductInterface
         $this->sourceItemsSave = $sourceItemsSave;
         $this->sourceItem = $sourceItem;
         $this->helper = $helper;
+        $this->cacheManagerHelper = $cacheManagerHelper;
     }
 
     /**
@@ -150,7 +142,7 @@ class Product implements ProductInterface
                 "total_pages" => ceil($totalProducts / $limit),
             ];
             return $this->helper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $productData,
@@ -431,15 +423,15 @@ class Product implements ProductInterface
         try {
             if (is_numeric($identifier)) {
                 $productId = (int) $identifier;
-                $product = $this->getProductById($productId);
+                $product = $this->loadProductById($productId);
                 $productData = $this->getProductData($product);
             } else {
                 $productSku = $identifier;
-                $product = $this->getProductBySku($productSku);
+                $product = $this->productRepository->get($productSku);
                 $productData = $this->getProductData($product);
             }
             return $this->helper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $productData,
@@ -468,47 +460,15 @@ class Product implements ProductInterface
     }
 
     /**
-     * Load a product by SKU
+     * Load product by ID
      *
      * @param int $productId
      * @return MagentoProduct
      */
-    public function getProductById($productId, $storeId = null)
+    public function loadProductById($productId)
     {
-        try {
-            // Load the product by ID
-            $product = $this->productRepository->getById(
-                $productId,
-                false,
-                $storeId
-            );
-
-            // $product now contains the loaded product data for the specified store ID
-            return $product;
-        } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
-            // Handle the exception if the product with the given ID is not found
-            return null;
-        }
-    }
-
-    /**
-     * Load a product by SKU
-     *
-     * @param int $productId
-     * @return MagentoProduct
-     */
-    public function getProductBySku($sku, $storeId = null)
-    {
-        try {
-            // Load the product by SKU
-            $product = $this->productRepository->get($sku, false, $storeId);
-
-            // $product now contains the loaded product data for the specified store ID
-            return $product;
-        } catch (\Magento\Framework\Exception\NoSuchEntityException $e) {
-            // Handle the exception if the product with the given SKU is not found
-            return null;
-        }
+        // TODO: need to load by store id
+        return $this->productFactory->create()->load($productId);
     }
 
     /**
@@ -531,7 +491,7 @@ class Product implements ProductInterface
             $this->productRepository->save($product);
             $productData = $this->getProductData($product);
             return $this->helper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $productData,
@@ -582,7 +542,7 @@ class Product implements ProductInterface
             $this->sourceItemsSave->execute([$this->sourceItem]);
             $productData = $this->getProductData($product);
             return $this->helper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $productData,
@@ -623,9 +583,8 @@ class Product implements ProductInterface
                 $product = $this->productRepository->get($productData["sku"]);
                 $stockData = ["qty" => $productData["qty"]];
 
-                if (
-                    isset($productData["status"]) &&
-                    $productData["status"] === "out_of_stock"
+                if (isset($productData["status"])
+                    && $productData["status"] === "out_of_stock"
                 ) {
                     $stockData["is_in_stock"] = false;
                 } else {
@@ -635,7 +594,7 @@ class Product implements ProductInterface
                 $this->productRepository->save($product);
             }
             return $this->helper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $data = null,
@@ -673,9 +632,8 @@ class Product implements ProductInterface
     {
         try {
             foreach ($products as $productData) {
-                if (
-                    isset($productData["status"]) &&
-                    $productData["status"] === "out_of_stock"
+                if (isset($productData["status"])
+                    && $productData["status"] === "out_of_stock"
                 ) {
                     $stockData = false;
                 } else {
@@ -688,7 +646,7 @@ class Product implements ProductInterface
                 $this->sourceItemsSave->execute([$this->sourceItem]);
             }
             return $this->helper->getResponseStatus(
-                "Success",
+                __("Success"),
                 200,
                 true,
                 $data = null,

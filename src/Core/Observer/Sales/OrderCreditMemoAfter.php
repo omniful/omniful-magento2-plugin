@@ -27,7 +27,7 @@ class OrderCreditMemoAfter implements ObserverInterface
                 $order->save();
             }
         } catch (\Exception $e) {
-            return $e->getMessage();
+            return __($e->getMessage());
         }
     }
 }
