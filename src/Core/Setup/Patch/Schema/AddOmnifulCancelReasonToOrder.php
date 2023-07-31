@@ -47,10 +47,11 @@ class AddOmnifulCancelReasonToOrder implements
     {
         $this->moduleDataSetup->startSetup();
         $connection = $this->moduleDataSetup->getConnection();
-        if (!$connection->tableColumnExists(
-            $this->getTableName(),
-            self::COLUMN_NAME
-        )
+        if (
+            !$connection->tableColumnExists(
+                $this->getTableName(),
+                self::COLUMN_NAME
+            )
         ) {
             $connection->addColumn(
                 $this->getTableName(),
@@ -59,10 +60,11 @@ class AddOmnifulCancelReasonToOrder implements
             );
         }
 
-        if (!$connection->tableColumnExists(
-            $this->getGridTableName(),
-            self::COLUMN_NAME
-        )
+        if (
+            !$connection->tableColumnExists(
+                $this->getGridTableName(),
+                self::COLUMN_NAME
+            )
         ) {
             $connection->addColumn(
                 $this->getGridTableName(),
@@ -80,18 +82,20 @@ class AddOmnifulCancelReasonToOrder implements
     {
         $this->moduleDataSetup->startSetup();
         $connection = $this->moduleDataSetup->getConnection();
-        if ($connection->tableColumnExists(
-            $this->getTableName(),
-            self::COLUMN_NAME
-        )
+        if (
+            $connection->tableColumnExists(
+                $this->getTableName(),
+                self::COLUMN_NAME
+            )
         ) {
             $connection->dropColumn($this->getTableName(), self::COLUMN_NAME);
         }
 
-        if ($connection->tableColumnExists(
-            $this->getGridTableName(),
-            self::COLUMN_NAME
-        )
+        if (
+            $connection->tableColumnExists(
+                $this->getGridTableName(),
+                self::COLUMN_NAME
+            )
         ) {
             $connection->dropColumn(
                 $this->getGridTableName(),

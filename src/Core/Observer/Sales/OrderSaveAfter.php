@@ -85,7 +85,10 @@ class OrderSaveAfter implements ObserverInterface
             // Determine the event name based on order status changes
             $eventName = $this->getEventName($order);
             $headers = [
-                "x-website-code" => $order->getStore()->getWebsite()->getCode(),
+                "x-website-code" => $order
+                    ->getStore()
+                    ->getWebsite()
+                    ->getCode(),
                 "x-store-code" => $order->getStore()->getCode(),
                 "x-store-view-code" => $order->getStore()->getName(),
             ];
@@ -97,7 +100,7 @@ class OrderSaveAfter implements ObserverInterface
             if ($eventName !== "") {
                 $payload = $this->orderManagement->getOrderData($order);
                 // Log the successful publication of the order event
-                $this->logger->info('Order event published successfully');
+                $this->logger->info("Order event published successfully");
                 return $this->adapter->publishMessage(
                     $eventName,
                     $payload,
@@ -119,13 +122,15 @@ class OrderSaveAfter implements ObserverInterface
     {
         $eventName = "";
 
-        if ($order->getOrigData("status") === null
-            && $order->getStatus() !== Order::STATE_CANCELED
+        if (
+            $order->getOrigData("status") === null &&
+            $order->getStatus() !== Order::STATE_CANCELED
         ) {
             $eventName = self::ORDER_CREATED_EVENT_NAME;
-        } elseif ($order->getStatus() !== Order::STATE_CANCELED
-            && $order->getStatus() !== $order->getOrigData("status")
-            && in_array($order->getStatus(), self::ALLOWED_STATUSES)
+        } elseif (
+            $order->getStatus() !== Order::STATE_CANCELED &&
+            $order->getStatus() !== $order->getOrigData("status") &&
+            in_array($order->getStatus(), self::ALLOWED_STATUSES)
         ) {
             $eventName = self::ORDER_STATUS_UPDATED_EVENT_NAME;
         }

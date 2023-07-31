@@ -19,5 +19,5 @@ interface ConfigurationsInterface
      *
      * @return mixed
      */
-    public function getOmnifulConfigs();
+    public function updateConfig();
 }

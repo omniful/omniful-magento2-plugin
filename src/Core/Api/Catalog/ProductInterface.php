@@ -39,9 +39,10 @@ interface ProductInterface
      * @return mixed
      */
     public function updateProductsInventory(
-        $sku,
+
+        string $sku,
         int $qty,
-        bool $status = null
+        ?bool $status = null
     );
 
     /**
@@ -54,10 +55,10 @@ interface ProductInterface
      * @return mixed
      */
     public function updateProductsInventorySource(
-        $sku,
+        string $sku,
         int $qty,
-        $sourceCode,
-        $status
+        string $sourceCode,
+        string $status
     );
 
     /**
@@ -66,5 +67,5 @@ interface ProductInterface
      * @param mixed $products
      * @return mixed
      */
-    public function updateBulkProductsInventorySource($products);
+    public function updateBulkProductsInventorySource(array $products);
 }

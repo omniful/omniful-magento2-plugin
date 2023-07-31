@@ -123,15 +123,24 @@ class StockSources implements StockSourcesInterface
         $returnData = [];
         foreach ($websiteCollection as $website){
             $sourceData = [];
-            $stockId = $this->getAssignedStockIdForWebsite->execute($website->getCode());
+            $stockId = $this->getAssignedStockIdForWebsite->execute(
+                $website->getCode()
+            );
 
             $searchCriteria = $this->searchCriteriaBuilder
                 ->addFilter(StockSourceLinkInterface::STOCK_ID, $stockId)
                 ->create();
 
-            foreach ($this->getStockSourceLinks->execute($searchCriteria)->getItems() as $source) {
-                $sourceData[] = $this->sourceRepository->get($source->getSourceCode());
-                $returnData[$website->getCode()][] = $this->getData($sourceData);
+            foreach (
+                $this->getStockSourceLinks->execute($searchCriteria)->getItems()
+                as $source
+            ) {
+                $sourceData[] = $this->sourceRepository->get(
+                    $source->getSourceCode()
+                );
+                $returnData[$website->getCode()][] = $this->getData(
+                    $sourceData
+                );
             }
         }
         if ($cacheIdentifier) {
@@ -150,17 +159,21 @@ class StockSources implements StockSourcesInterface
     public function getData($sourceItems)
     {
         foreach ($sourceItems as $source) {
-            $stockSources["enabled"] = (bool)$source->getEnabled();
+            $stockSources["enabled"] = (bool) $source->getEnabled();
             $stockSources["name"] = $source->getName();
             $stockSources["source_code"] = $source->getSourceCode();
             $stockSources["description"] = $source->getDescription();
             $stockSources["carrier_links"] = $source->getCarrierLinks();
-            $stockSources["use_default_carrier_config"] = (bool)$source->getUseDefaultCarrierConfig();
-            $stockSources["is_pickup_location_active"] = (bool)$source->getIs_pickupLocationActive();
+            $stockSources[
+                "use_default_carrier_config"
+            ] = (bool) $source->getUseDefaultCarrierConfig();
+            $stockSources[
+                "is_pickup_location_active"
+            ] = (bool) $source->getIs_pickupLocationActive();
             $stockAddressDetails["latitude"] = $source->getLatitude();
             $stockAddressDetails["longitude"] = $source->getLongitude();
             $stockAddressDetails["country_id"] = $source->getCountryId();
-            $stockAddressDetails["region_id"] = (int)$source->getRegionId();
+            $stockAddressDetails["region_id"] = (int) $source->getRegionId();
             $stockAddressDetails["region"] = $source->getRegion();
             $stockAddressDetails["city"] = $source->getCity();
             $stockAddressDetails["street"] = $source->getStreet();

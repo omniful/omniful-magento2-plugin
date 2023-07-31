@@ -284,10 +284,10 @@ class Product implements ProductInterface
             "barcode" => $product->getCustomAttribute(
                 "omniful_barcode_attribute"
             )
-            ? (string) $product
-                ->getCustomAttribute("omniful_barcode_attribute")
-                ->getValue()
-            : null,
+                ? (string) $product
+                    ->getCustomAttribute("omniful_barcode_attribute")
+                    ->getValue()
+                : null,
             "stock_quantity" => (float) $stockItem->getQty(),
             "name" => (string) $product->getName(),
             "description" => (string) $product->getDescription(),
@@ -354,19 +354,21 @@ class Product implements ProductInterface
                         "barcode" => $variation->getCustomAttribute(
                             "omniful_barcode_attribute"
                         )
-                        ? (string) $variation
-                            ->getCustomAttribute(
-                                "omniful_barcode_attribute"
-                            )
-                            ->getValue()
-                        : null,
+                            ? (string) $variation
+                                ->getCustomAttribute(
+                                    "omniful_barcode_attribute"
+                                )
+                                ->getValue()
+                            : null,
                         "regular_price" => (float) $variation->getPrice(),
                         "sale_price" => (float) $variation->getSpecialPrice(),
                         "price" => (float) $variation->getFinalPrice(),
                         "stock_quantity" => (float) $stockItem->getQty(),
                         "in_stock" => (bool) $stockItem->getIsInStock(),
                         "backorders_allowed" => (bool) $stockItem->getBackOrder(),
-                        "attributes" => $this->getProductAttributesWithOptions($variation->getId()),
+                        "attributes" => $this->getProductAttributesWithOptions(
+                            $variation->getId()
+                        ),
                         "thumbnail" => (string) $thumbnailUrl,
                     ];
 
@@ -465,9 +467,7 @@ class Product implements ProductInterface
             );
         } catch (NoSuchEntityException $e) {
             return $this->helper->getResponseStatus(
-                __(
-                    "Product not found"
-                ),
+                __("Product not found"),
                 404,
                 false,
                 $data = null,
@@ -527,9 +527,7 @@ class Product implements ProductInterface
             );
         } catch (NoSuchEntityException $e) {
             return $this->helper->getResponseStatus(
-                __(
-                    "Product not found"
-                ),
+                __("Product not found"),
                 404,
                 false,
                 $data = null,
@@ -580,9 +578,7 @@ class Product implements ProductInterface
             );
         } catch (NoSuchEntityException $e) {
             return $this->helper->getResponseStatus(
-                __(
-                    "CategoProductry not found"
-                ),
+                __("CategoProductry not found"),
                 404,
                 false,
                 $data = null,
@@ -634,9 +630,7 @@ class Product implements ProductInterface
             );
         } catch (NoSuchEntityException $e) {
             return $this->helper->getResponseStatus(
-                __(
-                    "Product not found"
-                ),
+                __("Product not found"),
                 404,
                 false,
                 $data = null,
@@ -673,8 +667,8 @@ class Product implements ProductInterface
                     $stockData = true;
                 }
                 $this->sourceItem->setSku($productData["sku"]);
-                $this->sourceItem->setSourceCode($productData['sourceCode']);
-                $this->sourceItem->setQuantity($productData['qty']);
+                $this->sourceItem->setSourceCode($productData["sourceCode"]);
+                $this->sourceItem->setQuantity($productData["qty"]);
                 $this->sourceItem->setStatus($stockData);
                 $this->sourceItemsSave->execute([$this->sourceItem]);
             }
@@ -688,9 +682,7 @@ class Product implements ProductInterface
             );
         } catch (NoSuchEntityException $e) {
             return $this->helper->getResponseStatus(
-                __(
-                    "Product not found"
-                ),
+                __("Product not found"),
                 404,
                 false,
                 $data = null,

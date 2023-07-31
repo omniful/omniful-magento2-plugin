@@ -139,15 +139,13 @@ class AddCustomOrderStatuses implements DataPatchInterface
             $statusResource = $this->statusResourceFactory->create();
             /**
              * @var Status $status
-            */
+             */
             $status = $this->statusFactory->create();
-            $status->setData(
-                [
+            $status->setData([
                 "status" => $code,
                 "label" => $label,
                 "sort_order" => $sortOrder,
-                ]
-            );
+            ]);
             try {
                 $statusResource->save($status);
             } catch (AlreadyExistsException $exception) {

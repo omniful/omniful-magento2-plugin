@@ -9,5 +9,5 @@ interface InfoInterface
      *
      * @return array
      */
-    public function getStoreInfo();
+    public function getStoreInfo(): array;
 }

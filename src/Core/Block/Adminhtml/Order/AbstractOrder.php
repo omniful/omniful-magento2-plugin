@@ -34,8 +34,11 @@ class AbstractOrder extends \Magento\Sales\Block\Adminhtml\Order\AbstractOrder
         ?ShippingHelper $shippingHelper = null,
         ?TaxHelper $taxHelper = null
     ) {
-        $data['shippingHelper'] = $shippingHelper ?? ObjectManager::getInstance()->get(ShippingHelper::class);
-        $data['taxHelper'] = $taxHelper ?? ObjectManager::getInstance()->get(TaxHelper::class);
+        $data["shippingHelper"] =
+            $shippingHelper ??
+            ObjectManager::getInstance()->get(ShippingHelper::class);
+        $data["taxHelper"] =
+            $taxHelper ?? ObjectManager::getInstance()->get(TaxHelper::class);
         parent::__construct($context, $registry, $adminHelper, $data);
     }
 }

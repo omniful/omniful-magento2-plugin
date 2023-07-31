@@ -122,7 +122,7 @@ class Adapter
             "X-Device-Info" => $xDeviceInfo ?? "",
             "X-Webhook-Token" => $this->webhookToken,
             "X-Omniful-Merchant" => $this->workspaceId,
-            "store_view_code" => 'default',
+            "store_view_code" => "default",
         ];
     }
 

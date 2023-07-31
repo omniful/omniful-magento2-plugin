@@ -65,7 +65,9 @@ class ProductImportSaveAfter implements ObserverInterface
     public function execute(Observer $observer)
     {
         $eventName = null;
-        $productIds = $this->getProductIdsFromBunch($observer->getEvent()->getData('bunch'));
+        $productIds = $this->getProductIdsFromBunch(
+            $observer->getEvent()->getData("bunch")
+        );
 
         try {
             // Connect to the adapter
@@ -73,23 +75,35 @@ class ProductImportSaveAfter implements ObserverInterface
 
             if ($productIds) {
                 foreach ($productIds as $productId) {
-                    $product = $this->productManagement->loadProductById($productId);
+                    $product = $this->productManagement->getProductById(
+                        $productId
+                    );
                     $headers = [
-                        "x-website-code" => $product->getStore()->getWebsite()->getCode(),
+                        "x-website-code" => $product
+                            ->getStore()
+                            ->getWebsite()
+                            ->getCode(),
                         "x-store-code" => $product->getStore()->getCode(),
                         "x-store-view-code" => $product->getStore()->getName(),
                     ];
 
-                    if ($product === null
-                        || $product->getId() === null
-                        || $product->getCreatedAt() == $product->getUpdatedAt()
+                    if (
+                        $product === null ||
+                        $product->getId() === null ||
+                        $product->getCreatedAt() == $product->getUpdatedAt()
                     ) {
                         $eventName = self::PRODUCT_CREATED_EVENT_NAME;
                     } else {
                         $eventName = self::PRODUCT_UPDATED_EVENT_NAME;
                     }
-                    $payload = $this->productManagement->getProductData($product);
-                    $response = $this->adapter->publishMessage($eventName, $payload, $headers);
+                    $payload = $this->productManagement->getProductData(
+                        $product
+                    );
+                    $response = $this->adapter->publishMessage(
+                        $eventName,
+                        $payload,
+                        $headers
+                    );
                     if (!$response) {
                         return false;
                     }
@@ -113,7 +127,7 @@ class ProductImportSaveAfter implements ObserverInterface
         $validProductIds = [];
         if (!empty($productsBunch)) {
             foreach ($productsBunch as $productBunch) {
-                $product = $this->productRepository->get($productBunch['sku']);
+                $product = $this->productRepository->get($productBunch["sku"]);
                 if ($product && $product->getId()) {
                     $validProductIds[] = $product->getId();
                 }

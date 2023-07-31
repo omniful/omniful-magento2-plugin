@@ -58,11 +58,20 @@ class OrderCancelAfter implements ObserverInterface
     public function execute(Observer $observer)
     {
         $order = $observer->getOrder();
+
+        file_put_contents(
+            BP . "/var/log/plog.log",
+            print_r("Pixicommerce CheckoutCom Verify", true) . "\n",
+            FILE_APPEND
+        );
         try {
             if ($order->getStatus() == "canceled") {
                 $eventName = self::EVENT_NAME;
                 $headers = [
-                    "website-code" => $order->getStore()->getWebsite()->getCode(),
+                    "website-code" => $order
+                        ->getStore()
+                        ->getWebsite()
+                        ->getCode(),
                     "store-code" => $order->getStore()->getCode(),
                     "store-view-code" => $order->getStore()->getName(),
                 ];
@@ -77,7 +86,7 @@ class OrderCancelAfter implements ObserverInterface
                     $headers
                 );
                 // LOG MESSAGE
-                $this->logger->info('Order Canceled successfully');
+                $this->logger->info("Order Canceled successfully");
                 return $response;
             }
         } catch (\Exception $e) {

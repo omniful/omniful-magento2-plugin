@@ -87,9 +87,7 @@ class ConfigurationsManagement implements ConfigurationsInterface
             );
         } catch (NoSuchEntityException $e) {
             return $this->coreHelper->getResponseStatus(
-                __(
-                    "Config not found"
-                ),
+                __("Config not found"),
                 404,
                 false
             );
@@ -136,17 +134,21 @@ class ConfigurationsManagement implements ConfigurationsInterface
         try {
             $params = $this->request->getBodyParams();
             $store = $this->storeManager->getStore();
-            $path = 'omniful_core/general/';
+            $path = "omniful_core/general/";
 
             foreach ($params as $key => $value) {
-                $this->configWriter
-                    ->save($path . $key, $value, $scope = $store->getCode(), $store->getId());
+                $this->configWriter->save(
+                    $path . $key,
+                    $value,
+                    $scope = $store->getCode(),
+                    $store->getId()
+                );
             }
 
-            if (isset($params['enable_debugging'])) {
+            if (isset($params["enable_debugging"])) {
                 $this->configWriter->save(
-                    'omniful_core/developer/enable_debugging',
-                    $params['enable_debugging'],
+                    "omniful_core/developer/enable_debugging",
+                    $params["enable_debugging"],
                     $scope = ScopeConfigInterface::SCOPE_TYPE_DEFAULT,
                     $scopeId = 0
                 );
@@ -163,9 +165,7 @@ class ConfigurationsManagement implements ConfigurationsInterface
             );
         } catch (NoSuchEntityException $e) {
             return $this->coreHelper->getResponseStatus(
-                __(
-                    "Config not found"
-                ),
+                __("Config not found"),
                 404,
                 false
             );
@@ -176,5 +176,21 @@ class ConfigurationsManagement implements ConfigurationsInterface
                 false
             );
         }
+    }
+
+    function getConfigData()
+    {
+        $configData["active"] = (bool) $this->coreHelper->getIsActive();
+        $configData["webhook_url"] = $this->coreHelper->getWebhookUrl();
+        $configData["workspace_id"] = $this->coreHelper->getWorkspaceId();
+        $configData["webhook_token"] = $this->coreHelper->getWebhookToken();
+        $configData[
+            "disable_ship_button"
+        ] = (bool) $this->coreHelper->isOrderShipButtonDisabled();
+        $configData[
+            "disable_order_status_dropdown"
+        ] = (bool) $this->coreHelper->isOrderStatusDropdownDisabled();
+
+        return $configData;
     }
 }

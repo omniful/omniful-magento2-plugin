@@ -12,5 +12,5 @@ interface StockSourcesInterface
      *
      * @return string[]
      */
-    public function getStockSources();
+    public function getStockSources(): array;
 }

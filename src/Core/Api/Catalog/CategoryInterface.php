@@ -20,5 +20,5 @@ interface CategoryInterface
      * @param  int $id
      * @return string[]
      */
-    public function getCategoryById(int $id);
+    public function getCategoryById(int $id): array;
 }

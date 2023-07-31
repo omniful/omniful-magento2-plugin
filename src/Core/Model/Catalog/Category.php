@@ -140,9 +140,7 @@ class Category implements CategoryInterface
                 );
             } else {
                 return $this->helper->getResponseStatus(
-                    __(
-                        "Category not found"
-                    ),
+                    __("Category not found"),
                     404,
                     false,
                     $data = null,
@@ -152,9 +150,7 @@ class Category implements CategoryInterface
             }
         } catch (NoSuchEntityException $e) {
             return $this->helper->getResponseStatus(
-                __(
-                    "Category not found"
-                ),
+                __("Category not found"),
                 404,
                 false,
                 $data = null,
@@ -222,7 +218,8 @@ class Category implements CategoryInterface
         $categoryData["childrenCount"] = (int) $category->getChildrenCount();
         $categoryData["attributeSetId"] = (int) $category->getAttributeSetId();
         $categoryData["productCount"] = (int) $category->getProductCount();
-        $categoryData["hasChildren"] = (bool) $category->getChildrenCount() > 0 ? true : false;
+        $categoryData["hasChildren"] =
+            (bool) $category->getChildrenCount() > 0 ? true : false;
         $categoryData["displayMode"] = (string) $category->getDisplayMode();
         $categoryData["includeInMenu"] = (bool) $category->getIncludeInMenu();
         $categoryData["description"] = $category->getDescription();
