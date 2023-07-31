@@ -14,6 +14,7 @@ $shippingHelper = $block->getData('shippingHelper');
 /** @var \Magento\Tax\Helper\Data $taxHelper */
 $taxHelper = $block->getData('taxHelper');
 
+$magentoVersion = $block->getMagentoVersion();
 ?>
 <?php $order = $block->getOrder() ?>
 <?php if ($order->getIsVirtual()):
@@ -26,6 +27,7 @@ endif; ?>
         <span class="title"><?= $block->escapeHtml(__('Shipping &amp; Handling Information')) ?></span>
     </div>
     <div class="admin__page-section-item-content">
+        <?php if(version_compare($magentoVersion, '2.4', '>=')):?>
         <?php if ($order->getTracksCollection()->count()): ?>
             <p>
                 <?php /*<a href="#" id="linkId" title="<?= $block->escapeHtmlAttr(__('Track Order')) ?>">
@@ -42,6 +44,7 @@ endif; ?>
                 "','track_order','width=800,height=600,resizable=yes,scrollbars=yes')",
                 'a#linkId'
             ) ?>
+        <?php endif; ?>
         <?php endif; ?>
         <?php if ($order->getShippingDescription()): ?>
             <strong><?= $block->escapeHtml($order->getShippingDescription()) ?></strong>

@@ -10,6 +10,10 @@ interface StatusInterface
     /**
      * Update order status
      *
+     * @param int         $id The ID of the order to update the status for.
+     * @param string      $status The new status for the order.
+     * @param mixed       $hubId The ID of the hub (optional).
+     * @param string|null $comment The comment for the status update (optional).
      * @param  int         $id
      * @param  string      $status
      * @param  mixed       $hubId
@@ -23,3 +27,4 @@ interface StatusInterface
         string $comment = null
     );
 }
+
