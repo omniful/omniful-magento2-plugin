@@ -268,27 +268,6 @@ class Product implements ProductInterface
                 : null,
             "stock_quantity" => (float) $stockItem->getQty(),
             "name" => (string) $product->getName(),
-            "description" => (string) $product->getDescription(),
-            "short_description" => (string) $product->getShortDescription(),
-            "date_created" => (string) $product->getCreatedAt(),
-            "date_modified" => (string) $product->getUpdatedAt(),
-            "categories" => $categories,
-            "tags" => (array) $product->getTagIds(),
-            "attributes" => $this->getProductAttributesWithOptions(
-                $product->getId()
-            ),
-            "variations" => $variationDetails,
-            "prices" => $prices,
-            "gallery_images" => [
-                "full" => (string) $imageUrl,
-                "thumbnail" => (string) $thumbnailUrl,
-                "images" => (array) $galleryUrls,
-            ],
-            "tax_class" => (int) $product->getTaxClassId(),
-            "manage_stock" => (bool) $product->getManageStock(),
-            "in_stock" => (bool) $stockItem->getIsInStock(),
-            "backorders_allowed" => (bool) $stockItem->getBackOrder(),
-            "weight" => (float) $product->getWeight(),
         ];
     }
 

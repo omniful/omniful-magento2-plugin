@@ -4,7 +4,6 @@ namespace Omniful\Core\Api\Store;
 
 /**
  * Interface InfoInterface
- * @package Omniful\Core\Api\Store
  */
 interface InfoInterface
 {
@@ -25,4 +24,3 @@ interface InfoInterface
      */
     public function getStoreInfo();
 }
-
