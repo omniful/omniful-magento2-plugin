@@ -222,21 +222,10 @@ class Shipment implements ShipmentInterface
             $shipment->addComment(__($comment));
             $shipment->addTrack($track);
             $bodyParameters = $this->request->getBodyParams();
-
-            $stockSources = $this->stockSourcesInterface->getStockSourcesData();
-            $stockSource = [];
-            foreach ($stockSources as $stockSource) {
-                if (count($stockSource) > 1) {
-                    $stockSource = $stockSource[1]['source_code'];
-                } else {
-                    $stockSource = $stockSource[0]['source_code'];
-                }
-            }
-
             if (isset($bodyParameters["source_code"])) {
                 $shipment->getExtensionAttributes()->setSourceCode($bodyParameters["source_code"]);
             } else {
-                $shipment->getExtensionAttributes()->setSourceCode($stockSource);
+                $shipment->getExtensionAttributes()->setSourceCode('default');
             }
             $commentText =
                 "Order Shipment has been Generated and you can print the <a href='" .
