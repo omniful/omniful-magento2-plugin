@@ -111,7 +111,6 @@ class ConfigurationsManagement implements ConfigurationsInterface
             $params = $this->request->getBodyParams();
             $store = $this->storeManager->getStore();
             $path = "omniful_core/general/";
-
             foreach ($params as $key => $value) {
                 $this->configWriter->save(
                     $path . $key,
@@ -157,15 +156,15 @@ class ConfigurationsManagement implements ConfigurationsInterface
     /**
      * Get Config Data
      *
+     * @param mixed $storeId
      * @return bool|mixed
-     * @throws NoSuchEntityException
      */
-    public function getConfigData()
+    public function getConfigData($storeId = null)
     {
-        $configData["active"] = (bool) $this->coreHelper->getIsActive();
-        $configData["webhook_url"] = $this->coreHelper->getWebhookUrl();
-        $configData["workspace_id"] = $this->coreHelper->getWorkspaceId();
-        $configData["webhook_token"] = $this->coreHelper->getWebhookToken();
+        $configData["active"] = (bool) $this->coreHelper->getIsActive($storeId);
+        $configData["webhook_url"] = $this->coreHelper->getWebhookUrl($storeId);
+        $configData["workspace_id"] = $this->coreHelper->getWorkspaceId($storeId);
+        $configData["webhook_token"] = $this->coreHelper->getWebhookToken($storeId);
         $configData[
             "disable_ship_button"
         ] = (bool) $this->coreHelper->isOrderShipButtonDisabled();

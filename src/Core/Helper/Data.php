@@ -3,11 +3,11 @@
 namespace Omniful\Core\Helper;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\UrlInterface;
 use Magento\Sales\Model\ResourceModel\Order\Status\CollectionFactory;
-use Magento\Store\Model\StoreManagerInterface;
-use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Store\Model\ScopeInterface;
+use Magento\Store\Model\StoreManagerInterface;
 
 class Data extends AbstractHelper
 {
@@ -22,16 +22,6 @@ class Data extends AbstractHelper
     public const FAILED_HTTP_CODE = 204;
     public const ERROR_HTTP_CODE = 500;
     public const EMPTY_CONTENT_CONTAINS = "No Data are available.";
-
-    /**
-     * @var ScopeConfigInterface
-     */
-    protected $scopeConfig;
-
-    /**
-     * @var UrlInterface
-     */
-    protected $urlBuilder;
     /**
      * @var StoreManagerInterface
      */
@@ -40,6 +30,14 @@ class Data extends AbstractHelper
      * @var CollectionFactory
      */
     public $statusCollectionFactory;
+    /**
+     * @var ScopeConfigInterface
+     */
+    protected $scopeConfig;
+    /**
+     * @var UrlInterface
+     */
+    protected $urlBuilder;
 
     /**
      * Info constructor.
@@ -64,11 +62,15 @@ class Data extends AbstractHelper
     /**
      * Get Is Active
      *
+     * @param mixed $storeId
      * @return bool
      */
-    public function getIsActive()
+    public function getIsActive($storeId = null)
     {
-        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
+        if ($storeId) {
+            $this->storeManager->setCurrentStore($storeId);
+        }
+        $storeScope = ScopeInterface::SCOPE_STORE;
         return $this->scopeConfig->getValue(
             self::XML_PATH_ENABLE_MODULE,
             $storeScope
@@ -82,7 +84,7 @@ class Data extends AbstractHelper
      */
     public function isOrderShipButtonDisabled()
     {
-        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
+        $storeScope = ScopeInterface::SCOPE_STORE;
         return $this->scopeConfig->getValue(
             self::XML_PATH_DISABLE_SHIP_BUTTON,
             $storeScope
@@ -96,7 +98,7 @@ class Data extends AbstractHelper
      */
     public function isOrderStatusDropdownDisabled()
     {
-        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
+        $storeScope = ScopeInterface::SCOPE_STORE;
         return $this->scopeConfig->getValue(
             self::XML_PATH_DISABLE_ORDER_STATUS_DROPDOWN,
             $storeScope
@@ -106,11 +108,15 @@ class Data extends AbstractHelper
     /**
      * Get Webhook Url
      *
+     * @param mixed $storeId
      * @return mixed
      */
-    public function getWebhookUrl()
+    public function getWebhookUrl($storeId = null)
     {
-        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
+        if ($storeId) {
+            $this->storeManager->setCurrentStore($storeId);
+        }
+        $storeScope = ScopeInterface::SCOPE_STORE;
         return $this->scopeConfig->getValue(
             self::XML_PATH_WEB_HOOK_URL,
             $storeScope
@@ -120,11 +126,15 @@ class Data extends AbstractHelper
     /**
      * Get Workspace Id
      *
+     * @param mixed $storeId
      * @return mixed
      */
-    public function getWorkspaceId()
+    public function getWorkspaceId($storeId = null)
     {
-        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
+        if ($storeId) {
+            $this->storeManager->setCurrentStore($storeId);
+        }
+        $storeScope = ScopeInterface::SCOPE_STORE;
         return $this->scopeConfig->getValue(
             self::XML_PATH_WORK_SPACE_ID,
             $storeScope
@@ -134,11 +144,15 @@ class Data extends AbstractHelper
     /**
      * Get Webhook Token
      *
+     * @param mixed $storeId
      * @return mixed
      */
-    public function getWebhookToken()
+    public function getWebhookToken($storeId = null)
     {
-        $storeScope = \Magento\Store\Model\ScopeInterface::SCOPE_STORE;
+        if ($storeId) {
+            $this->storeManager->setCurrentStore($storeId);
+        }
+        $storeScope = ScopeInterface::SCOPE_STORE;
         return $this->scopeConfig->getValue(
             self::XML_PATH_WEB_HOOK_TOKEN,
             $storeScope
@@ -148,12 +162,12 @@ class Data extends AbstractHelper
     /**
      * GetResponseStatus
      *
-     * @param  mixed $message
-     * @param  mixed $code
-     * @param  mixed $status
-     * @param  mixed $data
-     * @param  mixed $pageData
-     * @param  bool  $nestedArray
+     * @param mixed $message
+     * @param mixed $code
+     * @param mixed $status
+     * @param mixed $data
+     * @param mixed $pageData
+     * @param bool $nestedArray
      * @return mixed
      */
     public function getResponseStatus(
@@ -196,9 +210,9 @@ class Data extends AbstractHelper
     /**
      * Get Status Response
      *
-     * @param  boolean $action
-     * @param  integer $httpCode
-     * @param  string  $message
+     * @param boolean $action
+     * @param integer $httpCode
+     * @param string $message
      * @return array
      */
     public function getStatusResponse(
@@ -212,8 +226,8 @@ class Data extends AbstractHelper
                 $httpCode == self::SUCCESS_HTTP_CODE
                     ? self::SUCCESS_HTTP_CODE
                     : ($httpCode == self::FAILED_HTTP_CODE
-                        ? self::FAILED_HTTP_CODE
-                        : $httpCode),
+                    ? self::FAILED_HTTP_CODE
+                    : $httpCode),
             "success" => $action ? true : false,
             "message" => $message
                 ? __($message)->render()
@@ -231,6 +245,17 @@ class Data extends AbstractHelper
     public function getAllowedCountries(): ?array
     {
         return explode(",", $this->getConfigValue("general/country/allow"));
+    }
+
+    /**
+     * Get configuration value by path
+     *
+     * @param string $path
+     * @return mixed|null
+     */
+    public function getConfigValue(string $path)
+    {
+        return $this->scopeConfig->getValue($path, ScopeInterface::SCOPE_STORE);
     }
 
     /**
@@ -260,16 +285,5 @@ class Data extends AbstractHelper
             ];
         }
         return $storeUrls;
-    }
-
-    /**
-     * Get configuration value by path
-     *
-     * @param string $path
-     * @return mixed|null
-     */
-    public function getConfigValue(string $path)
-    {
-        return $this->scopeConfig->getValue($path, ScopeInterface::SCOPE_STORE);
     }
 }

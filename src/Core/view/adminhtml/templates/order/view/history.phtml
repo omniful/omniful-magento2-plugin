@@ -105,7 +105,7 @@ $isOrderStatusDropdownDisabled = !$helper->isOrderStatusDropdownDisabled();
                 </span>
                 <?php if ($_item->getComment()): ?>
                     <div class="note-list-comment">
-                        <?= $block->escapeHtml($_item->getComment(), ['b', 'br', 'strong', 'i', 'u', 'a']) ?>
+                        <?= /* @noEscape */ $_item->getComment(); ?>
                     </div>
                 <?php endif; ?>
             </li>
