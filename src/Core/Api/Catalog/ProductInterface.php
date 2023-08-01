@@ -25,10 +25,10 @@ interface ProductInterface
     /**
      * Update product in Bulk
      *
-     * @param array $products An array of products to update.
+     * @param mixed $products An array of products to update.
      * @return mixed The result of the bulk update operation.
      */
-    public function updateBulkProductsInventory(array $products);
+    public function updateBulkProductsInventory($products);
 
     /**
      * Update product by SKU
@@ -54,9 +54,8 @@ interface ProductInterface
     /**
      * Update product in Bulk by source code
      *
-     * @param array $products An array of products to update with source code.
+     * @param mixed $products An array of products to update with source code.
      * @return mixed The result of the bulk update operation.
      */
-    public function updateBulkProductsInventorySource(array $products);
+    public function updateBulkProductsInventorySource($products);
 }
-

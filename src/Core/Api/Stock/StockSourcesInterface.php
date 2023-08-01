@@ -16,4 +16,3 @@ interface StockSourcesInterface
      */
     public function getStockSources();
 }
-

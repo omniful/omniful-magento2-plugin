@@ -17,6 +17,9 @@ use Magento\Tax\Helper\Data as TaxHelper;
  */
 class AbstractOrder extends \Magento\Sales\Block\Adminhtml\Order\AbstractOrder
 {
+    /**
+     * @var ProductMetadataInterface
+     */
     public $productMetadata;
     /**
      * AbstractOrder constructor.
