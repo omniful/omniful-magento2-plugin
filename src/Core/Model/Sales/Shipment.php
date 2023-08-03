@@ -241,13 +241,7 @@ class Shipment implements ShipmentInterface
             if (isset($bodyParameters["source_code"])) {
                 $shipment->getExtensionAttributes()->setSourceCode($bodyParameters["source_code"]);
             } else {
-                $searchCriteriaBuilder = $this->searchCriteriaBuilderFactory->create();
-                $searchCriteria = $searchCriteriaBuilder->create();
-                $sources = $this->sourceRepository->getList($searchCriteria)->getItems();
-                $sourcesCode = '';
-                foreach ($sources as $source) {
-                    $sourcesCode = $source->getSourceCode();
-                }
+                $sourcesCode = $this->getDefaultSourceCode();
                 $shipment->getExtensionAttributes()->setSourceCode($sourcesCode);
             }
             $commentText =
@@ -320,5 +314,17 @@ class Shipment implements ShipmentInterface
             }
         }
         return $shipmentTracking;
+    }
+
+    public function getDefaultSourceCode()
+    {
+        $searchCriteriaBuilder = $this->searchCriteriaBuilderFactory->create();
+        $searchCriteria = $searchCriteriaBuilder->create();
+        $sources = $this->sourceRepository->getList($searchCriteria)->getItems();
+        $sourcesCode = 'Default';
+        foreach ($sources as $source) {
+            $sourcesCode = $source->getSourceCode();
+        }
+        return $sourcesCode;
     }
 }
