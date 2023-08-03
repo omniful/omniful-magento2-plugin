@@ -195,7 +195,7 @@ class Data extends AbstractHelper
             $responseData["data"] = $data;
         }
         if ($pageData) {
-            $responseData["pageData"] = $pageData;
+            $responseData["page_info"] = $pageData;
         }
 
         if ($nestedArray) {
