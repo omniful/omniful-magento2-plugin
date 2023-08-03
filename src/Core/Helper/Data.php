@@ -67,7 +67,7 @@ class Data extends AbstractHelper
      */
     public function getIsActive($storeId = null)
     {
-        if ($storeId) {
+        if ($storeId !== null) {
             $this->storeManager->setCurrentStore($storeId);
         }
         $storeScope = ScopeInterface::SCOPE_STORE;
@@ -113,7 +113,7 @@ class Data extends AbstractHelper
      */
     public function getWebhookUrl($storeId = null)
     {
-        if ($storeId) {
+        if ($storeId !== null) {
             $this->storeManager->setCurrentStore($storeId);
         }
         $storeScope = ScopeInterface::SCOPE_STORE;
@@ -131,7 +131,7 @@ class Data extends AbstractHelper
      */
     public function getWorkspaceId($storeId = null)
     {
-        if ($storeId) {
+        if ($storeId !== null) {
             $this->storeManager->setCurrentStore($storeId);
         }
         $storeScope = ScopeInterface::SCOPE_STORE;
@@ -149,7 +149,7 @@ class Data extends AbstractHelper
      */
     public function getWebhookToken($storeId = null)
     {
-        if ($storeId) {
+        if ($storeId !== null) {
             $this->storeManager->setCurrentStore($storeId);
         }
         $storeScope = ScopeInterface::SCOPE_STORE;
@@ -195,7 +195,7 @@ class Data extends AbstractHelper
             $responseData["data"] = $data;
         }
         if ($pageData) {
-            $responseData["pageData"] = $pageData;
+            $responseData["page_info"] = $pageData;
         }
 
         if ($nestedArray) {

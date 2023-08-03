@@ -133,7 +133,7 @@ class Product implements ProductInterface
             $totalProducts = $searchResults->getTotalCount(); // Total products count
             $productData = [];
             foreach ($products as $product) {
-                $productData[] = $this->getProductData($product);
+                $productData[] = $this->getProductFullData($product);
             }
             $pageInfo = [
                 "current_page" => $page,
@@ -178,6 +178,118 @@ class Product implements ProductInterface
             ->create();
 
         return $searchCriteria;
+    }
+
+    /**
+     * Get Product Data
+     *
+     * @param array $product
+     * @return array
+     * @throws NoSuchEntityException
+     */
+    public function getProductFullData($product)
+    {
+        $galleryUrls = [];
+        $variationDetails = [];
+        $categories = [];
+        $productCategories = $product->getCategoryIds();
+
+        foreach ($productCategories as $categoryId) {
+            $category = $this->categoryRepository->get($categoryId);
+            if ($category) {
+                $categories[] = [
+                    "id" => (int) $category->getId(),
+                    "name" => (string) $category->getName(),
+                ];
+            }
+        }
+
+        // Get prices and sales
+        $regularPrice = $product
+            ->getPriceInfo()
+            ->getPrice("regular_price")
+            ->getAmount()
+            ->getValue();
+        $salePrice = $product
+            ->getPriceInfo()
+            ->getPrice("final_price")
+            ->getAmount()
+            ->getValue();
+        $price = $salePrice ?: $regularPrice;
+        $msrpPrice = $product
+            ->getPriceInfo()
+            ->getPrice("msrp_price")
+            ->getAmount()
+            ->getValue();
+
+        $prices = [
+            "regular_price" => (float) $regularPrice,
+            "sale_price" => (float) $salePrice,
+            "price" => (float) $price,
+            "msrp_price" => (float) $msrpPrice,
+            "qty" => (float) $product->getQty(),
+        ];
+
+        $variationDetails = $this->getProductVariations($product->getId());
+
+        // Get the product images
+        $galleryImages = $product->getMediaGalleryImages();
+
+        // Get the product image
+        $image = $product->getMediaGalleryImages()->getFirstItem();
+
+        // Get the URL of the full-size image
+        $imageUrl = $image->getUrl();
+
+        // Get the URL of the thumbnail
+        $thumbnailUrl = $image->getUrl("thumbnail");
+
+        foreach ($galleryImages as $galleryImage) {
+            $galleryUrls[] = [
+                "url" => (string) $galleryImage->getUrl(),
+                "alt" => (string) $galleryImage->getLabel(),
+            ];
+        }
+
+        // Retrieve StockItemInterface for the product
+        $stockItem = $this->stockRegistry->getStockItemBySku(
+            $product->getSku()
+        );
+
+        return [
+            "id" => (int) $product->getId(),
+            "sku" => (string) $product->getSku(),
+            "barcode" => $product->getCustomAttribute(
+                "omniful_barcode_attribute"
+            )
+                ? (string) $product
+                    ->getCustomAttribute("omniful_barcode_attribute")
+                    ->getValue()
+                : null,
+            "stock_quantity" => (float) $stockItem->getQty(),
+            "name" => (string) $product->getName(),
+            "description" => (string) $product->getDescription(),
+            "short_description" => (string) $product->getShortDescription(),
+            "date_created" => (string) $product->getCreatedAt(),
+            "date_modified" => (string) $product->getUpdatedAt(),
+            "categories" => $categories,
+            "tags" => (array) $product->getTagIds(),
+            "attributes" => $this->getProductAttributesWithOptions(
+                $product->getId()
+            ),
+            "variations" => $variationDetails,
+            "prices" => $prices,
+            "gallery_images" => [
+                "full" => (string) $imageUrl,
+                "thumbnail" => (string) $thumbnailUrl,
+                "images" => (array) $galleryUrls,
+            ],
+            "tax_class" => (int) $product->getTaxClassId(),
+            "manage_stock" => (bool) $product->getManageStock(),
+            "in_stock" => (bool) $stockItem->getIsInStock(),
+            "backorders_allowed" => (bool) $stockItem->getBackOrder(),
+            "weight" => (float) $product->getWeight(),
+        ];
     }
 
     /**
@@ -403,11 +515,11 @@ class Product implements ProductInterface
             if (is_numeric($identifier)) {
                 $productId = (int) $identifier;
                 $product = $this->loadProductById($productId);
-                $productData = $this->getProductData($product);
+                $productData = $this->getProductFullData($product);
             } else {
                 $productSku = $identifier;
                 $product = $this->productRepository->get($productSku);
-                $productData = $this->getProductData($product);
+                $productData = $this->getProductFullData($product);
             }
             return $this->helper->getResponseStatus(
                 __("Success"),
