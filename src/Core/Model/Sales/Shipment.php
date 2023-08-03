@@ -13,6 +13,8 @@ use Magento\Sales\Model\Convert\OrderFactory as OrderConvertFactory;
 use Magento\Sales\Model\Order\Shipment\TrackFactory;
 use Magento\Sales\Model\Order\ShipmentFactory;
 use Omniful\Core\Api\Sales\ShipmentInterface;
+use Magento\Framework\Api\SearchCriteriaBuilderFactory;
+use Magento\InventoryApi\Api\SourceRepositoryInterface;
 use Omniful\Core\Api\Stock\StockSourcesInterface;
 use Omniful\Core\Helper\Data;
 use Omniful\Core\Logger\Logger;
@@ -82,6 +84,14 @@ class Shipment implements ShipmentInterface
      * @var StockSourcesInterface
      */
     private $stockSourcesInterface;
+    /**
+     * @var SearchCriteriaBuilderFactory
+     */
+    private $searchCriteriaBuilderFactory;
+    /**
+     * @var SourceRepositoryInterface
+     */
+    private $sourceRepository;
 
     /**
      * Shipment constructor.
@@ -93,6 +103,8 @@ class Shipment implements ShipmentInterface
      * @param ScopeConfigInterface $scopeConfig
      * @param OrderConvertFactory $orderConvertFactory
      * @param Data $helper
+     * @param SourceRepositoryInterface $sourceRepository
+     * @param SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory
      * @param StockSourcesInterface $stockSourcesInterface
      * @param ShipmentRepositoryInterface $shipmentRepository
      * @param ShipmentTrackInterfaceFactory $shipmentTrackFactory
@@ -106,6 +118,8 @@ class Shipment implements ShipmentInterface
         ScopeConfigInterface $scopeConfig,
         OrderConvertFactory $orderConvertFactory,
         Data $helper,
+        SourceRepositoryInterface $sourceRepository,
+        SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory,
         StockSourcesInterface $stockSourcesInterface,
         ShipmentRepositoryInterface $shipmentRepository,
         ShipmentTrackInterfaceFactory $shipmentTrackFactory,
@@ -116,6 +130,8 @@ class Shipment implements ShipmentInterface
         $this->trackFactory = $trackFactory;
         $this->shipmentFactory = $shipmentFactory;
         $this->orderRepository = $orderRepository;
+        $this->sourceRepository = $sourceRepository;
+        $this->searchCriteriaBuilderFactory = $searchCriteriaBuilderFactory;
         $this->shipmentRepository = $shipmentRepository;
         $this->orderConvertFactory = $orderConvertFactory;
         $this->shipmentTrackFactory = $shipmentTrackFactory;
@@ -225,7 +241,8 @@ class Shipment implements ShipmentInterface
             if (isset($bodyParameters["source_code"])) {
                 $shipment->getExtensionAttributes()->setSourceCode($bodyParameters["source_code"]);
             } else {
-                $shipment->getExtensionAttributes()->setSourceCode('default');
+                $sourcesCode = $this->getDefaultSourceCode();
+                $shipment->getExtensionAttributes()->setSourceCode($sourcesCode);
             }
             $commentText =
                 "Order Shipment has been Generated and you can print the <a href='" .
@@ -297,5 +314,17 @@ class Shipment implements ShipmentInterface
             }
         }
         return $shipmentTracking;
+    }
+
+    public function getDefaultSourceCode()
+    {
+        $searchCriteriaBuilder = $this->searchCriteriaBuilderFactory->create();
+        $searchCriteria = $searchCriteriaBuilder->create();
+        $sources = $this->sourceRepository->getList($searchCriteria)->getItems();
+        $sourcesCode = 'Default';
+        foreach ($sources as $source) {
+            $sourcesCode = $source->getSourceCode();
+        }
+        return $sourcesCode;
     }
 }
