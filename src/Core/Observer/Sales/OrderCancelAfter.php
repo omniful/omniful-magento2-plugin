@@ -58,20 +58,20 @@ class OrderCancelAfter implements ObserverInterface
     public function execute(Observer $observer)
     {
         $order = $observer->getOrder();
-        $writer = new \Zend_Log_Writer_Stream(BP . '/var/log/plog.log');
-        $logger = new \Zend_Log();
-        $logger->addWriter($writer);
-        $logger->info(__('Pixicommerce CheckoutCom Verify'));
+        $store = $order->getStore();
+
         try {
             if ($order->getStatus() == "canceled") {
                 $eventName = self::EVENT_NAME;
+                $storeData = $this->storeManager->getGroup($store->getGroupId());
+
                 $headers = [
                     "website-code" => $order
                         ->getStore()
                         ->getWebsite()
                         ->getCode(),
-                    "store-code" => $order->getStore()->getCode(),
-                    "store-view-code" => $order->getStore()->getName(),
+                    "x-store-code" => $storeData->getCode(),
+                    "x-store-view-code" => $order->getStore()->getCode(),
                 ];
 
                 // CONNECT FIRST

@@ -74,6 +74,7 @@ class OrderSaveAfter implements ObserverInterface
     public function execute(Observer $observer)
     {
         $order = $observer->getOrder();
+        $store = $order->getStore();
 
         try {
             // Check if the order status is "complete" and update the status to "delivered"
@@ -84,13 +85,15 @@ class OrderSaveAfter implements ObserverInterface
 
             // Determine the event name based on order status changes
             $eventName = $this->getEventName($order);
+            $storeData = $this->storeManager->getGroup($store->getGroupId());
+
             $headers = [
                 "x-website-code" => $order
                     ->getStore()
                     ->getWebsite()
                     ->getCode(),
-                "x-store-code" => $order->getStore()->getCode(),
-                "x-store-view-code" => $order->getStore()->getName(),
+                "x-store-code" => $storeData->getCode(),
+                "x-store-view-code" => $order->getStore()->getCode(),
             ];
 
             // Connect to the adapter
@@ -122,11 +125,13 @@ class OrderSaveAfter implements ObserverInterface
     {
         $eventName = "";
 
-        if ($order->getOrigData("status") === null &&
+        if (
+            $order->getOrigData("status") === null &&
             $order->getStatus() !== Order::STATE_CANCELED
         ) {
             $eventName = self::ORDER_CREATED_EVENT_NAME;
-        } elseif ($order->getStatus() !== Order::STATE_CANCELED &&
+        } elseif (
+            $order->getStatus() !== Order::STATE_CANCELED &&
             $order->getStatus() !== $order->getOrigData("status") &&
             in_array($order->getStatus(), self::ALLOWED_STATUSES)
         ) {

@@ -7,6 +7,7 @@ use Magento\Framework\Event\ObserverInterface;
 use Omniful\Core\Model\Adapter;
 use Omniful\Core\Logger\Logger;
 use Omniful\Core\Model\Sales\Order as OrderManagement;
+use Magento\Store\Model\StoreManagerInterface;
 
 class OrderPlaceAfter implements ObserverInterface
 {
@@ -26,6 +27,11 @@ class OrderPlaceAfter implements ObserverInterface
     protected $orderManagement;
 
     /**
+     * @var StoreManagerInterface
+     */
+    protected $storeManager;
+
+    /**
      * OrderPlaceAfter constructor.
      *
      * @param Logger                $logger
@@ -35,10 +41,12 @@ class OrderPlaceAfter implements ObserverInterface
     public function __construct(
         Logger $logger,
         Adapter $adapter,
-        OrderManagement $orderManagement
+        OrderManagement $orderManagement,
+        StoreManagerInterface $storeManager
     ) {
         $this->logger = $logger;
         $this->adapter = $adapter;
+        $this->storeManager = $storeManager;
         $this->orderManagement = $orderManagement;
     }
 
@@ -51,15 +59,19 @@ class OrderPlaceAfter implements ObserverInterface
     public function execute(Observer $observer)
     {
         $order = $observer->getEvent()->getOrder();
+        $store = $order->getStore();
+
         try {
             $eventName = self::ORDER_CREATED_EVENT_NAME;
+            $storeData = $this->storeManager->getGroup($store->getGroupId());
+
             $headers = [
                 "x-website-code" => $order
                     ->getStore()
                     ->getWebsite()
                     ->getCode(),
-                "x-store-code" => $order->getStore()->getCode(),
-                "x-store-view-code" => $order->getStore()->getName(),
+                "x-store-code" => $storeData->getCode(),
+                "x-store-view-code" => $order->getStore()->getCode(),
             ];
 
             // Connect to the adapter

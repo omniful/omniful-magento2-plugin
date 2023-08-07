@@ -177,11 +177,12 @@ class Info implements InfoInterface
 
             foreach ($stores as $store) {
                 if ($store->getWebsiteId() === $website->getId()) {
+                    $storeData = $this->storeManager->getGroup($store->getGroupId());
                     $storeData = [
-                        "store_id" => (int) $store->getId(),
-                        "store_name" => (string) $store->getName(),
-                        "store_code" => (string) $store->getCode(),
-                        "store_group_id" => (int) $store->getGroupId(),
+                        "store_id" => (int) $storeData->getId(),
+                        "store_name" => (string) $storeData->getName(),
+                        "store_code" => (string) $storeData->getCode(),
+                        "store_group_id" => (int) $storeData->getGroupId(),
                         "store_group_name" => (string) $store
                             ->getGroup()
                             ->getName(),
