@@ -316,6 +316,11 @@ class Shipment implements ShipmentInterface
         return $shipmentTracking;
     }
 
+    /**
+     * Get Default Source Code
+     *
+     * @return string|null
+     */
     public function getDefaultSourceCode()
     {
         $searchCriteriaBuilder = $this->searchCriteriaBuilderFactory->create();

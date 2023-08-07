@@ -2,12 +2,12 @@
 
 namespace Omniful\Core\Model\Store;
 
-use Omniful\Core\Helper\Data as CoreHelper;
+use Exception;
 use Magento\Sales\Model\ResourceModel\Order\Status\CollectionFactory;
-use Omniful\Core\Api\Store\InfoInterface;
 use Magento\Store\Model\StoreManagerInterface;
-use Omniful\Core\Helper\CacheManager as CacheManagerHelper;
 use Omniful\Core\Api\Stock\StockSourcesInterface;
+use Omniful\Core\Api\Store\InfoInterface;
+use Omniful\Core\Helper\Data as CoreHelper;
 
 class Info implements InfoInterface
 {
@@ -30,24 +30,18 @@ class Info implements InfoInterface
      * @var stockSourcesInterface
      */
     private $stockSourcesInterface;
-    /**
-     * @var CacheManagerHelper
-     */
-    private $cacheManagerHelper;
 
     /**
      * Info constructor.
      *
      * @param CoreHelper $coreHelper
      * @param StoreManagerInterface $storeManager
-     * @param CacheManagerHelper $cacheManagerHelper
      * @param CollectionFactory $statusCollectionFactory
      * @param StockSourcesInterface $stockSourcesInterface
      */
     public function __construct(
         CoreHelper $coreHelper,
         StoreManagerInterface $storeManager,
-        CacheManagerHelper $cacheManagerHelper,
         CollectionFactory $statusCollectionFactory,
         StockSourcesInterface $stockSourcesInterface
     ) {
@@ -55,7 +49,6 @@ class Info implements InfoInterface
         $this->storeManager = $storeManager;
         $this->stockSourcesInterface = $stockSourcesInterface;
         $this->statusCollectionFactory = $statusCollectionFactory;
-        $this->cacheManagerHelper = $cacheManagerHelper;
     }
 
     /**
@@ -86,15 +79,62 @@ class Info implements InfoInterface
                     "order_statuses" => $orderStatuses,
                 ],
             ];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return [
                 "data" => null,
                 "error" => [
                     "code" => 500,
-                    "message" => (string) $e->getMessage(),
+                    "message" => (string)$e->getMessage(),
                 ],
             ];
         }
+    }
+
+    /**
+     * Retrieve all store info
+     *
+     * @return array
+     */
+    private function getAllStoresInfo(): array
+    {
+        $websites = $this->storeManager->getWebsites();
+        $storeGroup = $this->storeManager->getGroups();
+        $allStores = [];
+
+        // Organize websites and their related stores
+        foreach ($websites as $website) {
+            $websiteData = [
+                "website_id" => (int)$website->getId(),
+                "website_code" => (string)$website->getCode(),
+                "website_name" => (string)$website->getName(),
+                "stores" => [], // Initialize an empty array to store related stores
+            ];
+
+            foreach ($storeGroup as $store) {
+                if ($store->getWebsiteId() === $website->getId()) {
+                    $storeData = [
+                        "store_id" => (int)$store->getId(),
+                        "store_name" => (string)$store->getName(),
+                        "store_code" => (string)$store->getCode(),
+                        "store_group_id" => (int)$store->getGroupId(),
+                        "store_group_name" => (string)$store->getName(),
+                        "store_views" => [], // Initialize an empty array to store related store views
+                    ];
+                    foreach ($store->getStores() as $storeView) {
+                        $storeViewData = [
+                            "store_view_id" => (int)$storeView->getId(),
+                            "store_view_name" => (string)$storeView->getName(),
+                            "store_view_code" => (string)$storeView->getCode(),
+                        ];
+                        $storeData["store_views"][] = $storeViewData;
+                    }
+                    $websiteData["stores"][] = $storeData;
+                }
+            }
+
+            $allStores["websites"][] = $websiteData;
+        }
+        return $allStores;
     }
 
     /**
@@ -143,70 +183,14 @@ class Info implements InfoInterface
 
         // Catalog-related Settings
         $storeDetails["catalog"] = [
-            "root_category" => (int) $this->coreHelper->getConfigValue(
+            "root_category" => (int)$this->coreHelper->getConfigValue(
                 "catalog/category/root_id"
             ),
-            "default_category" => (int) $this->coreHelper->getConfigValue(
+            "default_category" => (int)$this->coreHelper->getConfigValue(
                 "catalog/category/root_id"
             ),
         ];
         return $storeDetails;
-    }
-
-    /**
-     * Retrieve all store info
-     *
-     * @return array
-     */
-    private function getAllStoresInfo(): array
-    {
-        $websites = $this->storeManager->getWebsites();
-        $stores = $this->storeManager->getStores();
-        $storeViews = $this->storeManager->getStores(true);
-
-        $allStores = [];
-
-        // Organize websites and their related stores
-        foreach ($websites as $website) {
-            $websiteData = [
-                "website_id" => (int) $website->getId(),
-                "website_code" => (string) $website->getCode(),
-                "website_name" => (string) $website->getName(),
-                "stores" => [], // Initialize an empty array to store related stores
-            ];
-
-            foreach ($stores as $store) {
-                if ($store->getWebsiteId() === $website->getId()) {
-                    $storeData = $this->storeManager->getGroup($store->getGroupId());
-                    $storeData = [
-                        "store_id" => (int) $storeData->getId(),
-                        "store_name" => (string) $storeData->getName(),
-                        "store_code" => (string) $storeData->getCode(),
-                        "store_group_id" => (int) $storeData->getGroupId(),
-                        "store_group_name" => (string) $store
-                            ->getGroup()
-                            ->getName(),
-                        "store_views" => [], // Initialize an empty array to store related store views
-                    ];
-
-                    foreach ($storeViews as $storeView) {
-                        if ($storeView->getStoreId() === $store->getId()) {
-                            $storeViewData = [
-                                "store_view_id" => (int) $storeView->getId(),
-                                "store_view_name" => (string) $storeView->getName(),
-                                "store_view_code" => (string) $storeView->getCode(),
-                            ];
-                            $storeData["store_views"][] = $storeViewData;
-                        }
-                    }
-
-                    $websiteData["stores"][] = $storeData;
-                }
-            }
-
-            $allStores["websites"][] = $websiteData;
-        }
-        return $allStores;
     }
 
     /**
