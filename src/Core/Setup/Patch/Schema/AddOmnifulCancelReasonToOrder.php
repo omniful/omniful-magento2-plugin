@@ -39,6 +39,16 @@ class AddOmnifulCancelReasonToOrder implements
     }
 
     /**
+     * Get Dependencies
+     *
+     * @return array|string[]
+     */
+    public static function getDependencies()
+    {
+        return [];
+    }
+
+    /**
      * Apply
      *
      * @return AddOmnifulCancelReasonToOrder|void
@@ -74,6 +84,26 @@ class AddOmnifulCancelReasonToOrder implements
     }
 
     /**
+     * Get Table Name
+     *
+     * @return string
+     */
+    private function getTableName(): string
+    {
+        return $this->moduleDataSetup->getTable(self::TABLE_NAME);
+    }
+
+    /**
+     * Get Grid Table Name
+     *
+     * @return string
+     */
+    private function getGridTableName(): string
+    {
+        return $this->moduleDataSetup->getTable(self::GRID_TABLE_NAME);
+    }
+
+    /**
      * Revert
      */
     public function revert()
@@ -99,36 +129,6 @@ class AddOmnifulCancelReasonToOrder implements
             );
         }
         $this->moduleDataSetup->endSetup();
-    }
-
-    /**
-     * Get Table Name
-     *
-     * @return string
-     */
-    private function getTableName(): string
-    {
-        return $this->moduleDataSetup->getTable(self::TABLE_NAME);
-    }
-
-    /**
-     * Get Grid Table Name
-     *
-     * @return string
-     */
-    private function getGridTableName(): string
-    {
-        return $this->moduleDataSetup->getTable(self::GRID_TABLE_NAME);
-    }
-
-    /**
-     * Get Dependencies
-     *
-     * @return array|string[]
-     */
-    public static function getDependencies()
-    {
-        return [];
     }
 
     /**

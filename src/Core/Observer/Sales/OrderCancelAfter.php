@@ -58,13 +58,20 @@ class OrderCancelAfter implements ObserverInterface
     public function execute(Observer $observer)
     {
         $order = $observer->getOrder();
+        $store = $order->getStore();
+
         try {
             if ($order->getStatus() == "canceled") {
                 $eventName = self::EVENT_NAME;
+                $storeData = $this->storeManager->getGroup($store->getGroupId());
+
                 $headers = [
-                    "website-code" => $order->getStore()->getWebsite()->getCode(),
-                    "store-code" => $order->getStore()->getCode(),
-                    "store-view-code" => $order->getStore()->getName(),
+                    "website-code" => $order
+                        ->getStore()
+                        ->getWebsite()
+                        ->getCode(),
+                    "x-store-code" => $storeData->getCode(),
+                    "x-store-view-code" => $order->getStore()->getCode(),
                 ];
 
                 // CONNECT FIRST
@@ -77,7 +84,7 @@ class OrderCancelAfter implements ObserverInterface
                     $headers
                 );
                 // LOG MESSAGE
-                $this->logger->info('Order Canceled successfully');
+                $this->logger->info(__("Order Canceled successfully"));
                 return $response;
             }
         } catch (\Exception $e) {

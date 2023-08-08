@@ -12,7 +12,7 @@ The Omniful Magento 2 Plugin enables integration between Magento 2 and Omniful C
 1. Navigate to the Magento 2 root directory and run the following to install the module with Composer:
 
    ```bash
-   composer require omniful/magento2-plugin
+   composer require omniful/magento2-plugin *
 
 2. Enable the module by running the following commands:
 

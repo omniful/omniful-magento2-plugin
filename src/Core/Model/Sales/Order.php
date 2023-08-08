@@ -7,6 +7,7 @@ use Magento\Sales\Api\OrderRepositoryInterface;
 use Omniful\Core\Api\Sales\OrderInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\App\RequestInterface;
+use Omniful\Core\Helper\CacheManager as CacheManagerHelper;
 use Omniful\Core\Model\Sales\Shipment as ShipmentManagement;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
 use Omniful\Core\Helper\Countries;
@@ -19,58 +20,63 @@ class Order implements OrderInterface
      * @var RequestInterface
      */
     protected $request;
+
     /**
      * @var OrderRepositoryInterface
      */
     protected $orderRepository;
+
     /**
      * @var Shipment
      */
     protected $shipmentManagement;
+
     /**
      * @var Countries
      */
     protected $countriesHelper;
+
     /**
      * @var CollectionFactory
      */
     protected $orderCollectionFactory;
+
     /**
      * @var Data
      */
     private $helper;
     /**
-     * @var Timezone
+     * @var CacheManagerHelper
      */
-    private $stdTimezone;
+    private $cacheManagerHelper;
 
     /**
      * Order constructor.
      *
+     * @param Data $helper
      * @param RequestInterface $request
      * @param Countries $countriesHelper
-     * @param Data $helper
-     * @param Timezone $stdTimezone
+     * @param CacheManagerHelper $cacheManagerHelper
      * @param Shipment $shipmentManagement
      * @param CollectionFactory $orderCollectionFactory
      * @param OrderRepositoryInterface $orderRepository
      */
     public function __construct(
+        Data $helper,
         RequestInterface $request,
         Countries $countriesHelper,
-        Data $helper,
-        Timezone $stdTimezone,
+        CacheManagerHelper $cacheManagerHelper,
         ShipmentManagement $shipmentManagement,
         CollectionFactory $orderCollectionFactory,
         OrderRepositoryInterface $orderRepository
     ) {
+        $this->helper = $helper;
         $this->request = $request;
         $this->countriesHelper = $countriesHelper;
         $this->orderRepository = $orderRepository;
         $this->shipmentManagement = $shipmentManagement;
         $this->orderCollectionFactory = $orderCollectionFactory;
-        $this->helper = $helper;
-        $this->stdTimezone = $stdTimezone;
+        $this->cacheManagerHelper = $cacheManagerHelper;
     }
 
     /**
@@ -93,8 +99,14 @@ class Order implements OrderInterface
         $createdAtMax = $this->request->getParam("CreatedAtMax");
 
         $orderCollection = $this->orderCollectionFactory->create();
-        $orderCollection->addFieldToFilter('status', ['in' => $status])
-            ->addAttributeToFilter('created_at', ['from' => $createdAtMin, 'to' => $createdAtMax]);
+
+        if ($createdAtMin && $createdAtMax) {
+            $orderCollection->addAttributeToFilter("created_at", [
+                "from" => $createdAtMin,
+                "to" => $createdAtMax,
+            ]);
+        }
+        $orderCollection->addFieldToFilter("status", ["in" => $status]);
         $orderCollection->setPageSize($limit);
         $orderCollection->setCurPage($page);
         $orderData = [];
@@ -105,41 +117,17 @@ class Order implements OrderInterface
         $totalOrders = $orderCollection->getSize();
 
         $pageInfo = [
-            'current_page' => $page,
-            'per_page' => $limit,
-            'total_count' => $totalOrders,
-            'total_pages' => ceil($totalOrders / $limit),
+            "current_page" => $page,
+            "per_page" => $limit,
+            "total_count" => $totalOrders,
+            "total_pages" => ceil($totalOrders / $limit),
         ];
         return $this->helper->getResponseStatus(
-            "Success",
+            __("Success"),
             200,
             true,
             $orderData,
             $pageInfo,
-            $nestedArray = true
-        );
-    }
-
-    /**
-     * Get Order By Id
-     *
-     * @param int|int $orderId
-     * @return mixed|string[]
-     * @throws NoSuchEntityException
-     */
-    public function getOrderById($orderId)
-    {
-        $order = $this->getOrderByIdentifier($orderId);
-        if (!$order) {
-            throw new NoSuchEntityException(__('Order not found.'));
-        }
-        $orderData = $this->getOrderData($order);
-        return $this->helper->getResponseStatus(
-            "Success",
-            200,
-            true,
-            $orderData,
-            $pageData = null,
             $nestedArray = true
         );
     }
@@ -223,7 +211,6 @@ class Order implements OrderInterface
                     "total" => (float) $item->getRowTotalInclTax(),
                     "tax" => (float) $item->getTaxAmount(),
                 ];
-
             }
 
             $invoiceData = [
@@ -244,7 +231,10 @@ class Order implements OrderInterface
                 "is_cash_on_delivery" => $this->isCashOnDelivery($order),
             ];
 
-            $shippingAddress = $this->getShippingAddressData($customerId, $order->getShippingAddress()->getData());
+            $shippingAddress = $this->getShippingAddressData(
+                $customerId,
+                $order->getShippingAddress()->getData()
+            );
 
             // Retrieve totals
             $totals = [
@@ -334,7 +324,7 @@ class Order implements OrderInterface
             ];
         } catch (NoSuchEntityException $e) {
             return $this->helper->getResponseStatus(
-                __('Order not found.'),
+                __("Order not found."),
                 500,
                 false,
                 $data = null,
@@ -345,59 +335,28 @@ class Order implements OrderInterface
     }
 
     /**
-     * Get order by order identifier
-     *
-     * @param  int|string $orderIdentifier
-     * @return OrderInterface|null
-     * @throws NoSuchEntityException
-     */
-    protected function getOrderByIdentifier($orderIdentifier)
-    {
-        if (is_numeric($orderIdentifier)) {
-            $order = $this->orderRepository->get($orderIdentifier);
-        } else {
-            $order = $this->orderRepository->getByIncrementId($orderIdentifier);
-        }
-
-        if (!$order->getEntityId()) {
-            throw new NoSuchEntityException(__('Order not found.'));
-        }
-
-        return $order;
-    }
-
-    /**
      * Check if the order payment method is cash on delivery
      *
-     * @param  OrderInterface $order
+     * @param OrderInterface $order
      * @return bool
      */
     protected function isCashOnDelivery($order)
     {
-        return $order->getPayment()->getMethod() === 'cashondelivery';
-    }
-
-    /**
-     * Get cancel reason for order
-     *
-     * @param  OrderInterface $order
-     * @return string|null
-     */
-    protected function getCancelReason($order)
-    {
-        return $order->getData('omniful_cancel_reason') ?: null;
+        return $order->getPayment()->getMethod() === "cashondelivery";
     }
 
     /**
      * Get Shipping Address Data
      *
-     * @param  mixed $customerId
-     * @param  mixed $address
+     * @param mixed $customerId
+     * @param mixed $address
      * @return mixed
      */
     public function getShippingAddressData($customerId, $address)
     {
-        $country = $this->countriesHelper->getCountryByCode($address["country_id"]);
+        $country = $this->countriesHelper->getCountryByCode(
+            $address["country_id"]
+        );
         $shippingAddressData["first_name"] = $address["firstname"];
         $shippingAddressData["last_name"] = $address["lastname"];
         $shippingAddressData["email"] = $address["email"];
@@ -411,5 +370,62 @@ class Order implements OrderInterface
         $shippingAddressData["company"] = $address["company"] ?: "";
         $shippingAddressData["phone"] = $address["telephone"] ?: "";
         return $shippingAddressData;
+    }
+
+    /**
+     * Get cancel reason for order
+     *
+     * @param OrderInterface $order
+     * @return string|null
+     */
+    protected function getCancelReason($order)
+    {
+        return $order->getData("omniful_cancel_reason") ?: null;
+    }
+
+    /**
+     * Get Order By Id
+     *
+     * @param int|int $orderId
+     * @return mixed|string[]
+     * @throws NoSuchEntityException
+     */
+    public function getOrderById($orderId)
+    {
+        $order = $this->getOrderByIdentifier($orderId);
+        if (!$order) {
+            throw new NoSuchEntityException(__("Order not found."));
+        }
+        $orderData = $this->getOrderData($order);
+        return $this->helper->getResponseStatus(
+            __("Success"),
+            200,
+            true,
+            $orderData,
+            $pageData = null,
+            $nestedArray = true
+        );
+    }
+
+    /**
+     * Get order by order identifier
+     *
+     * @param int|string $orderIdentifier
+     * @return OrderInterface|null
+     * @throws NoSuchEntityException
+     */
+    protected function getOrderByIdentifier($orderIdentifier)
+    {
+        if (is_numeric($orderIdentifier)) {
+            $order = $this->orderRepository->get($orderIdentifier);
+        } else {
+            $order = $this->orderRepository->getByIncrementId($orderIdentifier);
+        }
+
+        if (!$order->getEntityId()) {
+            throw new NoSuchEntityException(__("Order not found."));
+        }
+
+        return $order;
     }
 }

@@ -74,6 +74,7 @@ class OrderSaveAfter implements ObserverInterface
     public function execute(Observer $observer)
     {
         $order = $observer->getOrder();
+        $store = $order->getStore();
 
         try {
             // Check if the order status is "complete" and update the status to "delivered"
@@ -84,10 +85,15 @@ class OrderSaveAfter implements ObserverInterface
 
             // Determine the event name based on order status changes
             $eventName = $this->getEventName($order);
+            $storeData = $this->storeManager->getGroup($store->getGroupId());
+
             $headers = [
-                "website_code" => $order->getStore()->getWebsite()->getCode(),
-                "store_code" => $order->getStore()->getCode(),
-                "store_view_code" => $order->getStore()->getName(),
+                "x-website-code" => $order
+                    ->getStore()
+                    ->getWebsite()
+                    ->getCode(),
+                "x-store-code" => $storeData->getCode(),
+                "x-store-view-code" => $order->getStore()->getCode(),
             ];
 
             // Connect to the adapter
@@ -97,7 +103,7 @@ class OrderSaveAfter implements ObserverInterface
             if ($eventName !== "") {
                 $payload = $this->orderManagement->getOrderData($order);
                 // Log the successful publication of the order event
-                $this->logger->info('Order event published successfully');
+                $this->logger->info(__("Order event published successfully"));
                 return $this->adapter->publishMessage(
                     $eventName,
                     $payload,
@@ -105,7 +111,7 @@ class OrderSaveAfter implements ObserverInterface
                 );
             }
         } catch (\Exception $e) {
-            $this->logger->error($e->getMessage());
+            $this->logger->error(__($e->getMessage()));
         }
     }
 
@@ -119,13 +125,15 @@ class OrderSaveAfter implements ObserverInterface
     {
         $eventName = "";
 
-        if ($order->getOrigData("status") === null
-            && $order->getStatus() !== Order::STATE_CANCELED
+        if (
+            $order->getOrigData("status") === null &&
+            $order->getStatus() !== Order::STATE_CANCELED
         ) {
             $eventName = self::ORDER_CREATED_EVENT_NAME;
-        } elseif ($order->getStatus() !== Order::STATE_CANCELED
-            && $order->getStatus() !== $order->getOrigData("status")
-            && in_array($order->getStatus(), self::ALLOWED_STATUSES)
+        } elseif (
+            $order->getStatus() !== Order::STATE_CANCELED &&
+            $order->getStatus() !== $order->getOrigData("status") &&
+            in_array($order->getStatus(), self::ALLOWED_STATUSES)
         ) {
             $eventName = self::ORDER_STATUS_UPDATED_EVENT_NAME;
         }

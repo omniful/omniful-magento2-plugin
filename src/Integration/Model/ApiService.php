@@ -106,7 +106,8 @@ class ApiService implements \Omniful\Integration\Api\ApiServiceInterface
         \Magento\Integration\Model\Integration $integration
     ) {
         $token = "";
-        if ($integration->getStatus() == Integration::STATUS_ACTIVE &&
+        if (
+            $integration->getStatus() == Integration::STATUS_ACTIVE &&
             $integration->getConsumerId()
         ) {
             $accessToken = $this->oauthService->getAccessToken(
@@ -129,10 +130,11 @@ class ApiService implements \Omniful\Integration\Api\ApiServiceInterface
     public function createAccessToken(
         \Magento\Integration\Model\Integration $integration
     ) {
-        if ($this->oauthService->createAccessToken(
-            $integration->getConsumerId(),
-            true
-        )
+        if (
+            $this->oauthService->createAccessToken(
+                $integration->getConsumerId(),
+                true
+            )
         ) {
             $integration->setStatus(Integration::STATUS_ACTIVE)->save();
         }

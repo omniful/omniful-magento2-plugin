@@ -125,7 +125,10 @@ class Refund implements RefundInterface
                 // If invoice creation fails
                 if (!$invoice) {
                     throw new \Magento\Framework\Exception\AlreadyExistsException(
-                        __("Could not create invoice for Order ID: %1", $order->getId())
+                        __(
+                            "Could not create invoice for Order ID: %1",
+                            $order->getId()
+                        )
                     );
                 }
             }
@@ -173,7 +176,7 @@ class Refund implements RefundInterface
 
                     // Add the response data
                     return $this->helper->getResponseStatus(
-                        "Success",
+                        __("Success"),
                         200,
                         true,
                         $orderData,
@@ -184,18 +187,15 @@ class Refund implements RefundInterface
                     throw new \Magento\Framework\Exception\AlreadyExistsException(
                         __(
                             "Invoice ID: " .
-                            $invoice->getId() .
-                            " is already refunded."
+                                $invoice->getId() .
+                                " is already refunded."
                         )
                     );
                 }
             }
         } catch (\Exception $e) {
             return $this->helper->getResponseStatus(
-                __(
-                    "Could not refund the order: %1",
-                    $e->getMessage()
-                ),
+                __("Could not refund the order: %1", $e->getMessage()),
                 500,
                 false,
                 $data = null,

@@ -122,7 +122,7 @@ class Adapter
             "X-Device-Info" => $xDeviceInfo ?? "",
             "X-Webhook-Token" => $this->webhookToken,
             "X-Omniful-Merchant" => $this->workspaceId,
-            "store_view_code" => 'default',
+            "store_view_code" => "default",
         ];
     }
 
@@ -147,6 +147,13 @@ class Adapter
         $this->headers["X-Event-Name"] = $event;
 
         $endPoint = $this->webhookUrl;
+
+        $writer = new \Zend_Log_Writer_Stream(BP . '/var/log/headers.log');
+        $logger = new \Zend_Log();
+        $logger->addWriter($writer);
+        $logger->info(print_r($additionalHeaders, true));
+        $logger->info(print_r($this->headers, true));
+        $logger->info(print_r(array_merge($this->headers, $additionalHeaders), true));
 
         $loggingData = [
             "endPoint" => $endPoint,
