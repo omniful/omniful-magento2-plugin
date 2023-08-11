@@ -71,6 +71,7 @@ class ProductSaveAfter implements ObserverInterface
                 : self::PRODUCT_UPDATED_EVENT_NAME;
 
             $code = $product->getStore()->getCode();
+
             $headers = [
                 "x-website-code" => $code == 'admin' ? 'default' : $product
                     ->getStore()
@@ -83,7 +84,7 @@ class ProductSaveAfter implements ObserverInterface
             $this->adapter->connect();
 
             // Publish the event
-            $payload = $this->productManagement->getProductData($product);
+            $payload = $this->productManagement->getProductFullData($product);
             $response = $this->adapter->publishMessage(
                 $eventName,
                 $payload,
