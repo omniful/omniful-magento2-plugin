@@ -34,9 +34,10 @@ class OrderPlaceAfter implements ObserverInterface
     /**
      * OrderPlaceAfter constructor.
      *
-     * @param Logger                $logger
-     * @param Adapter               $adapter
-     * @param OrderManagement       $orderManagement
+     * @param Logger $logger
+     * @param Adapter $adapter
+     * @param OrderManagement $orderManagement
+     * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         Logger $logger,

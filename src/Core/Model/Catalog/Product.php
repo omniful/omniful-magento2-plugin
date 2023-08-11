@@ -3,23 +3,21 @@
 namespace Omniful\Core\Model\Catalog;
 
 use Exception;
-use Magento\Catalog\Api\ProductRepositoryInterface;
-use Magento\Framework\App\ObjectManager;
+use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\Catalog\Api\Data\ProductInterfaceFactory;
-use Magento\Framework\Exception\NoSuchEntityException;
-use Omniful\Core\Api\Catalog\ProductInterface;
+use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Catalog\Model\Product as MagentoProduct;
+use Magento\CatalogInventory\Api\StockRegistryInterface;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
+use Magento\Eav\Api\AttributeRepositoryInterface;
+use Magento\Eav\Api\Data\AttributeInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Api\SearchCriteriaInterface;
 use Magento\Framework\App\Request\Http;
-use Magento\Catalog\Api\CategoryRepositoryInterface;
-use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
-use Magento\Catalog\Model\Product as MagentoProduct;
-use Magento\Eav\Api\AttributeRepositoryInterface;
-use Magento\Eav\Api\Data\AttributeInterface;
-use Magento\CatalogInventory\Api\StockRegistryInterface;
-use Magento\InventoryApi\Api\SourceItemsSaveInterface;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\InventoryApi\Api\Data\SourceItemInterface;
-use Omniful\Core\Helper\CacheManager as CacheManagerHelper;
+use Magento\InventoryApi\Api\SourceItemsSaveInterface;
+use Omniful\Core\Api\Catalog\ProductInterface;
 use Omniful\Core\Helper\Data;
 
 class Product implements ProductInterface
@@ -68,10 +66,6 @@ class Product implements ProductInterface
      * @var Data
      */
     private $helper;
-    /**
-     * @var CacheManagerHelper
-     */
-    private $cacheManagerHelper;
 
     /**
      * Product constructor.
@@ -84,7 +78,6 @@ class Product implements ProductInterface
      * @param CategoryRepositoryInterface $categoryRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param ProductRepositoryInterface $productRepository
-     * @param CacheManagerHelper $cacheManagerHelper
      * @param SourceItemsSaveInterface $sourceItemsSave
      * @param SourceItemInterface $sourceItem
      * @param ProductInterfaceFactory $productFactory
@@ -98,7 +91,6 @@ class Product implements ProductInterface
         CategoryRepositoryInterface $categoryRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
         ProductRepositoryInterface $productRepository,
-        CacheManagerHelper $cacheManagerHelper,
         SourceItemsSaveInterface $sourceItemsSave,
         SourceItemInterface $sourceItem,
         ProductInterfaceFactory $productFactory
@@ -114,7 +106,6 @@ class Product implements ProductInterface
         $this->sourceItemsSave = $sourceItemsSave;
         $this->sourceItem = $sourceItem;
         $this->helper = $helper;
-        $this->cacheManagerHelper = $cacheManagerHelper;
     }
 
     /**
@@ -125,8 +116,8 @@ class Product implements ProductInterface
     public function getProducts()
     {
         try {
-            $page = (int) $this->request->getParam("page") ?: 1;
-            $limit = (int) $this->request->getParam("limit") ?: 200;
+            $page = (int)$this->request->getParam("page") ?: 1;
+            $limit = (int)$this->request->getParam("limit") ?: 200;
             $searchCriteria = $this->createSearchCriteria($page, $limit);
             $searchResults = $this->productRepository->getList($searchCriteria);
             $products = $searchResults->getItems();
@@ -198,8 +189,8 @@ class Product implements ProductInterface
             $category = $this->categoryRepository->get($categoryId);
             if ($category) {
                 $categories[] = [
-                    "id" => (int) $category->getId(),
-                    "name" => (string) $category->getName(),
+                    "id" => (int)$category->getId(),
+                    "name" => (string)$category->getName(),
                 ];
             }
         }
@@ -223,11 +214,11 @@ class Product implements ProductInterface
             ->getValue();
 
         $prices = [
-            "regular_price" => (float) $regularPrice,
-            "sale_price" => (float) $salePrice,
-            "price" => (float) $price,
-            "msrp_price" => (float) $msrpPrice,
-            "qty" => (float) $product->getQty(),
+            "regular_price" => (float)$regularPrice,
+            "sale_price" => (float)$salePrice,
+            "price" => (float)$price,
+            "msrp_price" => (float)$msrpPrice,
+            "qty" => (float)$product->getQty(),
         ];
 
         $variationDetails = $this->getProductVariations($product->getId());
@@ -246,8 +237,8 @@ class Product implements ProductInterface
 
         foreach ($galleryImages as $galleryImage) {
             $galleryUrls[] = [
-                "url" => (string) $galleryImage->getUrl(),
-                "alt" => (string) $galleryImage->getLabel(),
+                "url" => (string)$galleryImage->getUrl(),
+                "alt" => (string)$galleryImage->getLabel(),
             ];
         }
 
@@ -257,129 +248,38 @@ class Product implements ProductInterface
         );
 
         return [
-            "id" => (int) $product->getId(),
-            "sku" => (string) $product->getSku(),
+            "id" => (int)$product->getId(),
+            "sku" => (string)$product->getSku(),
             "barcode" => $product->getCustomAttribute(
                 "omniful_barcode_attribute"
             )
-                ? (string) $product
+                ? (string)$product
                     ->getCustomAttribute("omniful_barcode_attribute")
                     ->getValue()
                 : null,
-            "stock_quantity" => (float) $stockItem->getQty(),
-            "name" => (string) $product->getName(),
-            "description" => (string) $product->getDescription(),
-            "short_description" => (string) $product->getShortDescription(),
-            "date_created" => (string) $product->getCreatedAt(),
-            "date_modified" => (string) $product->getUpdatedAt(),
+            "stock_quantity" => (float)$stockItem->getQty(),
+            "name" => (string)$product->getName(),
+            "description" => (string)$product->getDescription(),
+            "short_description" => (string)$product->getShortDescription(),
+            "date_created" => (string)$product->getCreatedAt(),
+            "date_modified" => (string)$product->getUpdatedAt(),
             "categories" => $categories,
-            "tags" => (array) $product->getTagIds(),
+            "tags" => (array)$product->getTagIds(),
             "attributes" => $this->getProductAttributesWithOptions(
                 $product->getId()
             ),
             "variations" => $variationDetails,
             "prices" => $prices,
             "gallery_images" => [
-                "full" => (string) $imageUrl,
-                "thumbnail" => (string) $thumbnailUrl,
-                "images" => (array) $galleryUrls,
+                "full" => (string)$imageUrl,
+                "thumbnail" => (string)$thumbnailUrl,
+                "images" => (array)$galleryUrls,
             ],
-            "tax_class" => (int) $product->getTaxClassId(),
-            "manage_stock" => (bool) $product->getManageStock(),
-            "in_stock" => (bool) $stockItem->getIsInStock(),
-            "backorders_allowed" => (bool) $stockItem->getBackOrder(),
-            "weight" => (float) $product->getWeight(),
-        ];
-    }
-
-    /**
-     * Get Product Data
-     *
-     * @param array $product
-     * @return array
-     * @throws NoSuchEntityException
-     */
-    public function getProductData($product)
-    {
-        $galleryUrls = [];
-        $variationDetails = [];
-        $categories = [];
-        $productCategories = $product->getCategoryIds();
-
-        foreach ($productCategories as $categoryId) {
-            $category = $this->categoryRepository->get($categoryId);
-            if ($category) {
-                $categories[] = [
-                    "id" => (int) $category->getId(),
-                    "name" => (string) $category->getName(),
-                ];
-            }
-        }
-
-        // Get prices and sales
-        $regularPrice = $product
-            ->getPriceInfo()
-            ->getPrice("regular_price")
-            ->getAmount()
-            ->getValue();
-        $salePrice = $product
-            ->getPriceInfo()
-            ->getPrice("final_price")
-            ->getAmount()
-            ->getValue();
-        $price = $salePrice ?: $regularPrice;
-        $msrpPrice = $product
-            ->getPriceInfo()
-            ->getPrice("msrp_price")
-            ->getAmount()
-            ->getValue();
-
-        $prices = [
-            "regular_price" => (float) $regularPrice,
-            "sale_price" => (float) $salePrice,
-            "price" => (float) $price,
-            "msrp_price" => (float) $msrpPrice,
-            "qty" => (float) $product->getQty(),
-        ];
-
-        $variationDetails = $this->getProductVariations($product->getId());
-
-        // Get the product images
-        $galleryImages = $product->getMediaGalleryImages();
-
-        // Get the product image
-        $image = $product->getMediaGalleryImages()->getFirstItem();
-
-        // Get the URL of the full-size image
-        $imageUrl = $image->getUrl();
-
-        // Get the URL of the thumbnail
-        $thumbnailUrl = $image->getUrl("thumbnail");
-
-        foreach ($galleryImages as $galleryImage) {
-            $galleryUrls[] = [
-                "url" => (string) $galleryImage->getUrl(),
-                "alt" => (string) $galleryImage->getLabel(),
-            ];
-        }
-
-        // Retrieve StockItemInterface for the product
-        $stockItem = $this->stockRegistry->getStockItemBySku(
-            $product->getSku()
-        );
-
-        return [
-            "id" => (int) $product->getId(),
-            "sku" => (string) $product->getSku(),
-            "barcode" => $product->getCustomAttribute(
-                "omniful_barcode_attribute"
-            )
-                ? (string) $product
-                    ->getCustomAttribute("omniful_barcode_attribute")
-                    ->getValue()
-                : null,
-            "stock_quantity" => (float) $stockItem->getQty(),
-            "name" => (string) $product->getName(),
+            "tax_class" => (int)$product->getTaxClassId(),
+            "manage_stock" => (bool)$product->getManageStock(),
+            "in_stock" => (bool)$stockItem->getIsInStock(),
+            "backorders_allowed" => (bool)$stockItem->getBackOrder(),
+            "weight" => (float)$product->getWeight(),
         ];
     }
 
@@ -413,27 +313,27 @@ class Product implements ProductInterface
 
                     // Get variation details
                     $variationDetail = [
-                        "id" => (int) $variation->getId(),
-                        "sku" => (string) $variation->getSku(),
+                        "id" => (int)$variation->getId(),
+                        "sku" => (string)$variation->getSku(),
                         "barcode" => $variation->getCustomAttribute(
                             "omniful_barcode_attribute"
                         )
-                            ? (string) $variation
+                            ? (string)$variation
                                 ->getCustomAttribute(
                                     "omniful_barcode_attribute"
                                 )
                                 ->getValue()
                             : null,
-                        "regular_price" => (float) $variation->getPrice(),
-                        "sale_price" => (float) $variation->getSpecialPrice(),
-                        "price" => (float) $variation->getFinalPrice(),
-                        "stock_quantity" => (float) $stockItem->getQty(),
-                        "in_stock" => (bool) $stockItem->getIsInStock(),
-                        "backorders_allowed" => (bool) $stockItem->getBackOrder(),
+                        "regular_price" => (float)$variation->getPrice(),
+                        "sale_price" => (float)$variation->getSpecialPrice(),
+                        "price" => (float)$variation->getFinalPrice(),
+                        "stock_quantity" => (float)$stockItem->getQty(),
+                        "in_stock" => (bool)$stockItem->getIsInStock(),
+                        "backorders_allowed" => (bool)$stockItem->getBackOrder(),
                         "attributes" => $this->getProductAttributesWithOptions(
                             $variation->getId()
                         ),
-                        "thumbnail" => (string) $thumbnailUrl,
+                        "thumbnail" => (string)$thumbnailUrl,
                     ];
 
                     // Add the variation details to the array
@@ -470,8 +370,8 @@ class Product implements ProductInterface
             foreach ($attributes as $attribute) {
                 if ($attribute->getFrontendInput() === "select") {
                     $attributeData = [
-                        "name" => (string) $attribute->getAttributeCode(),
-                        "label" => (string) $attribute->getDefaultFrontendLabel(),
+                        "name" => (string)$attribute->getAttributeCode(),
+                        "label" => (string)$attribute->getDefaultFrontendLabel(),
                         "options" => $this->getAttributeOptions($attribute),
                     ];
                     $productAttributes[] = $attributeData;
@@ -513,7 +413,7 @@ class Product implements ProductInterface
     {
         try {
             if (is_numeric($identifier)) {
-                $productId = (int) $identifier;
+                $productId = (int)$identifier;
                 $product = $this->loadProductById($productId);
                 $productData = $this->getProductFullData($product);
             } else {
@@ -608,6 +508,97 @@ class Product implements ProductInterface
                 $nestedArray = true
             );
         }
+    }
+
+    /**
+     * Get Product Data
+     *
+     * @param array $product
+     * @return array
+     * @throws NoSuchEntityException
+     */
+    public function getProductData($product)
+    {
+        $galleryUrls = [];
+        $variationDetails = [];
+        $categories = [];
+        $productCategories = $product->getCategoryIds();
+
+        foreach ($productCategories as $categoryId) {
+            $category = $this->categoryRepository->get($categoryId);
+            if ($category) {
+                $categories[] = [
+                    "id" => (int)$category->getId(),
+                    "name" => (string)$category->getName(),
+                ];
+            }
+        }
+
+        // Get prices and sales
+        $regularPrice = $product
+            ->getPriceInfo()
+            ->getPrice("regular_price")
+            ->getAmount()
+            ->getValue();
+        $salePrice = $product
+            ->getPriceInfo()
+            ->getPrice("final_price")
+            ->getAmount()
+            ->getValue();
+        $price = $salePrice ?: $regularPrice;
+        $msrpPrice = $product
+            ->getPriceInfo()
+            ->getPrice("msrp_price")
+            ->getAmount()
+            ->getValue();
+
+        $prices = [
+            "regular_price" => (float)$regularPrice,
+            "sale_price" => (float)$salePrice,
+            "price" => (float)$price,
+            "msrp_price" => (float)$msrpPrice,
+            "qty" => (float)$product->getQty(),
+        ];
+
+        $variationDetails = $this->getProductVariations($product->getId());
+
+        // Get the product images
+        $galleryImages = $product->getMediaGalleryImages();
+
+        // Get the product image
+        $image = $product->getMediaGalleryImages()->getFirstItem();
+
+        // Get the URL of the full-size image
+        $imageUrl = $image->getUrl();
+
+        // Get the URL of the thumbnail
+        $thumbnailUrl = $image->getUrl("thumbnail");
+
+        foreach ($galleryImages as $galleryImage) {
+            $galleryUrls[] = [
+                "url" => (string)$galleryImage->getUrl(),
+                "alt" => (string)$galleryImage->getLabel(),
+            ];
+        }
+
+        // Retrieve StockItemInterface for the product
+        $stockItem = $this->stockRegistry->getStockItemBySku(
+            $product->getSku()
+        );
+
+        return [
+            "id" => (int)$product->getId(),
+            "sku" => (string)$product->getSku(),
+            "barcode" => $product->getCustomAttribute(
+                "omniful_barcode_attribute"
+            )
+                ? (string)$product
+                    ->getCustomAttribute("omniful_barcode_attribute")
+                    ->getValue()
+                : null,
+            "stock_quantity" => (float)$stockItem->getQty(),
+            "name" => (string)$product->getName(),
+        ];
     }
 
     /**
