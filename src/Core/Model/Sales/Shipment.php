@@ -154,14 +154,14 @@ class Shipment implements ShipmentInterface
      */
     public function processShipment(
         int $id,
-        string $tracking_link,
         string $tracking_number,
-        string $shipping_label_pdf,
+        string $tracking_link = null,
+        string $shipping_label_pdf = null,
         string $carrier_title = null,
         bool $override_exist_data = false
     ) {
         // Validate input data
-        if (empty($tracking_number) ||
+        /*if (empty($tracking_number) ||
             empty($tracking_link) ||
             empty($shipping_label_pdf)
         ) {
@@ -169,7 +169,7 @@ class Shipment implements ShipmentInterface
             throw new LocalizedException(
                 __($errorMessage)
             );
-        }
+        }*/
 
         try {
             $order = $this->orderRepository->get($id);
@@ -229,10 +229,17 @@ class Shipment implements ShipmentInterface
                 ->setWeight($itemsWeight)
                 ->setTitle($carrier_title)
                 ->setCarrierCode($this->carrier_code)
-                ->setTracingLink($tracking_link)
+                //->setTracingLink($tracking_link)
                 ->setDescription($carrier_title)
-                ->setTrackNumber($tracking_number)
-                ->setShippingLabelPdf($shipping_label_pdf);
+                ->setTrackNumber($tracking_number);
+                //->setShippingLabelPdf($shipping_label_pdf);
+            if ($tracking_link) {
+                $track->setTracingLink($tracking_link);
+            }
+
+            if ($shipping_label_pdf) {
+                $track->setShippingLabelPdf($shipping_label_pdf);
+            }
 
             // Add the comment to the shipment
             $shipment->addComment(__($comment));
