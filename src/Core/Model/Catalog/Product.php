@@ -289,7 +289,6 @@ class Product implements ProductInterface
             "in_stock" => (bool) $stockItem->getIsInStock(),
             "backorders_allowed" => (bool) $stockItem->getBackOrder(),
             "weight" => (float) $product->getWeight(),
-            "trilok-test" => "test-key",
         ];
     }
 
@@ -381,7 +380,6 @@ class Product implements ProductInterface
                 : null,
             "stock_quantity" => (float) $stockItem->getQty(),
             "name" => (string) $product->getName(),
-            "test_key" => "trilok-test-key",
         ];
     }
 
