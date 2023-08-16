@@ -369,10 +369,14 @@ class Product implements ProductInterface
             $product = $this->productRepository->getById($productId);
             $attributes = $product->getAttributes();
             foreach ($attributes as $attribute) {
-                if ($product->hasData($attribute->getAttributeCode())) {
+                if ($product->hasData($attribute->getAttributeCode()) && $attribute->getFrontendInput() === "select") {
                     $attributeCode = $attribute->getAttributeCode();
-                    $attributeValue = $product->getData($attributeCode);
-                    $selectedAttributes[$attributeCode] = $attributeValue;
+                    $attributeData = [
+                        "name" => (string)$attribute->getAttributeCode(),
+                        "label" => (string)$attribute->getDefaultFrontendLabel(),
+                        "value" => (string)$product->getData($attributeCode),
+                    ];
+                    $selectedAttributes[] = $attributeData;
                 }
             }
             return $selectedAttributes;
