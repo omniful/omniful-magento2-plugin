@@ -280,6 +280,7 @@ class Product implements ProductInterface
             "in_stock" => (bool)$stockItem->getIsInStock(),
             "backorders_allowed" => (bool)$stockItem->getBackOrder(),
             "weight" => (float)$product->getWeight(),
+            "ajay" => "ajay-test-passed"
         ];
     }
 
@@ -364,20 +365,17 @@ class Product implements ProductInterface
     public function getProductAttributesWithOptions($productId)
     {
         try {
-            $productAttributes = [];
+            $selectedAttributes = [];
             $product = $this->productRepository->getById($productId);
             $attributes = $product->getAttributes();
             foreach ($attributes as $attribute) {
-                if ($attribute->getFrontendInput() === "select") {
-                    $attributeData = [
-                        "name" => (string)$attribute->getAttributeCode(),
-                        "label" => (string)$attribute->getDefaultFrontendLabel(),
-                        "options" => $this->getAttributeOptions($attribute),
-                    ];
-                    $productAttributes[] = $attributeData;
+                if ($product->hasData($attribute->getAttributeCode())) {
+                    $attributeCode = $attribute->getAttributeCode();
+                    $attributeValue = $product->getData($attributeCode);
+                    $selectedAttributes[$attributeCode] = $attributeValue;
                 }
             }
-            return $productAttributes;
+            return $selectedAttributes;
         } catch (Exception $e) {
             return $e->getMessage();
         }
