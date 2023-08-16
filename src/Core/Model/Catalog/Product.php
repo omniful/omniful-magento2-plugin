@@ -374,7 +374,7 @@ class Product implements ProductInterface
                     $attributeData = [
                         "name" => (string)$attribute->getAttributeCode(),
                         "label" => (string)$attribute->getDefaultFrontendLabel(),
-                        "value" => (string)$product->getData($attributeCode),
+                        "value" => $product->getData($attributeCode),
                     ];
                     $selectedAttributes[] = $attributeData;
                 }
