@@ -4,6 +4,7 @@ namespace Omniful\Core\Observer\Catalog;
 
 use Exception;
 use Magento\Catalog\Model\Product as ProductModel;
+use Magento\Catalog\Model\ProductRepository;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Store\Api\WebsiteRepositoryInterface;
@@ -44,6 +45,10 @@ class ProductSaveAfter implements ObserverInterface
      * @var WebsiteRepositoryInterface
      */
     private $websiteRepository;
+    /**
+     * @var ProductRepository
+     */
+    private $productRepository;
 
     /**
      * ProductSaveAfter constructor.
@@ -52,6 +57,7 @@ class ProductSaveAfter implements ObserverInterface
      * @param Adapter $adapter
      * @param ProductModel $productModel
      * @param WebsiteRepositoryInterface $websiteRepository
+     * @param ProductRepository $productRepository
      * @param StoreManagerInterface $storeManager
      * @param ProductManagement $productManagement
      */
@@ -60,6 +66,7 @@ class ProductSaveAfter implements ObserverInterface
         Adapter $adapter,
         ProductModel $productModel,
         WebsiteRepositoryInterface $websiteRepository,
+        ProductRepository $productRepository,
         StoreManagerInterface $storeManager,
         ProductManagement $productManagement
     ) {
@@ -69,6 +76,7 @@ class ProductSaveAfter implements ObserverInterface
         $this->productModel = $productModel;
         $this->productManagement = $productManagement;
         $this->storeManager = $storeManager;
+        $this->productRepository = $productRepository;
     }
 
     /**
@@ -105,6 +113,8 @@ class ProductSaveAfter implements ObserverInterface
                                 "x-store-view-code" => $storeViewCode,
                             ];
                             // Publish the event
+                            $product = $this->productRepository
+                                ->getById($product->getId(), false, $store->getId());
                             $payload = $this->productManagement->getProductFullData($product);
                             $response = $this->adapter->publishMessage(
                                 $eventName,
