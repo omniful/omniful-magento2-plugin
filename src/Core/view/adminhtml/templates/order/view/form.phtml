@@ -14,6 +14,7 @@ $shippingHelper = $block->getData('shippingHelper');
 $taxHelper = $block->getData('taxHelper');
 /** @var \Magento\Sales\Model\Order $order */
 $order = $block->getShipment()->getOrder();
+$magentoVersion = $block->getMagentoVersion();
 ?>
 <?= $block->getChildHtml('order_info'); ?>
 <section class="admin__page-section order-shipment-billing-shipping">
@@ -114,7 +115,9 @@ $order = $block->getShipment()->getOrder();
 
 script;
                 ?>
+                <?php if (version_compare($magentoVersion, '2.4', '>=')): ?>
                 <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $scriptString, false) ?>
+                <?php endif; ?>
             </div>
         </div>
     </div>
