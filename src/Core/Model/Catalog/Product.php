@@ -265,7 +265,7 @@ class Product implements ProductInterface
             "date_modified" => (string)$product->getUpdatedAt(),
             "categories" => $categories,
             "tags" => (array)$product->getTagIds(),
-            "attributes" => $this->getProductAttributesWithOptions(
+            "attributes" => $this->getProductAttributes(
                 $product->getId()
             ),
             "variations" => $variationDetails,
@@ -330,7 +330,7 @@ class Product implements ProductInterface
                         "stock_quantity" => (float)$stockItem->getQty(),
                         "in_stock" => (bool)$stockItem->getIsInStock(),
                         "backorders_allowed" => (bool)$stockItem->getBackOrder(),
-                        "attributes" => $this->getProductAttributesWithOptions(
+                        "attributes" => $this->getProductAttributes(
                             $variation->getId()
                         ),
                         "thumbnail" => (string)$thumbnailUrl,
@@ -361,27 +361,32 @@ class Product implements ProductInterface
      * @param array $productId
      * @return array
      */
-    public function getProductAttributesWithOptions($productId)
+    public function getProductAttributes($productId)
     {
         try {
-            $productAttributes = [];
+            $selectedAttributes = [];
             $product = $this->productRepository->getById($productId);
             $attributes = $product->getAttributes();
             foreach ($attributes as $attribute) {
-                if ($attribute->getFrontendInput() === "select") {
+                if ($product->hasData($attribute->getAttributeCode()) && $attribute->getFrontendInput() === "select") {
+                    $attributeCode = $attribute->getAttributeCode();
+                    $selectedOptionId = $product->getData($attributeCode);
+                    $selectedOptionText = $attribute->getSource()->getOptionText($selectedOptionId);
+
                     $attributeData = [
-                        "name" => (string)$attribute->getAttributeCode(),
+                        "name" => (string)$attributeCode,
                         "label" => (string)$attribute->getDefaultFrontendLabel(),
-                        "options" => $this->getAttributeOptions($attribute),
+                        "value" => $selectedOptionText,
                     ];
-                    $productAttributes[] = $attributeData;
+                    $selectedAttributes[] = $attributeData;
                 }
             }
-            return $productAttributes;
+            return $selectedAttributes;
         } catch (Exception $e) {
             return $e->getMessage();
         }
     }
+
 
     /**
      * Get Attribute Options
