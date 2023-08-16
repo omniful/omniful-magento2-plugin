@@ -371,10 +371,13 @@ class Product implements ProductInterface
             foreach ($attributes as $attribute) {
                 if ($product->hasData($attribute->getAttributeCode()) && $attribute->getFrontendInput() === "select") {
                     $attributeCode = $attribute->getAttributeCode();
+                    $selectedOptionId = $product->getData($attributeCode);
+                    $selectedOptionText = $attribute->getSource()->getOptionText($selectedOptionId);
+
                     $attributeData = [
-                        "name" => (string)$attribute->getAttributeCode(),
+                        "name" => (string)$attributeCode,
                         "label" => (string)$attribute->getDefaultFrontendLabel(),
-                        "value" => $product->getData($attributeCode),
+                        "value" => $selectedOptionText,
                     ];
                     $selectedAttributes[] = $attributeData;
                 }
@@ -384,6 +387,7 @@ class Product implements ProductInterface
             return $e->getMessage();
         }
     }
+
 
     /**
      * Get Attribute Options
