@@ -265,7 +265,7 @@ class Product implements ProductInterface
             "date_modified" => (string)$product->getUpdatedAt(),
             "categories" => $categories,
             "tags" => (array)$product->getTagIds(),
-            "attributes" => $this->getProductAttributesWithOptions(
+            "attributes" => $this->getProductAttributes(
                 $product->getId()
             ),
             "variations" => $variationDetails,
@@ -280,7 +280,6 @@ class Product implements ProductInterface
             "in_stock" => (bool)$stockItem->getIsInStock(),
             "backorders_allowed" => (bool)$stockItem->getBackOrder(),
             "weight" => (float)$product->getWeight(),
-            "ajay" => "ajay-test-passed"
         ];
     }
 
@@ -331,7 +330,7 @@ class Product implements ProductInterface
                         "stock_quantity" => (float)$stockItem->getQty(),
                         "in_stock" => (bool)$stockItem->getIsInStock(),
                         "backorders_allowed" => (bool)$stockItem->getBackOrder(),
-                        "attributes" => $this->getProductAttributesWithOptions(
+                        "attributes" => $this->getProductAttributes(
                             $variation->getId()
                         ),
                         "thumbnail" => (string)$thumbnailUrl,
@@ -362,7 +361,7 @@ class Product implements ProductInterface
      * @param array $productId
      * @return array
      */
-    public function getProductAttributesWithOptions($productId)
+    public function getProductAttributes($productId)
     {
         try {
             $selectedAttributes = [];
