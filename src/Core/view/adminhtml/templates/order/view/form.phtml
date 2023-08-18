@@ -3,16 +3,22 @@
  * Copyright © Magento, Inc. All rights reserved.
  * See COPYING.txt for license details.
  */
+
+use Magento\Framework\View\Helper\SecureHtmlRenderer;
+use Magento\Sales\Model\Order;
+use Magento\Shipping\Block\Adminhtml\View\Form;
+use Magento\Tax\Helper\Data;
+
 /**
- * @var \Magento\Shipping\Block\Adminhtml\View\Form $block
- * @var \Magento\Framework\View\Helper\SecureHtmlRenderer $secureRenderer
+ * @var Form $block
+ * @var SecureHtmlRenderer $secureRenderer
  */
 
 /** @var \Magento\Shipping\Helper\Data $shippingHelper */
 $shippingHelper = $block->getData('shippingHelper');
-/** @var \Magento\Tax\Helper\Data $taxHelper */
+/** @var Data $taxHelper */
 $taxHelper = $block->getData('taxHelper');
-/** @var \Magento\Sales\Model\Order $order */
+/** @var Order $order */
 $order = $block->getShipment()->getOrder();
 $magentoVersion = $block->getMagentoVersion();
 ?>
@@ -68,21 +74,26 @@ $magentoVersion = $block->getMagentoVersion();
                     <?php endif; ?>
                     <?php $incl = $block->displayShippingPriceInclTax($order); ?>
 
-                    <?= /* @noEscape */ $excl; ?>
+                    <?= /* @noEscape */
+                    $excl; ?>
                     <?php if ($taxHelper->displayShippingBothPrices() && $incl != $excl): ?>
-                        (<?= $block->escapeHtml(__('Incl. Tax')); ?> <?= /* @noEscape */ $incl; ?>)
+                        (<?= $block->escapeHtml(__('Incl. Tax')); ?> <?= /* @noEscape */
+                        $incl; ?>)
                     <?php endif; ?>
                 </div>
 
                 <p>
                     <?php if ($block->canCreateShippingLabel()): ?>
-                        <?= /* @noEscape */ $block->getCreateLabelButton(); ?>
+                        <?= /* @noEscape */
+                        $block->getCreateLabelButton(); ?>
                     <?php endif ?>
                     <?php if ($block->getShipment()->getShippingLabel()): ?>
-                        <?= /* @noEscape */ $block->getPrintLabelButton(); ?>
+                        <?= /* @noEscape */
+                        $block->getPrintLabelButton(); ?>
                     <?php endif ?>
                     <?php if ($block->getShipment()->getPackages()): ?>
-                        <?= /* @noEscape */ $block->getShowPackagesButton(); ?>
+                        <?= /* @noEscape */
+                        $block->getShowPackagesButton(); ?>
                     <?php endif ?>
                 </p>
                 <?= $block->getChildHtml('shipment_tracking'); ?>
@@ -100,9 +111,9 @@ $magentoVersion = $block->getMagentoVersion();
                             });
                             window.packaging.setLabelCreatedCallback(function () {
                                 setLocation("{$block->escapeJs($block->getUrl(
-                                        'adminhtml/order_shipment/view',
-                                        ['shipment_id' => $block->getShipment()->getId()]
-                                    ))}");
+                    'adminhtml/order_shipment/view',
+                    ['shipment_id' => $block->getShipment()->getId()]
+                ))}");
                             });
                         };
 
@@ -116,7 +127,8 @@ $magentoVersion = $block->getMagentoVersion();
 script;
                 ?>
                 <?php if (version_compare($magentoVersion, '2.4', '>=')): ?>
-                <?= /* @noEscape */ $secureRenderer->renderTag('script', [], $scriptString, false) ?>
+                    <?= /* @noEscape */
+                    $secureRenderer->renderTag('script', [], $scriptString, false) ?>
                 <?php endif; ?>
             </div>
         </div>

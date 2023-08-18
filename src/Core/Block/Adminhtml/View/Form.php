@@ -1,5 +1,6 @@
 <?php
 namespace Omniful\Core\Block\Adminhtml\View;
+
 use Magento\Backend\Block\Template\Context;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\ProductMetadataInterface;
@@ -11,6 +12,9 @@ use Magento\Tax\Helper\Data as TaxHelper;
 
 class Form extends \Magento\Shipping\Block\Adminhtml\View\Form
 {
+    /**
+     * @var ProductMetadataInterface
+     */
     public $productMetadata;
     /**
      * Form constructor.
