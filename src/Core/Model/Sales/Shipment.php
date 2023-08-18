@@ -144,13 +144,12 @@ class Shipment implements ShipmentInterface
      * Add tracking information to an existing shipment
      *
      * @param int $id
-     * @param string $tracking_link
      * @param string $tracking_number
+     * @param string $tracking_link
      * @param string $shipping_label_pdf
      * @param string $carrier_title
      * @param bool $override_exist_data
      * @return mixed|string[]
-     * @throws LocalizedException
      */
     public function processShipment(
         int $id,
@@ -232,7 +231,6 @@ class Shipment implements ShipmentInterface
                 //->setTracingLink($tracking_link)
                 ->setDescription($carrier_title)
                 ->setTrackNumber($tracking_number);
-                //->setShippingLabelPdf($shipping_label_pdf);
             if ($tracking_link) {
                 $track->setTracingLink($tracking_link);
             }

@@ -134,7 +134,7 @@ class Status implements StatusInterface
                 $nestedArray = true
             );
         } catch (\Exception $e) {
-            return $this->helper->getResponseStatus( 
+            return $this->helper->getResponseStatus(
                 __("Failed to update order status: " . $e->getMessage()),
                 500,
                 false,
