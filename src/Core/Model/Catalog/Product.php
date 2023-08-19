@@ -310,7 +310,6 @@ class Product implements ProductInterface
                     $stockItem = $this->stockRegistry->getStockItemBySku(
                         $variation->getSku()
                     );
-
                     // Get variation details
                     $variationDetail = [
                         "id" => (int)$variation->getId(),
@@ -404,7 +403,6 @@ class Product implements ProductInterface
                 $options[] = $option["label"];
             }
         }
-
         return $options;
     }
 

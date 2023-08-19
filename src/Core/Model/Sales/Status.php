@@ -83,7 +83,6 @@ class Status implements StatusInterface
                 $status === self::STATUS_DELIVERED
             ) {
                 $shipments = $order->getShipmentsCollection();
-
                 // Check if the order has shipments
                 if ($shipments->getSize() === 0) {
                     throw new \Exception(
@@ -112,13 +111,11 @@ class Status implements StatusInterface
             // Set the order status and state
             $order->setStatus($this->getOrderStatus($status));
             $order->setState($this->getOrderState($status));
-
             // Set the omniful_hub_id attribute and update the fulfillment status
             if ($hubId !== null) {
                 $order->setData("omniful_hub_id", $hubId);
                 $order->setData("fulfillment_status", "Hub Assigned");
             }
-
             // Add a comment to the order (if present)
             if ($comment !== null && $comment !== "") {
                 $order->addCommentToStatusHistory($comment);

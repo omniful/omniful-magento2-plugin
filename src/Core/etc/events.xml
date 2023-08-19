@@ -10,4 +10,8 @@
         <observer name="adminhtml_omniful_handle_sales_order_cancel_after" instance="Omniful\Core\Observer\Sales\OrderCancelAfter" />
     </event>
 
+    <event name="sales_order_save_before">
+        <observer name="adminhtml_omniful_handle_sales_order_save_before" instance="Omniful\Core\Observer\Sales\OrderSaveBefore" />
+    </event>
+
 </config>

@@ -18,8 +18,8 @@ class OrderCreditMemoAfter implements ObserverInterface
     public function execute(Observer $observer)
     {
         try {
-            $shipment = $observer->getEvent()->getCreditmemo();
-            $order = $shipment->getOrder();
+            $creditMemo = $observer->getEvent()->getCreditmemo();
+            $order = $creditMemo->getOrder();
             if (!$order->getIsVirtual()) {
                 $order
                     ->setState(Order::STATE_CLOSED)
