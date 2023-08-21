@@ -4,14 +4,15 @@ namespace Omniful\Core\Model\Sales;
 
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Model\Order\Invoice as InvoiceManagement;
 use Omniful\Core\Api\Sales\OrderInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\App\RequestInterface;
-use Omniful\Core\Helper\CacheManager as CacheManagerHelper;
 use Omniful\Core\Model\Sales\Shipment as ShipmentManagement;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
 use Omniful\Core\Helper\Countries;
 use Omniful\Core\Helper\Data;
+use Magento\Sales\Api\CreditmemoRepositoryInterface;
 use Magento\Framework\Stdlib\DateTime\Timezone;
 
 class Order implements OrderInterface
@@ -46,9 +47,13 @@ class Order implements OrderInterface
      */
     private $helper;
     /**
-     * @var CacheManagerHelper
+     * @var InvoiceManagement
      */
-    private $cacheManagerHelper;
+    private $invoiceManagement;
+    /**
+     * @var CreditmemoRepositoryInterface
+     */
+    private $creditMemoRepository;
 
     /**
      * Order constructor.
@@ -56,8 +61,9 @@ class Order implements OrderInterface
      * @param Data $helper
      * @param RequestInterface $request
      * @param Countries $countriesHelper
-     * @param CacheManagerHelper $cacheManagerHelper
      * @param Shipment $shipmentManagement
+     * @param CreditmemoRepositoryInterface $creditMemoRepository
+     * @param InvoiceManagement $invoiceManagement
      * @param CollectionFactory $orderCollectionFactory
      * @param OrderRepositoryInterface $orderRepository
      */
@@ -65,8 +71,9 @@ class Order implements OrderInterface
         Data $helper,
         RequestInterface $request,
         Countries $countriesHelper,
-        CacheManagerHelper $cacheManagerHelper,
         ShipmentManagement $shipmentManagement,
+        CreditmemoRepositoryInterface $creditMemoRepository,
+        InvoiceManagement $invoiceManagement,
         CollectionFactory $orderCollectionFactory,
         OrderRepositoryInterface $orderRepository
     ) {
@@ -76,7 +83,8 @@ class Order implements OrderInterface
         $this->orderRepository = $orderRepository;
         $this->shipmentManagement = $shipmentManagement;
         $this->orderCollectionFactory = $orderCollectionFactory;
-        $this->cacheManagerHelper = $cacheManagerHelper;
+        $this->invoiceManagement = $invoiceManagement;
+        $this->creditMemoRepository = $creditMemoRepository;
     }
 
     /**
@@ -152,7 +160,6 @@ class Order implements OrderInterface
             $shippingData = $this->shipmentManagement->getShipmentData($order);
             $shipmentTracking = [];
             $customerId = $order->getCustomerId();
-
             foreach ($shippingData as $data) {
                 $shipmentTracking[] = [
                     "track_number" => (string) $data["tracking_number"],
@@ -193,26 +200,30 @@ class Order implements OrderInterface
 
             foreach ($order->getItems() as $item) {
                 $product = $item->getProduct();
-                $orderItems[] = [
-                    "id" => (int) $item->getId(),
-                    "sku" => (string) $product->getSku(),
-                    "product_id" => (int) $product->getId(),
-                    "name" => (string) $product->getName(),
-                    "barcode" => $product->getCustomAttribute(
-                        "omniful_barcode_attribute"
-                    )
-                    ? (string) $product
-                        ->getCustomAttribute("omniful_barcode_attribute")
-                        ->getValue()
-                    : null,
-                    "quantity" => (float) $item->getQtyOrdered(),
-                    "price" => (float) $item->getPrice(),
-                    "subtotal" => (float) $item->getRowTotal(),
-                    "total" => (float) $item->getRowTotalInclTax(),
-                    "tax" => (float) $item->getTaxAmount(),
-                ];
+                 if ($product = $item->getProduct()) {
+                    $orderItems[] = [
+                        "id" => (int) $item->getId(),
+                        "sku" => (string) $product->getSku(),
+                        "product_id" => (int) $product->getId(),
+                        "name" => (string) $product->getName(),
+                        "barcode" => $product->getCustomAttribute(
+                            "omniful_barcode_attribute"
+                        )
+                            ? (string) $product
+                                ->getCustomAttribute("omniful_barcode_attribute")
+                                ->getValue()
+                            : null,
+                        "quantity" => (float) $item->getQtyOrdered(),
+                        "price" => (float) $item->getPrice(),
+                        "subtotal" => (float) $item->getRowTotal(),
+                        "total" => (float) $item->getRowTotalInclTax(),
+                        "tax" => (float) $item->getTaxAmount(),
+                    ];
+                }
             }
 
+            $invoiceFullData = $this->getInvoiceDetails($order);
+            $creditMemosFullData = $this->getCreditMemosCollection($order);
             $invoiceData = [
                 "currency" => (string) $order->getOrderCurrencyCode(),
                 "subtotal" => (float) $order->getSubtotal(),
@@ -296,6 +307,17 @@ class Order implements OrderInterface
                 ],
             ];
 
+            $attributes = $order->getCustomAttributes();
+            $attributeData = [];
+            foreach ($attributes as $attribute) {
+                $attributeCode = $attribute->getAttributeCode();
+                $selectedOptionId = $order->getData($attributeCode);
+                $selectedOptionText = $attribute->getSource()->getOptionText($selectedOptionId);
+                $attributeData[] = [
+                    "name" => $attributeCode,
+                    "value" => $selectedOptionText,
+                ];
+            }
             return [
                 "id" => (int) $order->getEntityId(),
                 "increment_id" => $order->getIncrementId(),
@@ -314,6 +336,9 @@ class Order implements OrderInterface
                 ? $order->getCreatedAt()
                 : "",
                 "invoice" => $invoiceData,
+                "custom_attribute" => $attributeData,
+                "invoice_data" => $invoiceFullData,
+                "credit_memo_data" => $creditMemosFullData,
                 "customer" => $customerData,
                 "order_items" => $orderItems,
                 "payment_method" => $paymentMethod,
@@ -427,5 +452,39 @@ class Order implements OrderInterface
         }
 
         return $order;
+    }
+
+    /**
+     * Get Invoice Data
+     *
+     * @param mixed $order
+     * @return array
+     */
+    public function getInvoiceDetails($order)
+    {
+        $invoices = $order->getInvoiceCollection();
+        $invoiceData = [];
+        foreach ($invoices as $invoice) {
+            $invoice = $this->invoiceManagement->load($invoice->getId());
+            $invoiceData[] = $invoice->getData();
+        }
+        return $invoiceData;
+    }
+
+    /**
+     * Get Credit Memos Collection
+     *
+     * @param mixed $order
+     * @return array
+     */
+    public function getCreditMemosCollection($order)
+    {
+        $creditMemos = $order->getCreditmemosCollection();
+        $creditMemoData = [];
+        foreach ($creditMemos as $creditMemo) {
+            $creditMemo = $this->creditMemoRepository->get($creditMemo->getId());
+            $creditMemoData[] = $creditMemo->getData();
+        }
+        return $creditMemoData;
     }
 }
