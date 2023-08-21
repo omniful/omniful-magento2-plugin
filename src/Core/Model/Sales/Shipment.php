@@ -3,9 +3,11 @@
 namespace Omniful\Core\Model\Sales;
 
 use Exception;
+use Magento\Framework\Api\SearchCriteriaBuilderFactory;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Webapi\Rest\Request;
+use Magento\InventoryApi\Api\SourceRepositoryInterface;
 use Magento\Sales\Api\Data\ShipmentTrackInterfaceFactory;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Api\ShipmentRepositoryInterface;
@@ -13,9 +15,6 @@ use Magento\Sales\Model\Convert\OrderFactory as OrderConvertFactory;
 use Magento\Sales\Model\Order\Shipment\TrackFactory;
 use Magento\Sales\Model\Order\ShipmentFactory;
 use Omniful\Core\Api\Sales\ShipmentInterface;
-use Magento\Framework\Api\SearchCriteriaBuilderFactory;
-use Magento\InventoryApi\Api\SourceRepositoryInterface;
-use Omniful\Core\Api\Stock\StockSourcesInterface;
 use Omniful\Core\Helper\Data;
 use Omniful\Core\Logger\Logger;
 
@@ -81,10 +80,6 @@ class Shipment implements ShipmentInterface
      */
     private $request;
     /**
-     * @var StockSourcesInterface
-     */
-    private $stockSourcesInterface;
-    /**
      * @var SearchCriteriaBuilderFactory
      */
     private $searchCriteriaBuilderFactory;
@@ -105,7 +100,6 @@ class Shipment implements ShipmentInterface
      * @param Data $helper
      * @param SourceRepositoryInterface $sourceRepository
      * @param SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory
-     * @param StockSourcesInterface $stockSourcesInterface
      * @param ShipmentRepositoryInterface $shipmentRepository
      * @param ShipmentTrackInterfaceFactory $shipmentTrackFactory
      * @param OrderRepositoryInterface $orderRepository
@@ -120,11 +114,11 @@ class Shipment implements ShipmentInterface
         Data $helper,
         SourceRepositoryInterface $sourceRepository,
         SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory,
-        StockSourcesInterface $stockSourcesInterface,
         ShipmentRepositoryInterface $shipmentRepository,
         ShipmentTrackInterfaceFactory $shipmentTrackFactory,
         OrderRepositoryInterface $orderRepository
-    ) {
+    )
+    {
         $this->logger = $logger;
         $this->scopeConfig = $scopeConfig;
         $this->trackFactory = $trackFactory;
@@ -137,7 +131,6 @@ class Shipment implements ShipmentInterface
         $this->shipmentTrackFactory = $shipmentTrackFactory;
         $this->helper = $helper;
         $this->request = $request;
-        $this->stockSourcesInterface = $stockSourcesInterface;
     }
 
     /**
@@ -145,6 +138,7 @@ class Shipment implements ShipmentInterface
      *
      * @param int $id
      * @param string $tracking_number
+     * @param mixed $items
      * @param string $tracking_link
      * @param string $shipping_label_pdf
      * @param string $carrier_title
@@ -154,11 +148,13 @@ class Shipment implements ShipmentInterface
     public function processShipment(
         int $id,
         string $tracking_number,
+        mixed $items,
         string $tracking_link = null,
         string $shipping_label_pdf = null,
         string $carrier_title = null,
         bool $override_exist_data = false
-    ) {
+    )
+    {
         // Validate input data
         /*if (empty($tracking_number) ||
             empty($tracking_link) ||
@@ -198,17 +194,21 @@ class Shipment implements ShipmentInterface
             $shipment = $this->orderConvertFactory
                 ->create()
                 ->toShipment($order);
-            foreach ($order->getAllItems() as $orderItem) {
-                // Check if order item has qty to ship or is virtual
-                if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
-                    continue;
+            if (!empty($items)) {
+                $shipment = $this->getPartialShipmentData($order, $shipment, $items);
+            } else {
+                foreach ($order->getAllItems() as $orderItem) {
+                    // Check if order item has qty to ship or is virtual
+                    if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
+                        continue;
+                    }
+                    $qtyShipped = $orderItem->getQtyToShip();
+                    $shipmentItem = $this->orderConvertFactory
+                        ->create()
+                        ->itemToShipmentItem($orderItem)
+                        ->setQty($qtyShipped);
+                    $shipment->addItem($shipmentItem);
                 }
-                $qtyShipped = $orderItem->getQtyToShip();
-                $shipmentItem = $this->orderConvertFactory
-                    ->create()
-                    ->itemToShipmentItem($orderItem)
-                    ->setQty($qtyShipped);
-                $shipment->addItem($shipmentItem);
             }
 
             $shipment->register();
@@ -294,6 +294,23 @@ class Shipment implements ShipmentInterface
     }
 
     /**
+     * Get Default Source Code
+     *
+     * @return string|null
+     */
+    public function getDefaultSourceCode()
+    {
+        $searchCriteriaBuilder = $this->searchCriteriaBuilderFactory->create();
+        $searchCriteria = $searchCriteriaBuilder->create();
+        $sources = $this->sourceRepository->getList($searchCriteria)->getItems();
+        $sourcesCode = 'Default';
+        foreach ($sources as $source) {
+            $sourcesCode = $source->getSourceCode();
+        }
+        return $sourcesCode;
+    }
+
+    /**
      * Get shipment tracking data for the order
      *
      * @param OrderInterface $order
@@ -322,19 +339,39 @@ class Shipment implements ShipmentInterface
     }
 
     /**
-     * Get Default Source Code
+     * Get Partial Shipment Data
      *
-     * @return string|null
+     * @param mixed $order
+     * @param mixed $shipment
+     * @param mixed $items
+     * @return mixed
+     * @throws LocalizedException
      */
-    public function getDefaultSourceCode()
+    public function getPartialShipmentData($order, $shipment, $items)
     {
-        $searchCriteriaBuilder = $this->searchCriteriaBuilderFactory->create();
-        $searchCriteria = $searchCriteriaBuilder->create();
-        $sources = $this->sourceRepository->getList($searchCriteria)->getItems();
-        $sourcesCode = 'Default';
-        foreach ($sources as $source) {
-            $sourcesCode = $source->getSourceCode();
+        try {
+            foreach ($items as $item) {
+                foreach ($order->getAllItems() as $orderItem) {
+                    if (isset($item['sku']) && isset($item['qty']) && $item['sku'] == $orderItem['sku']) {
+                        if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
+                            continue;
+                        }
+                        $qtyShipped = $item['qty'];
+                        $shipmentItem = $this->orderConvertFactory
+                            ->create()
+                            ->itemToShipmentItem($orderItem)
+                            ->setQty($qtyShipped);
+                        $shipment->addItem($shipmentItem);
+                    }
+                }
+            }
+            return $shipment;
+        } catch (Exception $e) {
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false
+            );
         }
-        return $sourcesCode;
     }
 }
