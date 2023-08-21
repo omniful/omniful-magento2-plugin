@@ -200,24 +200,26 @@ class Order implements OrderInterface
 
             foreach ($order->getItems() as $item) {
                 $product = $item->getProduct();
-                $orderItems[] = [
-                    "id" => (int) $item->getId(),
-                    "sku" => (string) $product->getSku(),
-                    "product_id" => (int) $product->getId(),
-                    "name" => (string) $product->getName(),
-                    "barcode" => $product->getCustomAttribute(
-                        "omniful_barcode_attribute"
-                    )
-                    ? (string) $product
-                        ->getCustomAttribute("omniful_barcode_attribute")
-                        ->getValue()
-                    : null,
-                    "quantity" => (float) $item->getQtyOrdered(),
-                    "price" => (float) $item->getPrice(),
-                    "subtotal" => (float) $item->getRowTotal(),
-                    "total" => (float) $item->getRowTotalInclTax(),
-                    "tax" => (float) $item->getTaxAmount(),
-                ];
+                 if ($product = $item->getProduct()) {
+                    $orderItems[] = [
+                        "id" => (int) $item->getId(),
+                        "sku" => (string) $product->getSku(),
+                        "product_id" => (int) $product->getId(),
+                        "name" => (string) $product->getName(),
+                        "barcode" => $product->getCustomAttribute(
+                            "omniful_barcode_attribute"
+                        )
+                            ? (string) $product
+                                ->getCustomAttribute("omniful_barcode_attribute")
+                                ->getValue()
+                            : null,
+                        "quantity" => (float) $item->getQtyOrdered(),
+                        "price" => (float) $item->getPrice(),
+                        "subtotal" => (float) $item->getRowTotal(),
+                        "total" => (float) $item->getRowTotalInclTax(),
+                        "tax" => (float) $item->getTaxAmount(),
+                    ];
+                }
             }
 
             $invoiceFullData = $this->getInvoiceDetails($order);
@@ -305,6 +307,17 @@ class Order implements OrderInterface
                 ],
             ];
 
+            $attributes = $order->getCustomAttributes();
+            $attributeData = [];
+            foreach ($attributes as $attribute) {
+                $attributeCode = $attribute->getAttributeCode();
+                $selectedOptionId = $order->getData($attributeCode);
+                $selectedOptionText = $attribute->getSource()->getOptionText($selectedOptionId);
+                $attributeData[] = [
+                    "name" => $attributeCode,
+                    "value" => $selectedOptionText,
+                ];
+            }
             return [
                 "id" => (int) $order->getEntityId(),
                 "increment_id" => $order->getIncrementId(),
@@ -323,10 +336,7 @@ class Order implements OrderInterface
                 ? $order->getCreatedAt()
                 : "",
                 "invoice" => $invoiceData,
-                "custom_attribute" => [
-                    'Custom Order Attribute' => $order->getData('custom_order_attribute'),
-                    'Fulfillment Status' => $order->getData('fulfillment_status')
-                ],
+                "custom_attribute" => $attributeData,
                 "invoice_data" => $invoiceFullData,
                 "credit_memo_data" => $creditMemosFullData,
                 "customer" => $customerData,

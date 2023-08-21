@@ -194,22 +194,22 @@ class Shipment implements ShipmentInterface
             $shipment = $this->orderConvertFactory
                 ->create()
                 ->toShipment($order);
-            foreach ($items as $item) {
+            if (!empty($items)) {
+                $shipment = $this->getPartialShipmentData($order, $shipment, $items);
+            } else {
                 foreach ($order->getAllItems() as $orderItem) {
-                    if ($item['sku'] == $orderItem['sku']) {
-                        if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
-                            continue;
-                        }
-                        $qtyShipped = $item['qty'];
-                        $shipmentItem = $this->orderConvertFactory
-                            ->create()
-                            ->itemToShipmentItem($orderItem)
-                            ->setQty($qtyShipped);
-                        $shipment->addItem($shipmentItem);
+                    // Check if order item has qty to ship or is virtual
+                    if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
+                        continue;
                     }
+                    $qtyShipped = $orderItem->getQtyToShip();
+                    $shipmentItem = $this->orderConvertFactory
+                        ->create()
+                        ->itemToShipmentItem($orderItem)
+                        ->setQty($qtyShipped);
+                    $shipment->addItem($shipmentItem);
                 }
             }
-
 
             $shipment->register();
             $shipment->getOrder()->setIsInProcess(true);
@@ -336,5 +336,42 @@ class Shipment implements ShipmentInterface
             }
         }
         return $shipmentTracking;
+    }
+
+    /**
+     * Get Partial Shipment Data
+     *
+     * @param mixed $order
+     * @param mixed $shipment
+     * @param mixed $items
+     * @return mixed
+     * @throws LocalizedException
+     */
+    public function getPartialShipmentData($order, $shipment, $items)
+    {
+        try {
+            foreach ($items as $item) {
+                foreach ($order->getAllItems() as $orderItem) {
+                    if (isset($item['sku']) && isset($item['qty']) && $item['sku'] == $orderItem['sku']) {
+                        if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
+                            continue;
+                        }
+                        $qtyShipped = $item['qty'];
+                        $shipmentItem = $this->orderConvertFactory
+                            ->create()
+                            ->itemToShipmentItem($orderItem)
+                            ->setQty($qtyShipped);
+                        $shipment->addItem($shipmentItem);
+                    }
+                }
+            }
+            return $shipment;
+        } catch (Exception $e) {
+            return $this->helper->getResponseStatus(
+                __($e->getMessage()),
+                500,
+                false
+            );
+        }
     }
 }
