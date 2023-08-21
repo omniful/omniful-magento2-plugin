@@ -122,12 +122,12 @@ class Status implements StatusInterface
             // Set the order status and state
             $order->setStatus($this->getOrderStatus($status));
             $order->setState($this->getOrderState($status));
-            $fulfillmentStatus = $customStatus[$status] ?? '';
             // Set the omniful_hub_id attribute and update the fulfillment status
             if ($hubId !== null) {
                 $order->setData("omniful_hub_id", $hubId);
-                $order->setData("fulfillment_status", $fulfillmentStatus);
             }
+            $fulfillmentStatus = $customStatus[$status] ?? $status;
+            $order->setData("fulfillment_status", $fulfillmentStatus);
             // Add a comment to the order (if present)
             if ($comment !== null && $comment !== "") {
                 $order->addCommentToStatusHistory($comment);
