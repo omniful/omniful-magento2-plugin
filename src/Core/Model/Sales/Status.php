@@ -126,8 +126,9 @@ class Status implements StatusInterface
             if ($hubId !== null) {
                 $order->setData("omniful_hub_id", $hubId);
             }
-            $fulfillmentStatus = $customStatus[$status] ?? $status;
-            $order->setData("fulfillment_status", $fulfillmentStatus);
+            if (isset($customStatus[$status])) {
+                $order->setData("fulfillment_status", $customStatus[$status]);
+            }
             // Add a comment to the order (if present)
             if ($comment !== null && $comment !== "") {
                 $order->addCommentToStatusHistory($comment);
