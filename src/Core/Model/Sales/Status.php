@@ -71,6 +71,17 @@ class Status implements StatusInterface
         string $comment = null
     ): array {
         try {
+
+           $customStatus = [
+                "pending" => "Pending",
+                "packed" => "Packed",
+                "processing" => "Hub Assigned",
+                "ready_to_ship" => "Ready To Ship",
+                "shipped" => "shipped",
+                "holded" => "On Hold",
+                "canceled" => "Canceled",
+                "delivered" => "Delivered",
+            ];
             $order = $this->orderRepository->get($id);
 
             if ($order === null) {
@@ -111,10 +122,11 @@ class Status implements StatusInterface
             // Set the order status and state
             $order->setStatus($this->getOrderStatus($status));
             $order->setState($this->getOrderState($status));
+            $fulfillmentStatus = $customStatus[$status] ?? '';
             // Set the omniful_hub_id attribute and update the fulfillment status
             if ($hubId !== null) {
                 $order->setData("omniful_hub_id", $hubId);
-                $order->setData("fulfillment_status", "Hub Assigned");
+                $order->setData("fulfillment_status", $fulfillmentStatus);
             }
             // Add a comment to the order (if present)
             if ($comment !== null && $comment !== "") {

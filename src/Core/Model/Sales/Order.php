@@ -213,10 +213,6 @@ class Order implements OrderInterface
                         ->getValue()
                     : null,
                     "quantity" => (float) $item->getQtyOrdered(),
-                    "custom_attribute" => [
-                        'Custom Order Attribute' => $order->getData('custom_order_attribute'),
-                        'Fulfillment Status' => $order->getData('fulfillment_status')
-                    ],
                     "price" => (float) $item->getPrice(),
                     "subtotal" => (float) $item->getRowTotal(),
                     "total" => (float) $item->getRowTotalInclTax(),
@@ -327,6 +323,10 @@ class Order implements OrderInterface
                 ? $order->getCreatedAt()
                 : "",
                 "invoice" => $invoiceData,
+                "custom_attribute" => [
+                    'Custom Order Attribute' => $order->getData('custom_order_attribute'),
+                    'Fulfillment Status' => $order->getData('fulfillment_status')
+                ],
                 "invoice_data" => $invoiceFullData,
                 "credit_memo_data" => $creditMemosFullData,
                 "customer" => $customerData,
