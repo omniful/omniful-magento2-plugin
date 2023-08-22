@@ -17,7 +17,7 @@ The Omniful Magento 2 Plugin enables integration between Magento 2 and Omniful C
 2. Enable the module by running the following commands:
 
 ```bash
-php bin/magento module:enable Omniful_Magento2Plugin
+php bin/magento module:enable Omniful_Core Omniful_Integration
 php bin/magento setup:upgrade
 php bin/magento cache:clean
 
