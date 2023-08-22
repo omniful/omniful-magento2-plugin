@@ -164,10 +164,10 @@ class ConfigurationsManagement implements ConfigurationsInterface
 
             $configData = json_decode($this->request->getContent(), true);
 
-            $configData['active'] = $configData['active'] ? true : false;
-            $configData['disable_ship_button'] = $configData['disable_ship_button'] ? true : false;
-            $configData['disable_order_status_dropdown'] = $configData['disable_order_status_dropdown'] ? true : false;
-            $configData['enable_debugging'] = $configData['enable_debugging'] ? true : false;
+            $configData['active'] = isset($configData['active']) ? true : false;
+            $configData['disable_ship_button'] = isset($configData['disable_ship_button']) ? true : false;
+            $configData['disable_order_status_dropdown'] = isset($configData['disable_order_status_dropdown']) ? true : false;
+            $configData['enable_debugging'] = isset($configData['enable_debugging']) ? true : false;
 
             return $this->coreHelper->getResponseStatus(
                 __("Success"),

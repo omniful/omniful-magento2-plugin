@@ -356,7 +356,11 @@ class Shipment implements ShipmentInterface
                         if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
                             continue;
                         }
-                        $qtyShipped = $item['qty'];
+                        if ($orderItem->getQtyToShip() >= $item['qty']) {
+                            $qtyShipped = $item['qty'];
+                        } else {
+                            $qtyShipped = $orderItem->getQtyToShip();
+                        }
                         $shipmentItem = $this->orderConvertFactory
                             ->create()
                             ->itemToShipmentItem($orderItem)
