@@ -148,7 +148,7 @@ class Shipment implements ShipmentInterface
     public function processShipment(
         int $id,
         string $tracking_number,
-        mixed $items,
+        mixed $items = null,
         string $tracking_link = null,
         string $shipping_label_pdf = null,
         string $carrier_title = null,
@@ -356,7 +356,11 @@ class Shipment implements ShipmentInterface
                         if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
                             continue;
                         }
-                        $qtyShipped = $item['qty'];
+                        if ($orderItem->getQtyToShip() >= $item['qty']) {
+                            $qtyShipped = $item['qty'];
+                        } else {
+                            $qtyShipped = $orderItem->getQtyToShip();
+                        }
                         $shipmentItem = $this->orderConvertFactory
                             ->create()
                             ->itemToShipmentItem($orderItem)
