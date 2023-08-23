@@ -148,7 +148,7 @@ class Shipment implements ShipmentInterface
     public function processShipment(
         int $id,
         string $tracking_number,
-        mixed $items,
+        mixed $items = null,
         string $tracking_link = null,
         string $shipping_label_pdf = null,
         string $carrier_title = null,
