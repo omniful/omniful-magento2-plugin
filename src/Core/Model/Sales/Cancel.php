@@ -2,6 +2,8 @@
 
 namespace Omniful\Core\Model\Sales;
 
+use Magento\Framework\Webapi\Rest\Request;
+use Magento\Store\Api\StoreRepositoryInterface;
 use Omniful\Core\Api\Sales\CancelInterface;
 use Magento\Sales\Api\OrderManagementInterface as MagentoOrderManagementInterface;
 use Magento\Framework\Exception\LocalizedException;
@@ -52,6 +54,14 @@ class Cancel implements CancelInterface
      * @var Data
      */
     private $helper;
+    /**
+     * @var Request
+     */
+    private $request;
+    /**
+     * @var StoreRepositoryInterface
+     */
+    private $storeRepository;
 
     /**
      * Cancel constructor.
@@ -62,6 +72,8 @@ class Cancel implements CancelInterface
      * @param CreditmemoService $creditmemoService
      * @param OrderRepositoryInterface $orderRepository
      * @param Data $helper
+     * @param Request $request
+     * @param StoreRepositoryInterface $storeRepository
      * @param InvoiceRepositoryInterface $invoiceRepository
      * @param MagentoOrderManagementInterface $magentoOrderManagementInterface
      */
@@ -72,6 +84,8 @@ class Cancel implements CancelInterface
         CreditmemoService $creditmemoService,
         OrderRepositoryInterface $orderRepository,
         Data $helper,
+        Request $request,
+        StoreRepositoryInterface $storeRepository,
         InvoiceRepositoryInterface $invoiceRepository,
         MagentoOrderManagementInterface $magentoOrderManagementInterface
     ) {
@@ -83,6 +97,8 @@ class Cancel implements CancelInterface
         $this->invoiceRepository = $invoiceRepository;
         $this->magentoOrderManagementInterface = $magentoOrderManagementInterface;
         $this->helper = $helper;
+        $this->request = $request;
+        $this->storeRepository = $storeRepository;
     }
 
     /**
@@ -100,7 +116,19 @@ class Cancel implements CancelInterface
         try {
             // Load the order
             $order = $this->orderRepository->get($orderId);
-
+            $apiUrl = $this->request->getUriString();
+            $storeCodeApi = $this->helper->getStoreCodeByApi($apiUrl);
+            $storeCode = $this->storeRepository->get($order->getStoreId())->getCode();
+            if ($storeCodeApi && $storeCodeApi !== $storeCode) {
+                return $this->helper->getResponseStatus(
+                    __("Order not found."),
+                    500,
+                    false,
+                    $data = null,
+                    $pageData = null,
+                    $nestedArray = true
+                );
+            }
             // Check if the order state is "complete", and throw an error if it is
             if ($order->getState() ===
                 \Magento\Sales\Model\Order::STATE_COMPLETE

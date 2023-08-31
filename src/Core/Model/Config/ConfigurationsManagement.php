@@ -166,7 +166,8 @@ class ConfigurationsManagement implements ConfigurationsInterface
 
             $configData['active'] = !empty($configData['active']) ? true : false;
             $configData['disable_ship_button'] = !empty($configData['disable_ship_button']) ? true : false;
-            $configData['disable_order_status_dropdown'] = !empty($configData['disable_order_status_dropdown']) ? true : false;
+            $configData['disable_order_status_dropdown'] = !empty($configData['disable_order_status_dropdown'])
+                ? true : false;
             $configData['enable_debugging'] = !empty($configData['enable_debugging']) ? true : false;
 
             return $this->coreHelper->getResponseStatus(

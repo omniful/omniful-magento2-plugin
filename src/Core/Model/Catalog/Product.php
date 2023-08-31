@@ -17,6 +17,8 @@ use Magento\Framework\App\Request\Http;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\InventoryApi\Api\Data\SourceItemInterface;
 use Magento\InventoryApi\Api\SourceItemsSaveInterface;
+use Magento\Store\Api\StoreRepositoryInterface;
+use Magento\Store\Model\StoreManagerInterface;
 use Omniful\Core\Api\Catalog\ProductInterface;
 use Omniful\Core\Helper\Data;
 
@@ -66,6 +68,14 @@ class Product implements ProductInterface
      * @var Data
      */
     private $helper;
+    /**
+     * @var StoreRepositoryInterface
+     */
+    private $storeRepository;
+    /**
+     * @var StoreManagerInterface
+     */
+    private $storeManager;
 
     /**
      * Product constructor.
@@ -74,6 +84,8 @@ class Product implements ProductInterface
      * @param StockRegistryInterface $stockRegistry
      * @param Configurable $configurableProductType
      * @param Data $helper
+     * @param StoreRepositoryInterface $storeRepository
+     * @param StoreManagerInterface $storeManager
      * @param AttributeRepositoryInterface $attributeRepository
      * @param CategoryRepositoryInterface $categoryRepository
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
@@ -87,6 +99,8 @@ class Product implements ProductInterface
         StockRegistryInterface $stockRegistry,
         Configurable $configurableProductType,
         Data $helper,
+        StoreRepositoryInterface $storeRepository,
+        StoreManagerInterface $storeManager,
         AttributeRepositoryInterface $attributeRepository,
         CategoryRepositoryInterface $categoryRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
@@ -106,6 +120,8 @@ class Product implements ProductInterface
         $this->sourceItemsSave = $sourceItemsSave;
         $this->sourceItem = $sourceItem;
         $this->helper = $helper;
+        $this->storeRepository = $storeRepository;
+        $this->storeManager = $storeManager;
     }
 
     /**
@@ -124,7 +140,25 @@ class Product implements ProductInterface
             $totalProducts = $searchResults->getTotalCount(); // Total products count
             $productData = [];
             foreach ($products as $product) {
-                $productData[] = $this->getProductFullData($product);
+                $apiUrl = $this->request->getUriString();
+                $storeCodeApi = $this->helper->getStoreCodeByApi($apiUrl);
+                if ($storeCodeApi) {
+                    $storeCode = $this->storeRepository->get($storeCodeApi);
+                    $storeGroupId = [];
+                    foreach ($product->getWebsiteIds() as $websiteId) {
+                        $storeGroup = $this->storeManager->getWebsite($websiteId)->getGroups();
+                        foreach ($storeGroup as $store) {
+                            $storeGroupId[] = $store->getGroupId();
+                        }
+                    }
+                    if (in_array($storeCode->getStoreId(), $storeGroupId)) {
+                        $product = $this->productRepository
+                            ->getById($product->getId(), false, $storeCode->getStoreId());
+                        $productData[] = $this->getProductFullData($product);
+                    }
+                } else {
+                    $productData[] = $this->getProductFullData($product);
+                }
             }
             $pageInfo = [
                 "current_page" => $page,
@@ -310,6 +344,7 @@ class Product implements ProductInterface
                     $stockItem = $this->stockRegistry->getStockItemBySku(
                         $variation->getSku()
                     );
+
                     // Get variation details
                     $variationDetail = [
                         "id" => (int)$variation->getId(),
@@ -386,26 +421,6 @@ class Product implements ProductInterface
         }
     }
 
-
-    /**
-     * Get Attribute Options
-     *
-     * @param AttributeInterface $attribute
-     * @return array
-     */
-    protected function getAttributeOptions(AttributeInterface $attribute)
-    {
-        $options = [];
-
-        if ($attribute->usesSource()) {
-            $attributeOptions = $attribute->getSource()->getAllOptions();
-            foreach ($attributeOptions as $option) {
-                $options[] = $option["label"];
-            }
-        }
-        return $options;
-    }
-
     /**
      * Get Product By Identifier
      *
@@ -418,6 +433,31 @@ class Product implements ProductInterface
             if (is_numeric($identifier)) {
                 $productId = (int)$identifier;
                 $product = $this->loadProductById($productId);
+                $apiUrl = $this->request->getUriString();
+                $storeCodeApi = $this->helper->getStoreCodeByApi($apiUrl);
+                if ($storeCodeApi) {
+                    $storeCode = $this->storeRepository->get($storeCodeApi);
+                    $storeGroupId = [];
+                    foreach ($product->getWebsiteIds() as $websiteId) {
+                        $storeGroup = $this->storeManager->getWebsite($websiteId)->getGroups();
+                        foreach ($storeGroup as $store) {
+                            $storeGroupId[] = $store->getGroupId();
+                        }
+                    }
+                    if (in_array($storeCode->getStoreId(), $storeGroupId)) {
+                        $product = $this->productRepository
+                            ->getById($product->getId(), false, $storeCode->getStoreId());
+                    } else {
+                        return $this->helper->getResponseStatus(
+                            __("product not found."),
+                            500,
+                            false,
+                            $data = null,
+                            $pageData = null,
+                            $nestedArray = true
+                        );
+                    }
+                }
                 $productData = $this->getProductFullData($product);
             } else {
                 $productSku = $identifier;
@@ -480,6 +520,31 @@ class Product implements ProductInterface
                 $stockData["is_in_stock"] = false;
             } else {
                 $stockData["is_in_stock"] = true;
+            }
+            $apiUrl = $this->request->getUriString();
+            $storeCodeApi = $this->helper->getStoreCodeByApi($apiUrl);
+            if ($storeCodeApi) {
+                $storeCode = $this->storeRepository->get($storeCodeApi);
+                $storeGroupId = [];
+                foreach ($product->getWebsiteIds() as $websiteId) {
+                    $storeGroup = $this->storeManager->getWebsite($websiteId)->getGroups();
+                    foreach ($storeGroup as $store) {
+                        $storeGroupId[] = $store->getGroupId();
+                    }
+                }
+                if (in_array($storeCode->getStoreId(), $storeGroupId)) {
+                    $product = $this->productRepository
+                        ->getById($product->getId(), false, $storeCode->getStoreId());
+                } else {
+                    return $this->helper->getResponseStatus(
+                        __("product not found."),
+                        500,
+                        false,
+                        $data = null,
+                        $pageData = null,
+                        $nestedArray = true
+                    );
+                }
             }
             $product->setStockData($stockData);
             $this->productRepository->save($product);
@@ -666,6 +731,31 @@ class Product implements ProductInterface
         try {
             foreach ($products as $productData) {
                 $product = $this->productRepository->get($productData["sku"]);
+                $apiUrl = $this->request->getUriString();
+                $storeCodeApi = $this->helper->getStoreCodeByApi($apiUrl);
+                if ($storeCodeApi) {
+                    $storeCode = $this->storeRepository->get($storeCodeApi);
+                    $storeGroupId = [];
+                    foreach ($product->getWebsiteIds() as $websiteId) {
+                        $storeGroup = $this->storeManager->getWebsite($websiteId)->getGroups();
+                        foreach ($storeGroup as $store) {
+                            $storeGroupId[] = $store->getGroupId();
+                        }
+                    }
+                    if (in_array($storeCode->getStoreId(), $storeGroupId)) {
+                        $product = $this->productRepository
+                            ->getById($product->getId(), false, $storeCode->getStoreId());
+                    } else {
+                        return $this->helper->getResponseStatus(
+                            __("product not found."),
+                            500,
+                            false,
+                            $data = null,
+                            $pageData = null,
+                            $nestedArray = true
+                        );
+                    }
+                }
                 $stockData = ["qty" => $productData["qty"]];
 
                 if (isset($productData["status"])
@@ -757,5 +847,25 @@ class Product implements ProductInterface
                 $nestedArray = true
             );
         }
+    }
+
+    /**
+     * Get Attribute Options
+     *
+     * @param AttributeInterface $attribute
+     * @return array
+     */
+    protected function getAttributeOptions(AttributeInterface $attribute)
+    {
+        $options = [];
+
+        if ($attribute->usesSource()) {
+            $attributeOptions = $attribute->getSource()->getAllOptions();
+            foreach ($attributeOptions as $option) {
+                $options[] = $option["label"];
+            }
+        }
+
+        return $options;
     }
 }

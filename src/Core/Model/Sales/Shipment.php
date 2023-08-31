@@ -14,6 +14,7 @@ use Magento\Sales\Api\ShipmentRepositoryInterface;
 use Magento\Sales\Model\Convert\OrderFactory as OrderConvertFactory;
 use Magento\Sales\Model\Order\Shipment\TrackFactory;
 use Magento\Sales\Model\Order\ShipmentFactory;
+use Magento\Store\Api\StoreRepositoryInterface;
 use Omniful\Core\Api\Sales\ShipmentInterface;
 use Omniful\Core\Helper\Data;
 use Omniful\Core\Logger\Logger;
@@ -87,6 +88,10 @@ class Shipment implements ShipmentInterface
      * @var SourceRepositoryInterface
      */
     private $sourceRepository;
+    /**
+     * @var StoreRepositoryInterface
+     */
+    private $storeRepository;
 
     /**
      * Shipment constructor.
@@ -98,6 +103,7 @@ class Shipment implements ShipmentInterface
      * @param ScopeConfigInterface $scopeConfig
      * @param OrderConvertFactory $orderConvertFactory
      * @param Data $helper
+     * @param StoreRepositoryInterface $storeRepository
      * @param SourceRepositoryInterface $sourceRepository
      * @param SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory
      * @param ShipmentRepositoryInterface $shipmentRepository
@@ -112,13 +118,13 @@ class Shipment implements ShipmentInterface
         ScopeConfigInterface $scopeConfig,
         OrderConvertFactory $orderConvertFactory,
         Data $helper,
+        StoreRepositoryInterface $storeRepository,
         SourceRepositoryInterface $sourceRepository,
         SearchCriteriaBuilderFactory $searchCriteriaBuilderFactory,
         ShipmentRepositoryInterface $shipmentRepository,
         ShipmentTrackInterfaceFactory $shipmentTrackFactory,
         OrderRepositoryInterface $orderRepository
-    )
-    {
+    ) {
         $this->logger = $logger;
         $this->scopeConfig = $scopeConfig;
         $this->trackFactory = $trackFactory;
@@ -131,6 +137,7 @@ class Shipment implements ShipmentInterface
         $this->shipmentTrackFactory = $shipmentTrackFactory;
         $this->helper = $helper;
         $this->request = $request;
+        $this->storeRepository = $storeRepository;
     }
 
     /**
@@ -139,22 +146,21 @@ class Shipment implements ShipmentInterface
      * @param int $id
      * @param string $tracking_number
      * @param mixed $items
-     * @param string $tracking_link
-     * @param string $shipping_label_pdf
-     * @param string $carrier_title
-     * @param bool $override_exist_data
-     * @return mixed|string[]
+     * @param string|null $tracking_link
+     * @param string|null $shipping_label_pdf
+     * @param string|null $carrier_title
+     * @param bool|bool $override_exist_data
+     * @return mixed
      */
     public function processShipment(
         int $id,
         string $tracking_number,
-        mixed $items = null,
+        $items = null,
         string $tracking_link = null,
         string $shipping_label_pdf = null,
         string $carrier_title = null,
         bool $override_exist_data = false
-    )
-    {
+    ) {
         // Validate input data
         /*if (empty($tracking_number) ||
             empty($tracking_link) ||
@@ -168,6 +174,19 @@ class Shipment implements ShipmentInterface
 
         try {
             $order = $this->orderRepository->get($id);
+            $apiUrl = $this->request->getUriString();
+            $storeCodeApi = $this->helper->getStoreCodeByApi($apiUrl);
+            $storeCode = $this->storeRepository->get($order->getStoreId())->getCode();
+            if ($storeCodeApi && $storeCodeApi !== $storeCode) {
+                return $this->helper->getResponseStatus(
+                    __("Order not found."),
+                    500,
+                    false,
+                    $data = null,
+                    $pageData = null,
+                    $nestedArray = true
+                );
+            }
             $status = $order->getStatus();
             // Check if the order status allows adding tracking information
             if (in_array($status, self::IGNORED_STATUSES)) {
