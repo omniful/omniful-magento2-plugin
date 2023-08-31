@@ -134,6 +134,7 @@ class Data extends AbstractHelper
         if ($storeId !== null) {
             $this->storeManager->setCurrentStore($storeId);
         }
+
         $storeScope = ScopeInterface::SCOPE_STORE;
         return $this->scopeConfig->getValue(
             self::XML_PATH_WORK_SPACE_ID,
@@ -285,5 +286,22 @@ class Data extends AbstractHelper
             ];
         }
         return $storeUrls;
+    }
+
+    /**
+     * Get Store Code By Api
+     *
+     * @param string $apiUrl
+     * @return string
+     */
+    public function getStoreCodeByApi($apiUrl)
+    {
+        $token = "rest/";
+        $result = "";
+        $index = strpos($apiUrl, $token);
+        if ($index !== false) {
+            $result = substr($apiUrl, $index + strlen($token));
+        }
+        return stristr($result, "/V2", true);
     }
 }
