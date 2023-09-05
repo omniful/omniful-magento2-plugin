@@ -12,7 +12,7 @@ interface ShipmentInterface
      *
      * @param int $id The ID of the order to create a shipment for.
      * @param string $tracking_number The tracking number for the shipment.
-     * @param mixed|null $item
+     * @param mixed $items
      * @param string $tracking_link The tracking link for the shipment.
      * @param string $shipping_label_pdf The shipping label PDF for the shipment.
      * @param string $carrier_title The carrier title for the shipment (optional).
@@ -22,7 +22,7 @@ interface ShipmentInterface
     public function processShipment(
         int $id,
         string $tracking_number,
-        mixed $items = null,
+        $items = [],
         string $tracking_link = null,
         string $shipping_label_pdf = null,
         string $carrier_title = null,

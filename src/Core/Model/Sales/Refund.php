@@ -2,12 +2,14 @@
 
 namespace Omniful\Core\Model\Sales;
 
+use Magento\Framework\Webapi\Rest\Request;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Sales\Model\Order\CreditmemoFactory;
 use Magento\Sales\Model\Order\Creditmemo\ItemFactory;
 use Magento\Sales\Model\Order\Invoice as InvoiceManagement;
 use Magento\Sales\Model\Service\CreditmemoService;
 use Magento\Sales\Model\Service\OrderService;
+use Magento\Store\Api\StoreRepositoryInterface;
 use Omniful\Core\Api\Sales\RefundInterface;
 use Omniful\Core\Logger\Logger;
 use Magento\Sales\Api\CreditmemoRepositoryInterface;
@@ -62,6 +64,14 @@ class Refund implements RefundInterface
      * @var Data
      */
     private $helper;
+    /**
+     * @var Request
+     */
+    private $request;
+    /**
+     * @var StoreRepositoryInterface
+     */
+    private $storeRepository;
 
     /**
      * Refund constructor.
@@ -74,6 +84,8 @@ class Refund implements RefundInterface
      * @param InvoiceManagement $invoiceManagement
      * @param CreditmemoService $creditmemoService
      * @param Data $helper
+     * @param Request $request
+     * @param StoreRepositoryInterface $storeRepository
      * @param OrderRepositoryInterface $orderRepository
      * @param OrderItemRepositoryInterface $orderItemRepository
      * @param CreditmemoRepositoryInterface $creditmemoRepository
@@ -87,6 +99,8 @@ class Refund implements RefundInterface
         InvoiceManagement $invoiceManagement,
         CreditmemoService $creditmemoService,
         Data $helper,
+        Request $request,
+        StoreRepositoryInterface $storeRepository,
         OrderRepositoryInterface $orderRepository,
         OrderItemRepositoryInterface $orderItemRepository,
         CreditmemoRepositoryInterface $creditmemoRepository
@@ -102,6 +116,8 @@ class Refund implements RefundInterface
         $this->creditmemoRepository = $creditmemoRepository;
         $this->creditmemoItemFactory = $creditmemoItemFactory;
         $this->helper = $helper;
+        $this->request = $request;
+        $this->storeRepository = $storeRepository;
     }
 
     /**
@@ -116,7 +132,19 @@ class Refund implements RefundInterface
         try {
             // Load the order
             $order = $this->orderRepository->get($id);
-
+            $apiUrl = $this->request->getUriString();
+            $storeCodeApi = $this->helper->getStoreCodeByApi($apiUrl);
+            $storeCode = $this->storeRepository->get($order->getStoreId())->getCode();
+            if ($storeCodeApi && $storeCodeApi !== $storeCode) {
+                return $this->helper->getResponseStatus(
+                    __("Order not found."),
+                    500,
+                    false,
+                    $data = null,
+                    $pageData = null,
+                    $nestedArray = true
+                );
+            }
             // Check if the order is invoiced
             if (!$order->hasInvoices()) {
                 // Create invoice for the order

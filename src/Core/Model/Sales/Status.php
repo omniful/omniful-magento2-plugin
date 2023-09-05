@@ -2,8 +2,10 @@
 
 namespace Omniful\Core\Model\Sales;
 
+use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Store\Api\StoreRepositoryInterface;
 use Omniful\Core\Model\Sales\Order as OrderManagement;
 use Omniful\Core\Api\Sales\StatusInterface;
 use Magento\Sales\Model\Order;
@@ -34,6 +36,14 @@ class Status implements StatusInterface
      * @var Data
      */
     private $helper;
+    /**
+     * @var RequestInterface
+     */
+    private $request;
+    /**
+     * @var StoreRepositoryInterface
+     */
+    private $storeRepository;
 
     /**
      * Status constructor.
@@ -41,18 +51,24 @@ class Status implements StatusInterface
      * @param \Omniful\Core\Model\Sales\Order $orderManagement
      * @param InvoiceService $invoiceService
      * @param Data $helper
+     * @param RequestInterface $request
+     * @param StoreRepositoryInterface $storeRepository
      * @param OrderRepositoryInterface $orderRepository
      */
     public function __construct(
         OrderManagement $orderManagement,
         InvoiceService $invoiceService,
         Data $helper,
+        RequestInterface $request,
+        StoreRepositoryInterface $storeRepository,
         OrderRepositoryInterface $orderRepository
     ) {
         $this->invoiceService = $invoiceService;
         $this->orderRepository = $orderRepository;
         $this->orderManagement = $orderManagement;
         $this->helper = $helper;
+        $this->request = $request;
+        $this->storeRepository = $storeRepository;
     }
 
     /**
@@ -72,7 +88,7 @@ class Status implements StatusInterface
     ): array {
         try {
 
-           $customStatus = [
+            $customStatus = [
                 "pending" => "Pending",
                 "packed" => "Packed",
                 "processing" => "Hub Assigned",
@@ -84,6 +100,19 @@ class Status implements StatusInterface
             ];
             $order = $this->orderRepository->get($id);
 
+            $apiUrl = $this->request->getUriString();
+            $storeCodeApi = $this->helper->getStoreCodeByApi($apiUrl);
+            $storeCode = $this->storeRepository->get($order->getStoreId())->getCode();
+            if ($storeCodeApi && $storeCodeApi !== $storeCode) {
+                return $this->helper->getResponseStatus(
+                    __("Order not found."),
+                    500,
+                    false,
+                    $data = null,
+                    $pageData = null,
+                    $nestedArray = true
+                );
+            }
             if ($order === null) {
                 throw new NoSuchEntityException(__("Order not found."));
             }
@@ -94,6 +123,7 @@ class Status implements StatusInterface
                 $status === self::STATUS_DELIVERED
             ) {
                 $shipments = $order->getShipmentsCollection();
+
                 // Check if the order has shipments
                 if ($shipments->getSize() === 0) {
                     throw new \Exception(
@@ -126,9 +156,11 @@ class Status implements StatusInterface
             if ($hubId !== null) {
                 $order->setData("omniful_hub_id", $hubId);
             }
+
             if (isset($customStatus[$status])) {
                 $order->setData("fulfillment_status", $customStatus[$status]);
             }
+
             // Add a comment to the order (if present)
             if ($comment !== null && $comment !== "") {
                 $order->addCommentToStatusHistory($comment);

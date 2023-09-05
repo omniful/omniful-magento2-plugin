@@ -75,7 +75,7 @@ class ProductImportSaveAfter implements ObserverInterface
 
             if ($productIds) {
                 foreach ($productIds as $productId) {
-                    $product = $this->productManagement->getProductById(
+                    $product = $this->productRepository->getById(
                         $productId
                     );
                     $headers = [
