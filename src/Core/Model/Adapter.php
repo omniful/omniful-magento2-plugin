@@ -2,6 +2,7 @@
 
 namespace Omniful\Core\Model;
 
+use Magento\Framework\HTTP\Client\Curl;
 use Omniful\Core\Helper\Data;
 use Magento\Framework\App\Request\Http;
 use Omniful\Core\Logger\Logger;
@@ -68,14 +69,14 @@ class Adapter
      * @param Logger                              $logger
      * @param Data                                $coreHelper
      * @param UrlInterface                        $urlInterface
-     * @param \Magento\Framework\HTTP\Client\Curl $curl
+     * @param Curl $curl
      */
     public function __construct(
         Http $request,
         Logger $logger,
         Data $coreHelper,
         UrlInterface $urlInterface,
-        \Magento\Framework\HTTP\Client\Curl $curl
+        Curl $curl
     ) {
         $this->curl = $curl;
         $this->logger = $logger;

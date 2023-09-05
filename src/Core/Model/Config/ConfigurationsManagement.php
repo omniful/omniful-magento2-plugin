@@ -6,6 +6,7 @@ use Magento\Framework\App\Cache\Type\Config;
 use Magento\Framework\App\Cache\TypeListInterface;
 use Magento\Framework\App\Config\Storage\WriterInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Phrase;
 use Magento\Framework\Webapi\Rest\Request;
 use Magento\Store\Model\StoreManagerInterface;
 use Omniful\Core\Api\Config\ConfigurationsInterface;
@@ -136,6 +137,14 @@ class ConfigurationsManagement implements ConfigurationsInterface
             }
             $path = "omniful_core/general/";
             foreach ($params as $key => $value) {
+                $validate = $this->configValidation($value, $key);
+                if ($validate !== '') {
+                    return $this->coreHelper->getResponseStatus(
+                        __($validate),
+                        404,
+                        false
+                    );
+                }
                 $this->configWriter->save(
                     $path . $key,
                     $value,
@@ -153,7 +162,13 @@ class ConfigurationsManagement implements ConfigurationsInterface
             }
             $this->cacheTypeList->cleanType(Config::TYPE_IDENTIFIER);
 
-            $configData = $this->getConfigData($storeId);
+            $configData = json_decode($this->request->getContent(), true);
+
+            $configData['active'] = !empty($configData['active']) ? true : false;
+            $configData['disable_ship_button'] = !empty($configData['disable_ship_button']) ? true : false;
+            $configData['disable_order_status_dropdown'] = !empty($configData['disable_order_status_dropdown'])
+                ? true : false;
+            $configData['enable_debugging'] = !empty($configData['enable_debugging']) ? true : false;
 
             return $this->coreHelper->getResponseStatus(
                 __("Success"),
@@ -174,5 +189,27 @@ class ConfigurationsManagement implements ConfigurationsInterface
                 false
             );
         }
+    }
+
+    /**
+     * ConfigValidation
+     *
+     * @param mixed $value
+     * @param mixed $key
+     * @return Phrase|string
+     */
+    public function configValidation($value, $key)
+    {
+        $configKay = ["active", "disable_ship_button", "disable_order_status_dropdown", "enable_debugging"];
+        if (in_array($key, $configKay)) {
+            if ($value == '') {
+                return $key . ' is required.';
+            } elseif (!is_numeric($value)) {
+                return $key . ' is not a number.';
+            } elseif ($value != 0 && $value != 1) {
+                return $key . ' is grater than 0 nad less than 1';
+            }
+        }
+        return '';
     }
 }

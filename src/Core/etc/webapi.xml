@@ -84,7 +84,7 @@
         </resources>
     </route>
 
-    <!-- PRODUCT APIs -->
+    <!-- ORDER APIs -->
     <route url="/V2/orders" method="GET">
         <service class="Omniful\Core\Api\Sales\OrderInterface" method="getOrders"/>
         <resources>
