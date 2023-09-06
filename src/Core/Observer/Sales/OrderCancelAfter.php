@@ -59,12 +59,11 @@ class OrderCancelAfter implements ObserverInterface
     {
         $order = $observer->getOrder();
         $store = $order->getStore();
+        $this->logger->info("Cancellation request received for Event: self::EVENT_NAME, Order: " . json_encode($order));
 
         try {
             if ($order->getStatus() == "canceled") {
                 $eventName = self::EVENT_NAME;
-                // TODO remove this before merging to main
-                $this->logger->info("Cancellation request received for Event: $eventName, Order: " . json_encode($order));
                 $storeData = $this->storeManager->getGroup($store->getGroupId());
 
                 $headers = [
