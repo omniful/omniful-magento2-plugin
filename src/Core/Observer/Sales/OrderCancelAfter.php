@@ -63,6 +63,8 @@ class OrderCancelAfter implements ObserverInterface
         try {
             if ($order->getStatus() == "canceled") {
                 $eventName = self::EVENT_NAME;
+                // TODO remove this before merging to main
+                $this->logger->info("Cancellation request received for Event: $eventName, Order: " . json_encode($order));
                 $storeData = $this->storeManager->getGroup($store->getGroupId());
 
                 $headers = [
