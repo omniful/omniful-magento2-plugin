@@ -61,6 +61,8 @@ class OrderPlaceAfter implements ObserverInterface
     {
         $order = $observer->getEvent()->getOrder();
         $store = $order->getStore();
+        // TODO Remove this log before production
+        $this->logger->info("Cancellation request received for Event: order Created, Order: " . json_encode($order));
 
         try {
             $eventName = self::ORDER_CREATED_EVENT_NAME;
