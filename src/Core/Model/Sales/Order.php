@@ -399,12 +399,18 @@ class Order implements OrderInterface
     {
         $creditMemos = $order->getCreditmemosCollection();
         $creditMemoData = [];
-        foreach ($creditMemos as $creditMemo) {
-            $creditMemo = $this->creditMemoRepository->get($creditMemo->getId());
-            $creditMemoData[] = $creditMemo->getData();
+
+        // Check if $creditMemos is not false before iterating
+        if ($creditMemos !== false) {
+            foreach ($creditMemos as $creditMemo) {
+                $creditMemo = $this->creditMemoRepository->get($creditMemo->getId());
+                $creditMemoData[] = $creditMemo->getData();
+            }
         }
+
         return $creditMemoData;
     }
+
 
     /**
      * Check if the order payment method is cash on delivery
