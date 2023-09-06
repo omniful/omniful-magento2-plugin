@@ -397,9 +397,8 @@ class Order implements OrderInterface
      */
     public function getCreditMemosCollection($order)
     {
-        $creditMemos = $order->getCreditmemosCollection();
         $creditMemoData = [];
-        foreach ($creditMemos as $creditMemo) {
+        foreach ($order->getCreditmemosCollection() as $creditMemo) {
             $creditMemo = $this->creditMemoRepository->get($creditMemo->getId());
             $creditMemoData[] = $creditMemo->getData();
         }
