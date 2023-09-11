@@ -411,7 +411,6 @@ class Order implements OrderInterface
         return $creditMemoData;
     }
 
-
     /**
      * Check if the order payment method is cash on delivery
      *

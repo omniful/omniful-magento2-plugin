@@ -11,7 +11,7 @@
     </event>
 
     <!-- Order Place After -->
-    <event name="sales_order_place_after">
+    <event name="checkout_submit_all_after">
         <observer name="adminhtml_omniful_handle_sales_order_place_after" instance="Omniful\Core\Observer\Sales\OrderPlaceAfter" />
     </event>
 

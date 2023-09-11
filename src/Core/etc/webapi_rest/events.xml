@@ -3,4 +3,8 @@
      <event name="sales_order_save_after">
          <observer name="rest_api_omniful_handle_sales_order_save_after" instance="Omniful\Core\Observer\Sales\OrderPlaceAfter" />
     </event>
+    <event name="order_cancel_after">
+        <observer name="adminhtml_omniful_handle_sales_order_cancel_after" instance="Omniful\Core\Observer\Sales\OrderCancelAfter" />
+    </event>
+
 </config>
