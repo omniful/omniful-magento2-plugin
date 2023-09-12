@@ -2,22 +2,27 @@
 
 namespace Omniful\Core\Model\Sales;
 
-use Magento\Framework\Webapi\Rest\Request;
-use Magento\Store\Api\StoreRepositoryInterface;
-use Omniful\Core\Api\Sales\CancelInterface;
-use Magento\Sales\Api\OrderManagementInterface as MagentoOrderManagementInterface;
+use Exception;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Webapi\Rest\Request;
+use Magento\Sales\Api\InvoiceRepositoryInterface;
+use Magento\Sales\Api\OrderManagementInterface as MagentoOrderManagementInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
-use Omniful\Core\Logger\Logger;
-use Omniful\Core\Model\Sales\Order as OrderManagement;
+use Magento\Sales\Model\Order\Creditmemo;
 use Magento\Sales\Model\Order\CreditmemoFactory;
 use Magento\Sales\Model\Service\CreditmemoService;
-use Magento\Sales\Api\InvoiceRepositoryInterface;
+use Magento\Store\Api\StoreRepositoryInterface;
+use Omniful\Core\Api\Sales\CancelInterface;
 use Omniful\Core\Helper\Data;
+use Omniful\Core\Logger\Logger;
+use Omniful\Core\Model\Sales\Order as OrderManagement;
 
 class Cancel implements CancelInterface
 {
     public const UN_FULFILLED = "Un FulFilled";
+    public const DEFAULT_CANCEL_REASON = "Omniful Side";
+    public const OMNIFUL_CANCEL_REASON = "omniful_cancel_reason";
+    public const STATE_CANCELED = \Magento\Sales\Model\Order::STATE_CANCELED;
     /**
      * @var Logger
      */
@@ -46,10 +51,6 @@ class Cancel implements CancelInterface
      * @var MagentoOrderManagementInterface
      */
     protected $magentoOrderManagementInterface;
-
-    public const DEFAULT_CANCEL_REASON = "Omniful Side";
-    public const OMNIFUL_CANCEL_REASON = "omniful_cancel_reason";
-    public const STATE_CANCELED = \Magento\Sales\Model\Order::STATE_CANCELED;
     /**
      * @var Data
      */
@@ -104,14 +105,13 @@ class Cancel implements CancelInterface
     /**
      * Cancel Magento 2 order and add cancel reason as custom order attribute
      *
-     * @param  int    $orderId
-     * @param  string $cancelReason
-     * @return array
-     * @throws CouldNotCancelException
+     * @param int $orderId
+     * @param string $cancelReason
+     * @return mixed
      */
     public function processCancel(
-        $orderId,
-        $cancelReason = self::DEFAULT_CANCEL_REASON
+        int $orderId,
+        string $cancelReason = self::DEFAULT_CANCEL_REASON
     ) {
         try {
             // Load the order
@@ -173,7 +173,7 @@ class Cancel implements CancelInterface
                     $creditMemo
                         ->setInvoice($invoice)
                         ->setState(
-                            \Magento\Sales\Model\Order\Creditmemo::STATE_REFUNDED
+                            Creditmemo::STATE_REFUNDED
                         )
                         ->register();
 
@@ -222,7 +222,7 @@ class Cancel implements CancelInterface
                 $pageData = null,
                 $nestedArray = true
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return $this->helper->getResponseStatus(
                 __(
                     "An error occurred while canceling the order. %1",
