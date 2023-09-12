@@ -2,12 +2,15 @@
 
 namespace Omniful\Core\Observer\Sales;
 
+use Exception;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Omniful\Core\Model\Adapter;
-use Omniful\Core\Logger\Logger;
-use Omniful\Core\Model\Sales\Order as OrderManagement;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Sales\Model\Order;
 use Magento\Store\Model\StoreManagerInterface;
+use Omniful\Core\Logger\Logger;
+use Omniful\Core\Model\Adapter;
+use Omniful\Core\Model\Sales\Order as OrderManagement;
 
 class OrderPlaceAfter implements ObserverInterface
 {
@@ -25,7 +28,6 @@ class OrderPlaceAfter implements ObserverInterface
      * @var OrderManagement
      */
     protected $orderManagement;
-
     /**
      * @var StoreManagerInterface
      */
@@ -61,36 +63,51 @@ class OrderPlaceAfter implements ObserverInterface
     {
         $order = $observer->getEvent()->getOrder();
         $store = $order->getStore();
-
         try {
-            $eventName = self::ORDER_CREATED_EVENT_NAME;
-            $storeData = $this->storeManager->getGroup($store->getGroupId());
-
-            $headers = [
-                "x-website-code" => $order
-                    ->getStore()
-                    ->getWebsite()
-                    ->getCode(),
-                "x-store-code" => $storeData->getCode(),
-                "x-store-view-code" => $order->getStore()->getCode(),
-            ];
-
-            // Connect to the adapter
-            $this->adapter->connect();
-
-            // Publish the event if the event name is not empty
-            if ($eventName !== "") {
-                $payload = $this->orderManagement->getOrderData($order);
-                // Log the successful publication of the order event
-                $this->logger->info(__("Order event published successfully"));
-                return $this->adapter->publishMessage(
-                    $eventName,
-                    $payload,
-                    $headers
-                );
+            if ($order->getOrigData("status") === null &&
+                $order->getStatus() !== Order::STATE_CANCELED) {
+                $eventName = self::ORDER_CREATED_EVENT_NAME;
+                return $this->getOrderDataByEventName($store, $order, $eventName);
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->logger->error(__($e->getMessage()));
+        }
+    }
+
+    /**
+     * Get Order Data By Event Name
+     *
+     * @param mixed $store
+     * @param mixed $order
+     * @param mixed $eventName
+     * @throws LocalizedException
+     */
+    public function getOrderDataByEventName($store, $order, $eventName)
+    {
+        $storeData = $this->storeManager->getGroup($store->getGroupId());
+
+        $headers = [
+            "x-website-code" => $order
+                ->getStore()
+                ->getWebsite()
+                ->getCode(),
+            "x-store-code" => $storeData->getCode(),
+            "x-store-view-code" => $order->getStore()->getCode(),
+        ];
+
+        // Connect to the adapter
+        $this->adapter->connect();
+
+        // Publish the event if the event name is not empty
+        if ($eventName !== "") {
+            $payload = $this->orderManagement->getOrderData($order);
+            // Log the successful publication of the order event
+            $this->logger->info(__("Order event published successfully"));
+            return $this->adapter->publishMessage(
+                $eventName,
+                $payload,
+                $headers
+            );
         }
     }
 }
