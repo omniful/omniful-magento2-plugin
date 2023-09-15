@@ -14,6 +14,7 @@ use Magento\Eav\Api\Data\AttributeInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Api\SearchCriteriaInterface;
 use Magento\Framework\App\Request\Http;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\InventoryApi\Api\Data\SourceItemInterface;
 use Magento\InventoryApi\Api\SourceItemsSaveInterface;
@@ -138,28 +139,7 @@ class Product implements ProductInterface
             $searchResults = $this->productRepository->getList($searchCriteria);
             $products = $searchResults->getItems();
             $totalProducts = $searchResults->getTotalCount(); // Total products count
-            $productData = [];
-            foreach ($products as $product) {
-                $apiUrl = $this->request->getUriString();
-                $storeCodeApi = $this->helper->getStoreCodeByApi($apiUrl);
-                if ($storeCodeApi) {
-                    $storeCode = $this->storeRepository->get($storeCodeApi);
-                    $storeGroupId = [];
-                    foreach ($product->getWebsiteIds() as $websiteId) {
-                        $storeGroup = $this->storeManager->getWebsite($websiteId)->getGroups();
-                        foreach ($storeGroup as $store) {
-                            $storeGroupId[] = $store->getGroupId();
-                        }
-                    }
-                    if (in_array($storeCode->getStoreId(), $storeGroupId)) {
-                        $product = $this->productRepository
-                            ->getById($product->getId(), false, $storeCode->getStoreId());
-                        $productData[] = $this->getProductFullData($product);
-                    }
-                } else {
-                    $productData[] = $this->getProductFullData($product);
-                }
-            }
+            $productData = $this->getEnableProductData($products);
             $pageInfo = [
                 "current_page" => $page,
                 "per_page" => $limit,
@@ -867,5 +847,42 @@ class Product implements ProductInterface
         }
 
         return $options;
+    }
+
+    /**
+     * Get Enable Product Data
+     *
+     * @param mixed $products
+     * @return array
+     * @throws NoSuchEntityException
+     * @throws LocalizedException
+     */
+    public function getEnableProductData($products)
+    {
+        $productData = [];
+        foreach ($products as $product) {
+            if ($product->getStatus() == 1) {
+                $apiUrl = $this->request->getUriString();
+                $storeCodeApi = $this->helper->getStoreCodeByApi($apiUrl);
+                if ($storeCodeApi) {
+                    $storeCode = $this->storeRepository->get($storeCodeApi);
+                    $storeGroupId = [];
+                    foreach ($product->getWebsiteIds() as $websiteId) {
+                        $storeGroup = $this->storeManager->getWebsite($websiteId)->getGroups();
+                        foreach ($storeGroup as $store) {
+                            $storeGroupId[] = $store->getGroupId();
+                        }
+                    }
+                    if (in_array($storeCode->getStoreId(), $storeGroupId)) {
+                        $product = $this->productRepository
+                            ->getById($product->getId(), false, $storeCode->getStoreId());
+                        $productData[] = $this->getProductFullData($product);
+                    }
+                } else {
+                    $productData[] = $this->getProductFullData($product);
+                }
+            }
+        }
+        return $productData;
     }
 }
