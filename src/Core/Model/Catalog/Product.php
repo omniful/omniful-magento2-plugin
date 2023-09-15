@@ -22,6 +22,7 @@ use Magento\Store\Api\StoreRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Omniful\Core\Api\Catalog\ProductInterface;
 use Omniful\Core\Helper\Data;
+use Magento\Catalog\Model\Product\Attribute\Source\Status as ProductStatus;
 
 class Product implements ProductInterface
 {
@@ -861,7 +862,7 @@ class Product implements ProductInterface
     {
         $productData = [];
         foreach ($products as $product) {
-            if ($product->getStatus() == 1) {
+            if ($product->getStatus() == ProductStatus::STATUS_ENABLED) {
                 $apiUrl = $this->request->getUriString();
                 $storeCodeApi = $this->helper->getStoreCodeByApi($apiUrl);
                 if ($storeCodeApi) {
