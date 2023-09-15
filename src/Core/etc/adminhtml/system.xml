@@ -37,6 +37,7 @@
                 <field id="webhook_url" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Webhook Url</label>
                     <validate>required-entry</validate>
+                    <frontend_model>Omniful\Core\Block\System\Config\Field\Disable</frontend_model>
                     <depends>
                         <field id="active">1</field>
                     </depends>
@@ -44,6 +45,7 @@
                 <field id="workspace_id" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Workspace Id</label>
                     <validate>required-entry</validate>
+                    <frontend_model>Omniful\Core\Block\System\Config\Field\Disable</frontend_model>
                     <depends>
                         <field id="active">1</field>
                     </depends>
@@ -51,6 +53,7 @@
                 <field id="webhook_token" translate="label" type="text" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="0">
                     <label>Webhook Token</label>
                     <validate>required-entry</validate>
+                    <frontend_model>Omniful\Core\Block\System\Config\Field\Disable</frontend_model>
                     <depends>
                         <field id="active">1</field>
                     </depends>
