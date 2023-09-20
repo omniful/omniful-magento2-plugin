@@ -121,4 +121,55 @@
             <resource ref="Magento_Sales::products" />
         </resources>
     </route>
+
+    <!-- Rma Module custom API-->
+
+    <route url="/V2/return/:id" method="GET">
+        <service class="Omniful\Core\Api\ReturnOrder\RmaRepositoryInterface" method="getReturnOrderDataById"/>
+        <resources>
+            <resource ref="Magento_Sales::products" />
+        </resources>
+    </route>
+    <route url="/V2/returns" method="GET">
+        <service class="Omniful\Core\Api\ReturnOrder\RmaRepositoryInterface" method="getReturnOrder"/>
+        <resources>
+            <resource ref="Magento_Sales::products" />
+        </resources>
+    </route>
+    <route url="/V2/return/:id/status" method="PUT">
+        <service class="Omniful\Core\Api\ReturnOrder\RmaRepositoryInterface" method="updateRmaStatus"/>
+        <resources>
+            <resource ref="Magento_Sales::products" />
+        </resources>
+    </route>
+
+    <route url="/V2/return/approve" method="PUT">
+        <service class="Omniful\Core\Api\ReturnOrder\RmaRepositoryInterface" method="approveRma"/>
+        <resources>
+            <resource ref="Magento_Sales::products" />
+        </resources>
+    </route>
+
+    <route url="/V2/return/reject" method="PUT">
+        <service class="Omniful\Core\Api\ReturnOrder\RmaRepositoryInterface" method="rejectRma"/>
+        <resources>
+            <resource ref="Magento_Sales::products" />
+        </resources>
+    </route>
+
+    <route url="/V2/return/Update/Shipment" method="PUT">
+        <service class="Omniful\Core\Api\ReturnOrder\RmaRepositoryInterface" method="updateShipment"/>
+        <resources>
+            <resource ref="Magento_Sales::products" />
+        </resources>
+    </route>
+
+    <route url="/V2/return/attributes" method="GET">
+        <service class="Omniful\Core\Api\ReturnOrder\RmaRepositoryInterface" method="getReturnAttributes"/>
+        <resources>
+            <resource ref="Magento_Sales::products" />
+        </resources>
+    </route>
+
+    <!--  END -->
 </routes>
