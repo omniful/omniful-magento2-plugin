@@ -20,6 +20,9 @@
     <!-- STOCK SOURCE -->
     <preference for="Omniful\Core\Api\Stock\StockSourcesInterface" type="Omniful\Core\Model\Stock\StockSources" />
 
+    <!--    RMA-->
+    <preference for="Omniful\Core\Api\ReturnOrder\RmaRepositoryInterface" type="Omniful\Core\Model\ReturnOrder\Rma" />
+
     <type name="Magento\Backend\Block\Widget\Button\Toolbar">
         <plugin disabled="false" name="disable_widget_ship_button" sortOrder="10" type="Omniful\Core\Plugin\Backend\Block\Widget\Button\Toolbar"/>
     </type>
