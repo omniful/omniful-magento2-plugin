@@ -97,9 +97,10 @@ class RmaSaveAfter implements ObserverInterface
             }
             $order = $this->orderRepository->get($orderId);
             $store = $order->getStore();
+            $uniqItemsStatus = array_unique($itemStatus);
             if (empty($itemStatus)) {
                 $eventName = 'rma.create';
-            } elseif (count($itemStatus) == 1) {
+            } elseif (count($uniqItemsStatus) == 1) {
                 foreach ($itemStatus as $status) {
                     if (in_array($status, self::EVENT_NAME)) {
                         $eventName = $status;
