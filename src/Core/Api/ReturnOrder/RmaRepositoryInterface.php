@@ -36,12 +36,12 @@ interface RmaRepositoryInterface
      * Return approve
      *
      * @param mixed $rmaEntityId
-     * @param mixed $returnItems
+     * @param mixed $returnApprove
      * @return mixed
      */
     public function approveRma(
         $rmaEntityId,
-        $returnItems = []
+        $returnApprove = []
     );
 
     /**
@@ -54,6 +54,18 @@ interface RmaRepositoryInterface
     public function rejectRma(
         $rmaEntityId,
         $returnReject = []
+    );
+
+    /**
+     * Return reject
+     *
+     * @param mixed $rmaEntityId
+     * @param mixed $returnAuthorize
+     * @return mixed
+     */
+    public function authorizeRma(
+        $rmaEntityId,
+        $returnAuthorize = []
     );
 
     /**

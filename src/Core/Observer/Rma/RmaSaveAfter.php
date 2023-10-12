@@ -6,6 +6,7 @@ use Exception;
 use Magento\Framework\App\Request\Http;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Framework\Webapi\Rest\Request as RestRequest;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Omniful\Core\Logger\Logger;
@@ -48,12 +49,17 @@ class RmaSaveAfter implements ObserverInterface
      * @var StoreManagerInterface
      */
     private $storeManager;
+    /**
+     * @var RestRequest
+     */
+    private $restRequest;
 
     /**
      * RmaSaveAfter constructor.
      * @param Http $request
      * @param Logger $logger
      * @param Adapter $adapter
+     * @param RestRequest $restRequest
      * @param StoreManagerInterface $storeManager
      * @param OrderRepositoryInterface $orderRepository
      */
@@ -61,6 +67,7 @@ class RmaSaveAfter implements ObserverInterface
         Http $request,
         Logger $logger,
         Adapter $adapter,
+        RestRequest $restRequest,
         StoreManagerInterface $storeManager,
         OrderRepositoryInterface $orderRepository
     ) {
@@ -69,6 +76,7 @@ class RmaSaveAfter implements ObserverInterface
         $this->logger = $logger;
         $this->adapter = $adapter;
         $this->storeManager = $storeManager;
+        $this->restRequest = $restRequest;
     }
 
     /**
@@ -86,10 +94,19 @@ class RmaSaveAfter implements ObserverInterface
         unset($rmaData['items'][0]["comments"]);
         $itemStatus = [];
         $rmaData = $this->manageRmaDataItems($rmaItemData, $rmaCommentData, $rmaData);
-        $orderId = $this->request->getParam('order_id');
+        $bodyParams = $this->restRequest->getBodyParams();
+        if ($this->request->getParam('order_id')) {
+            $orderId = $this->request->getParam('order_id');
+        } else {
+            $orderId = $bodyParams['rmaDataObject']['order_id'];
+        }
         try {
             if (empty($orderId)) {
-                $items = $this->request->getParam('items');
+                if ($this->request->getParam('items')) {
+                    $items = $this->request->getParam('items');
+                } else {
+                    $items = $bodyParams['rmaDataObject']['items'];
+                }
                 foreach ($items as $item) {
                     $itemStatus[] = $item['status'];
                     $orderId = $item['order_item_id'];
