@@ -98,14 +98,14 @@ class RmaSaveAfter implements ObserverInterface
         if ($this->request->getParam('order_id')) {
             $orderId = $this->request->getParam('order_id');
         } else {
-            $orderId = $bodyParams['rmaDataObject']['order_id'];
+            $orderId = isset($bodyParams['rmaDataObject']['order_id']);
         }
         try {
             if (empty($orderId)) {
                 if ($this->request->getParam('items')) {
                     $items = $this->request->getParam('items');
                 } else {
-                    $items = $bodyParams['rmaDataObject']['items'];
+                    $items = isset($bodyParams['rmaDataObject']['items']);
                 }
                 foreach ($items as $item) {
                     $itemStatus[] = $item['status'];
