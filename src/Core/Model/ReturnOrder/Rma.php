@@ -514,12 +514,12 @@ class Rma implements RmaRepositoryInterface
                             $rmaItem->save();
                         }
                         $rmaItemData[] = $rmaItem->debug();
-                    } else {
-                        $rmaItem->setQtyApproved($requestedQty);
-                        $rmaItem->setStatus('approved');
-                        $rmaItem->save();
-                        $rmaItemData[] = $rmaItem->debug();
                     }
+                } else {
+                    $rmaItem->setQtyApproved($requestedQty);
+                    $rmaItem->setStatus('approved');
+                    $rmaItem->save();
+                    $rmaItemData[] = $rmaItem->debug();
                 }
                 $status[] = $rmaItem->getStatus();
             }
@@ -750,6 +750,7 @@ class Rma implements RmaRepositoryInterface
             foreach ($rmaItemsCollection as $rmaItem) {
                 $requestedQty = $rmaItem->getQtyRequested();
                 $qty = isset($authorizeQuantity[$rmaItem->getEntityId()]);
+
                 if ($qty) {
                     if (isset($authorizeQuantity[$rmaItem->getEntityId()])) {
                         $updatedQty = (int)$rmaItem->getQtyAuthorized() + (int)$authorizeQuantity[$rmaItem->getEntityId()];
@@ -763,12 +764,12 @@ class Rma implements RmaRepositoryInterface
                             $rmaItem->save();
                         }
                         $rmaItemData[] = $rmaItem->debug();
-                    } else {
-                        $rmaItem->setQtyAuthorized($requestedQty);
-                        $rmaItem->setStatus('authorized');
-                        $rmaItem->save();
-                        $rmaItemData[] = $rmaItem->debug();
                     }
+                } else {
+                    $rmaItem->setQtyAuthorized($requestedQty);
+                    $rmaItem->setStatus('authorized');
+                    $rmaItem->save();
+                    $rmaItemData[] = $rmaItem->debug();
                 }
                 $status[] = $rmaItem->getStatus();
             }
