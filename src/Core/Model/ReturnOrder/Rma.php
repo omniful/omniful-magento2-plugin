@@ -503,8 +503,9 @@ class Rma implements RmaRepositoryInterface
                 $qty = isset($approveQuantity[$rmaItem->getEntityId()]);
                 if ($qty) {
                     if (isset($approveQuantity[$rmaItem->getEntityId()])) {
-                        if ((int)$requestedQty >= $qty) {
-                            $rmaItem->setQtyApproved($qty);
+                        $updatedQty = (int)$rmaItem->getQtyApproved() + (int)$approveQuantity[$rmaItem->getEntityId()];
+                        if ((int)$requestedQty >= $updatedQty) {
+                            $rmaItem->setQtyApproved($updatedQty);
                             $rmaItem->setStatus('approved');
                             $rmaItem->save();
                         } else {
@@ -751,8 +752,9 @@ class Rma implements RmaRepositoryInterface
                 $qty = isset($authorizeQuantity[$rmaItem->getEntityId()]);
                 if ($qty) {
                     if (isset($authorizeQuantity[$rmaItem->getEntityId()])) {
-                        if ((int)$requestedQty >= $qty) {
-                            $rmaItem->setQtyAuthorized($qty);
+                        $updatedQty = (int)$rmaItem->getQtyAuthorized() + (int)$authorizeQuantity[$rmaItem->getEntityId()];
+                        if ((int)$requestedQty >= $updatedQty) {
+                            $rmaItem->setQtyAuthorized($updatedQty);
                             $rmaItem->setStatus('authorized');
                             $rmaItem->save();
                         } else {
