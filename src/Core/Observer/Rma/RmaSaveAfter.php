@@ -3,10 +3,8 @@
 namespace Omniful\Core\Observer\Rma;
 
 use Exception;
-use Magento\Framework\App\Request\Http;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Webapi\Rest\Request as RestRequest;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Omniful\Core\Logger\Logger;
@@ -30,10 +28,6 @@ class RmaSaveAfter implements ObserverInterface
     ];
 
     /**
-     * @var Http
-     */
-    private $request;
-    /**
      * @var OrderRepositoryInterface
      */
     private $orderRepository;
@@ -49,34 +43,24 @@ class RmaSaveAfter implements ObserverInterface
      * @var StoreManagerInterface
      */
     private $storeManager;
-    /**
-     * @var RestRequest
-     */
-    private $restRequest;
 
     /**
      * RmaSaveAfter constructor.
-     * @param Http $request
      * @param Logger $logger
      * @param Adapter $adapter
-     * @param RestRequest $restRequest
      * @param StoreManagerInterface $storeManager
      * @param OrderRepositoryInterface $orderRepository
      */
     public function __construct(
-        Http $request,
         Logger $logger,
         Adapter $adapter,
-        RestRequest $restRequest,
         StoreManagerInterface $storeManager,
         OrderRepositoryInterface $orderRepository
     ) {
-        $this->request = $request;
         $this->orderRepository = $orderRepository;
         $this->logger = $logger;
         $this->adapter = $adapter;
         $this->storeManager = $storeManager;
-        $this->restRequest = $restRequest;
     }
 
     /**
@@ -86,48 +70,34 @@ class RmaSaveAfter implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        $rma = $observer->getEvent()->getDataObject()->debug();
-        $rmaData["items"][0] = $rma;
-        $rmaItemData = $rma["items"];
-        $rmaCommentData = $rma["comments"];
-        unset($rmaData["items"][0]["items"]);
-        unset($rmaData['items'][0]["comments"]);
-        $itemStatus = [];
-        $rmaData = $this->manageRmaDataItems($rmaItemData, $rmaCommentData, $rmaData);
-        $bodyParams = $this->restRequest->getBodyParams();
-        if ($this->request->getParam('order_id')) {
-            $orderId = $this->request->getParam('order_id');
-        } else {
-            $orderId = isset($bodyParams['rmaDataObject']['order_id']);
+        $rma = $observer->getEvent()->getDataObject();
+        $rmaData = $rma->debug();
+        unset($rmaData['items']);
+        unset($rmaData['comments']);
+        unset($rmaData['tracks']);
+        $itemsStatus = "closed";
+        foreach ($rma->getItems() as $item) {
+            $itemsStatus = $item->getStatus();
+            $rmaData['items'][] = $item->debug();
+        }
+        foreach ($rma->getComments() as $comment) {
+            $rmaData['comment'][] = $comment->debug();
+        }
+        foreach ($rma->getTracks() as $tracks) {
+            $rmaData['tracks'][] = $tracks->debug();
+        }
+
+        $orderId = $rmaData['order_id'];
+        $status = $rmaData['status'];
+        if ($status == "closed") {
+            $status = $itemsStatus;
+        }
+        if ($status == "pending") {
+            $status = "create";
         }
         try {
-            if (empty($orderId)) {
-                if ($this->request->getParam('items')) {
-                    $items = $this->request->getParam('items');
-                } else {
-                    $items = isset($bodyParams['rmaDataObject']['items']);
-                }
-                foreach ($items as $item) {
-                    $itemStatus[] = $item['status'];
-                    $orderId = $item['order_item_id'];
-                }
-            }
             $order = $this->orderRepository->get($orderId);
             $store = $order->getStore();
-            $uniqItemsStatus = array_unique($itemStatus);
-            if (empty($itemStatus)) {
-                $eventName = 'rma.create';
-            } elseif (count($uniqItemsStatus) == 1) {
-                foreach ($itemStatus as $status) {
-                    if (in_array($status, self::EVENT_NAME)) {
-                        $eventName = $status;
-                    } else {
-                        $eventName = 'rma.create';
-                    }
-                }
-            } else {
-                $eventName = 'rma.partial';
-            }
             $storeData = $this->storeManager->getGroup($store->getGroupId());
             $headers = [
                 "website-code" => $order
@@ -141,7 +111,7 @@ class RmaSaveAfter implements ObserverInterface
             $this->adapter->connect();
             // PUSH CANCEL ORDER EVENT
             $response = $this->adapter->publishMessage(
-                $eventName,
+                "rma." . $status,
                 $rmaData,
                 $headers
             );
@@ -151,25 +121,5 @@ class RmaSaveAfter implements ObserverInterface
         } catch (Exception $e) {
             $this->logger->info($e->getMessage());
         }
-    }
-
-    /**
-     * Manage items and return updated items
-     *
-     * @param mixed $itemData
-     * @param mixed $rmaCommentData
-     * @param mixed $rmaData
-     * @return mixed
-     */
-    public function manageRmaDataItems($itemData, $rmaCommentData, $rmaData)
-    {
-        foreach ($rmaCommentData as $comment) {
-            $rmaData['items'][0]["comments"][] = $comment;
-        }
-        foreach ($itemData as $item) {
-            $rmaData["items"][0]["items"][] = $item;
-        }
-
-        return $rmaData;
     }
 }
