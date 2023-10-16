@@ -185,6 +185,7 @@ class Rma implements RmaRepositoryInterface
             }
 
             $customerData = [
+                "customer_id" => $customerId,
                 "first_name" => (string)$order
                     ->getBillingAddress()
                     ->getFirstName(),
