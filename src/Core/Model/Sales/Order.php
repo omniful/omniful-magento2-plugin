@@ -186,6 +186,8 @@ class Order implements OrderInterface
             }
 
             $customerData = [
+                "customer_id" => (string)$order
+                    ->getCustomerId(),
                 "first_name" => (string)$order
                     ->getBillingAddress()
                     ->getFirstName(),
