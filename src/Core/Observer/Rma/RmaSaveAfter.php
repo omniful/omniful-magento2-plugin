@@ -10,6 +10,7 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Rma\Api\RmaAttributesManagementInterface as RmaAttributeRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Omniful\Core\Model\ReturnOrder\Rma;
 use Omniful\Core\Logger\Logger;
 use Omniful\Core\Model\Adapter;
 
@@ -58,11 +59,16 @@ class RmaSaveAfter implements ObserverInterface
      * @var RmaAttributeRepositoryInterface
      */
     private $rmaAttributeRepository;
+    /**
+     * @var Rma
+     */
+    private $rma;
 
     /**
      * RmaSaveAfter constructor.
      * @param Logger $logger
      * @param Adapter $adapter
+     * @param Rma $rma
      * @param StoreManagerInterface $storeManager
      * @param AttributeOptionInterfaceFactory $optionFactory
      * @param CollectionFactory $attributeOptionCollection
@@ -72,6 +78,7 @@ class RmaSaveAfter implements ObserverInterface
     public function __construct(
         Logger $logger,
         Adapter $adapter,
+        Rma $rma,
         StoreManagerInterface $storeManager,
         AttributeOptionInterfaceFactory $optionFactory,
         CollectionFactory $attributeOptionCollection,
@@ -85,6 +92,7 @@ class RmaSaveAfter implements ObserverInterface
         $this->optionFactory = $optionFactory;
         $this->attributeOptionCollection = $attributeOptionCollection;
         $this->rmaAttributeRepository = $rmaAttributeRepository;
+        $this->rma = $rma;
     }
 
     /**
@@ -95,8 +103,8 @@ class RmaSaveAfter implements ObserverInterface
     public function execute(Observer $observer)
     {
         $rma = $observer->getEvent()->getDataObject();
+        $rmaUpdateData = $this->rma->getReturnOrderData($rma);
         $rmaData = $rma->debug();
-        $rmaData['rma_id'] = $rmaData['entity_id'];
         unset($rmaData['items']);
         unset($rmaData['comments']);
         unset($rmaData['tracks']);
@@ -150,7 +158,7 @@ class RmaSaveAfter implements ObserverInterface
             // PUSH CANCEL ORDER EVENT
             $response = $this->adapter->publishMessage(
                 "rma." . $status,
-                $rmaData,
+                $rmaUpdateData,
                 $headers
             );
             // LOG MESSAGE
