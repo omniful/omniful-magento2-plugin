@@ -760,7 +760,7 @@ class Rma implements RmaRepositoryInterface
             }
             $bodyParams = $this->restRequest->getBodyParams();
             $rma = $this->rmaRepository->get($bodyParams['rma_entity_id']);
-            if ($rma->getStatus() == "Closed") {
+            if ($rma->getStatus() == "Closed" || $rma->getStatus() == "Processed and Closed") {
                 return $this->helper->getResponseStatus(
                     __("You can't change. This return is Closed"),
                     200,
