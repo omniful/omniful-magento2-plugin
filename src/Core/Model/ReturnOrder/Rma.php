@@ -13,6 +13,7 @@ use Magento\Rma\Model\ResourceModel\Rma\CollectionFactory;
 use Magento\Rma\Model\Rma\Status\History;
 use Magento\Rma\Model\ShippingFactory;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Store\Api\StoreRepositoryInterface;
 use Omniful\Core\Api\ReturnOrder\RmaRepositoryInterface;
 use Omniful\Core\Api\Sales\OrderInterface;
 use Omniful\Core\Helper\Countries;
@@ -77,6 +78,10 @@ class Rma implements RmaRepositoryInterface
      * @var RestRequest
      */
     private $restRequest;
+    /**
+     * @var StoreRepositoryInterface
+     */
+    private $storeRepository;
 
     /**
      * Rma constructor.
@@ -92,6 +97,7 @@ class Rma implements RmaRepositoryInterface
      * @param \Magento\Rma\Model\ResourceModel\Item\CollectionFactory $rmaItemCollection
      * @param ShippingFactory $shippingLabelFactory
      * @param RestRequest $restRequest
+     * @param StoreRepositoryInterface $storeRepository
      * @param RmaAttributeRepositoryInterface $rmaAttributeRepository
      * @param OrderRepositoryInterface $orderRepository
      */
@@ -107,6 +113,7 @@ class Rma implements RmaRepositoryInterface
         \Magento\Rma\Model\ResourceModel\Item\CollectionFactory $rmaItemCollection,
         ShippingFactory $shippingLabelFactory,
         RestRequest $restRequest,
+        StoreRepositoryInterface $storeRepository,
         RmaAttributeRepositoryInterface $rmaAttributeRepository,
         OrderRepositoryInterface $orderRepository
     ) {
@@ -124,6 +131,7 @@ class Rma implements RmaRepositoryInterface
         $this->shippingLabelFactory = $shippingLabelFactory;
         $this->rmaAttributeRepository = $rmaAttributeRepository;
         $this->restRequest = $restRequest;
+        $this->storeRepository = $storeRepository;
     }
 
     /**
@@ -140,6 +148,19 @@ class Rma implements RmaRepositoryInterface
             throw new NoSuchEntityException(__("Order not found."));
         }
         $rmaData = $this->getReturnOrderData($rma);
+        $apiUrl = $this->request->getUriString();
+        $storeCodeApi = $this->helper->getStoreCodeByApi($apiUrl);
+        $storeCode = $this->storeRepository->get($rma->getStoreId())->getCode();
+        if ($storeCodeApi && $storeCodeApi !== $storeCode) {
+            return $this->helper->getResponseStatus(
+                __("Return not found."),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
+        }
         return $this->helper->getResponseStatus(
             __("Success"),
             200,
@@ -158,8 +179,7 @@ class Rma implements RmaRepositoryInterface
      */
     public function getReturnOrderData($rma)
     {
-        $order =
-            $this->orderRepository->get($rma->getOrderId());
+        $order = $this->orderRepository->get($rma->getOrderId());
 
         $orderItems = [];
         $shipmentTracking = [];
@@ -363,6 +383,12 @@ class Rma implements RmaRepositoryInterface
         $orderCollection->setCurPage($page);
         $orderData = [];
         foreach ($orderCollection as $order) {
+            $apiUrl = $this->request->getUriString();
+            $storeCodeApi = $this->helper->getStoreCodeByApi($apiUrl);
+            $storeCode = $this->storeRepository->get($order->getStoreId())->getCode();
+            if ($storeCodeApi && $storeCodeApi !== $storeCode) {
+                continue;
+            }
             $orderData[] = $this->getReturnOrderData($order);
         }
         $totalOrders = $orderCollection->getSize();

@@ -3,8 +3,11 @@
 namespace Omniful\Core\Observer\Rma;
 
 use Exception;
+use Magento\Eav\Api\Data\AttributeOptionInterfaceFactory;
+use Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
+use Magento\Rma\Api\RmaAttributesManagementInterface as RmaAttributeRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Omniful\Core\Logger\Logger;
@@ -43,24 +46,45 @@ class RmaSaveAfter implements ObserverInterface
      * @var StoreManagerInterface
      */
     private $storeManager;
+    /**
+     * @var AttributeOptionInterfaceFactory
+     */
+    private $optionFactory;
+    /**
+     * @var Collection
+     */
+    private $attributeOptionCollection;
+    /**
+     * @var RmaAttributeRepositoryInterface
+     */
+    private $rmaAttributeRepository;
 
     /**
      * RmaSaveAfter constructor.
      * @param Logger $logger
      * @param Adapter $adapter
      * @param StoreManagerInterface $storeManager
+     * @param AttributeOptionInterfaceFactory $optionFactory
+     * @param CollectionFactory $attributeOptionCollection
+     * @param RmaAttributeRepositoryInterface $rmaAttributeRepository
      * @param OrderRepositoryInterface $orderRepository
      */
     public function __construct(
         Logger $logger,
         Adapter $adapter,
         StoreManagerInterface $storeManager,
+        AttributeOptionInterfaceFactory $optionFactory,
+        CollectionFactory $attributeOptionCollection,
+        RmaAttributeRepositoryInterface $rmaAttributeRepository,
         OrderRepositoryInterface $orderRepository
     ) {
         $this->orderRepository = $orderRepository;
         $this->logger = $logger;
         $this->adapter = $adapter;
         $this->storeManager = $storeManager;
+        $this->optionFactory = $optionFactory;
+        $this->attributeOptionCollection = $attributeOptionCollection;
+        $this->rmaAttributeRepository = $rmaAttributeRepository;
     }
 
     /**
@@ -72,12 +96,16 @@ class RmaSaveAfter implements ObserverInterface
     {
         $rma = $observer->getEvent()->getDataObject();
         $rmaData = $rma->debug();
+        $rmaData['rma_id'] = $rmaData['entity_id'];
         unset($rmaData['items']);
         unset($rmaData['comments']);
         unset($rmaData['tracks']);
-        $itemsStatus = "closed";
+        $itemsStatus = [];
+        $itemsClose = "closed";
         foreach ($rma->getItems() as $item) {
-            $itemsStatus = $item->getStatus();
+            $this->getResolutionAttributeValue($item);
+            $itemsClose = $item->getStatus();
+            $itemsStatus[] = $item->getStatus();
             $rmaData['items'][] = $item->debug();
         }
         foreach ($rma->getComments() as $comment) {
@@ -87,12 +115,22 @@ class RmaSaveAfter implements ObserverInterface
             $rmaData['tracks'][] = $tracks->debug();
         }
 
+        $statusUnique = count(array_unique($itemsStatus));
         $orderId = $rmaData['order_id'];
         $status = $rmaData['status'];
         if ($status == "closed") {
-            $status = $itemsStatus;
+            $status = $itemsClose;
         }
-        if ($status == "pending") {
+        if ($statusUnique == 2) {
+            if (in_array("pending", $itemsStatus)) {
+                foreach ($itemsStatus as $key => $value) {
+                    if ($value == 'pending') {
+                        unset($itemsStatus[$key]);
+                    }
+                }
+                $status = "partial." . $itemsStatus[0];
+            }
+        } elseif ($status == "pending") {
             $status = "create";
         }
         try {
@@ -120,6 +158,39 @@ class RmaSaveAfter implements ObserverInterface
             return $response;
         } catch (Exception $e) {
             $this->logger->info($e->getMessage());
+        }
+    }
+
+    /**
+     * Get Resolution Attribute Value
+     *
+     * @param mixed $item
+     */
+    public function getResolutionAttributeValue($item)
+    {
+        $attributes = $this->rmaAttributeRepository->getAllAttributesMetadata();
+        $attributeCodes = [];
+        foreach ($attributes as $attribute) {
+            $options = $attribute->__toArray();
+            $attributeCodes[] = $options['attribute_code'];
+        }
+        $updateData = [];
+        foreach ($attributeCodes as $attributeCode) {
+            $updateData[$attributeCode] = $item[$attributeCode];
+        }
+        foreach ($updateData as $key => $optionValue) {
+            $optionFactory = $this->optionFactory->create();
+            $optionFactory->load($optionValue);
+            $attributeId = $optionFactory->getAttributeId();
+            $optionData = $this->attributeOptionCollection->create()->setAttributeFilter($attributeId)
+                ->setIdFilter($optionValue)
+                ->setStoreFilter()
+                ->load();
+            foreach ($optionData as $option) {
+                if ($updateData[$key] == $option->getOptionId()) {
+                    $item[$key] = $option->getValue();
+                }
+            }
         }
     }
 }
