@@ -5,6 +5,7 @@ namespace Omniful\Core\Model\ReturnOrder;
 use Exception;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
+use Magento\Eav\Api\Data\AttributeOptionInterfaceFactory;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Webapi\Rest\Request as RestRequest;
@@ -82,6 +83,14 @@ class Rma implements RmaRepositoryInterface
      * @var StoreRepositoryInterface
      */
     private $storeRepository;
+    /**
+     * @var AttributeOptionInterfaceFactory
+     */
+    private $optionFactory;
+    /**
+     * @var \Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory
+     */
+    private $attributeOptionCollection;
 
     /**
      * Rma constructor.
@@ -97,6 +106,8 @@ class Rma implements RmaRepositoryInterface
      * @param \Magento\Rma\Model\ResourceModel\Item\CollectionFactory $rmaItemCollection
      * @param ShippingFactory $shippingLabelFactory
      * @param RestRequest $restRequest
+     * @param AttributeOptionInterfaceFactory $optionFactory
+     * @param \Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory $attributeOptionCollection
      * @param StoreRepositoryInterface $storeRepository
      * @param RmaAttributeRepositoryInterface $rmaAttributeRepository
      * @param OrderRepositoryInterface $orderRepository
@@ -113,6 +124,8 @@ class Rma implements RmaRepositoryInterface
         \Magento\Rma\Model\ResourceModel\Item\CollectionFactory $rmaItemCollection,
         ShippingFactory $shippingLabelFactory,
         RestRequest $restRequest,
+        AttributeOptionInterfaceFactory $optionFactory,
+        \Magento\Eav\Model\ResourceModel\Entity\Attribute\Option\CollectionFactory $attributeOptionCollection,
         StoreRepositoryInterface $storeRepository,
         RmaAttributeRepositoryInterface $rmaAttributeRepository,
         OrderRepositoryInterface $orderRepository
@@ -132,6 +145,8 @@ class Rma implements RmaRepositoryInterface
         $this->rmaAttributeRepository = $rmaAttributeRepository;
         $this->restRequest = $restRequest;
         $this->storeRepository = $storeRepository;
+        $this->optionFactory = $optionFactory;
+        $this->attributeOptionCollection = $attributeOptionCollection;
     }
 
     /**
@@ -231,25 +246,15 @@ class Rma implements RmaRepositoryInterface
             ];
 
             foreach ($rma->getItems() as $item) {
+                $rmaAttributes = $this->getResolutionAttributeValue($item, $orderItems);
                 $product = $this->getProductBySku($item->getProductSku());
-                $orderItems[] = [
+                $orderItems[] = array_merge([
                     "id" => (int)$item->getId(),
                     "sku" => (string)$product->getSku(),
                     "product_id" => (int)$product->getId(),
                     "name" => (string)$product->getName(),
-                    "barcode" => $product->getCustomAttribute(
-                        "omniful_barcode_attribute"
-                    )
-                        ? (string)$product
-                            ->getCustomAttribute("omniful_barcode_attribute")
-                            ->getValue()
-                        : null,
-                    "quantity" => (float)$item->getQtyOrdered(),
-                    "price" => (float)$item->getPrice(),
-                    "subtotal" => (float)$item->getRowTotal(),
-                    "total" => (float)$item->getRowTotalInclTax(),
-                    "tax" => (float)$item->getTaxAmount(),
-                ];
+                    "quantity" => (float)$item->getQtyRequested(),
+                ], $rmaAttributes);
             }
             $paymentMethod = [
                 "code" => (string)$order->getPayment()->getMethod(),
@@ -265,8 +270,8 @@ class Rma implements RmaRepositoryInterface
                 $order->getShippingAddress()->getData()
             );
 
-            $dataReturn[] = [
-                "id" => (int)$rma->getEntityId(),
+            $dataReturn = [
+                'rma_id' => (int)$rma->getEntityId(),
                 "status" => $rma->getStatus(),
                 "order_id" => $rma->getOrderId(),
                 "order_increment_id" => $rma->getOrderIncrementId(),
@@ -280,6 +285,13 @@ class Rma implements RmaRepositoryInterface
                 "shipping_address" => $shippingAddress,
                 "shipments" => $shipmentTracking,
             ];
+            foreach ($rma->getComments() as $comment) {
+                $dataReturn['comment'][] = $comment->debug();
+            }
+            foreach ($rma->getTracks() as $tracks) {
+                $dataReturn['tracks'][] = $tracks->debug();
+            }
+
             return $dataReturn;
         } catch (NoSuchEntityException $e) {
             return $this->helper->getResponseStatus(
@@ -291,6 +303,42 @@ class Rma implements RmaRepositoryInterface
                 $nestedArray = true
             );
         }
+    }
+
+    /**
+     * Get Resolution Attribute Value
+     *
+     * @param mixed $item
+     * @param mixed $orderItems
+     */
+    public function getResolutionAttributeValue($item, $orderItems)
+    {
+        $rmaAttributes = [];
+        $attributes = $this->rmaAttributeRepository->getAllAttributesMetadata();
+        $attributeCodes = [];
+        foreach ($attributes as $attribute) {
+            $options = $attribute->__toArray();
+            $attributeCodes[] = $options['attribute_code'];
+        }
+        $updateData = [];
+        foreach ($attributeCodes as $attributeCode) {
+            $updateData[$attributeCode] = $item[$attributeCode];
+        }
+        foreach ($updateData as $key => $optionValue) {
+            $optionFactory = $this->optionFactory->create();
+            $optionFactory->load($optionValue);
+            $attributeId = $optionFactory->getAttributeId();
+            $optionData = $this->attributeOptionCollection->create()->setAttributeFilter($attributeId)
+                ->setIdFilter($optionValue)
+                ->setStoreFilter()
+                ->load();
+            foreach ($optionData as $option) {
+                if ($updateData[$key] == $option->getOptionId()) {
+                    $rmaAttributes[$key] = $option->getValue();
+                }
+            }
+        }
+        return $rmaAttributes;
     }
 
     /**
