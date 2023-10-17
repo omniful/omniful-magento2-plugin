@@ -212,12 +212,11 @@ class Order implements OrderInterface
                     ->getBillingAddress()
                     ->getCountryId(),
             ];
-
             foreach ($order->getItems() as $item) {
                 $product = $item->getProduct();
                 if ($product = $item->getProduct()) {
                     $orderItems[] = [
-                        "id" => (int)$item->getId(),
+                        "id" => (int)$item->getQuoteItemId(),
                         "sku" => (string)$product->getSku(),
                         "product_id" => (int)$product->getId(),
                         "name" => (string)$product->getName(),
@@ -334,8 +333,8 @@ class Order implements OrderInterface
                 ];
             }
             return [
-                "id" => (int)$order->getEntityId(),
-                "increment_id" => $order->getIncrementId(),
+                "order_id" => (int)$order->getEntityId(),
+                "order_increment_id" => $order->getIncrementId(),
                 "status" => [
                     "code" => (string)$order->getStatus(),
                     "label" => $order->getStatusLabel(),
@@ -514,7 +513,6 @@ class Order implements OrderInterface
         } else {
             $order = $this->orderRepository->getByIncrementId($orderIdentifier);
         }
-
         if (!$order->getEntityId()) {
             throw new NoSuchEntityException(__("Order not found."));
         }
