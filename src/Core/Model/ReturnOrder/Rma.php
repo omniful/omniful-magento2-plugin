@@ -6,18 +6,18 @@ use Exception;
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\App\RequestInterface;
-use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Webapi\Rest\Request as RestRequest;
+use Magento\Rma\Api\RmaAttributesManagementInterface as RmaAttributeRepositoryInterface;
 use Magento\Rma\Model\ResourceModel\Rma\CollectionFactory;
 use Magento\Rma\Model\Rma\Status\History;
 use Magento\Rma\Model\ShippingFactory;
 use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Store\Api\StoreRepositoryInterface;
 use Omniful\Core\Api\ReturnOrder\RmaRepositoryInterface;
 use Omniful\Core\Api\Sales\OrderInterface;
 use Omniful\Core\Helper\Countries;
-use Magento\Framework\Serialize\Serializer\Json;
 use Omniful\Core\Helper\Data;
-use Magento\Rma\Api\RmaAttributesManagementInterface as RmaAttributeRepositoryInterface;
 use Omniful\Core\Model\Sales\Shipment as ShipmentManagement;
 
 class Rma implements RmaRepositoryInterface
@@ -75,9 +75,13 @@ class Rma implements RmaRepositoryInterface
      */
     private $rmaAttributeRepository;
     /**
-     * @var Json
+     * @var RestRequest
      */
-    private $serialize;
+    private $restRequest;
+    /**
+     * @var StoreRepositoryInterface
+     */
+    private $storeRepository;
 
     /**
      * Rma constructor.
@@ -87,12 +91,13 @@ class Rma implements RmaRepositoryInterface
      * @param Countries $countriesHelper
      * @param Data $helper
      * @param RequestInterface $request
-     * @param Json $serialize
      * @param History $history
      * @param ProductRepositoryInterface $productRepository
      * @param CollectionFactory $rmaFactory
      * @param \Magento\Rma\Model\ResourceModel\Item\CollectionFactory $rmaItemCollection
      * @param ShippingFactory $shippingLabelFactory
+     * @param RestRequest $restRequest
+     * @param StoreRepositoryInterface $storeRepository
      * @param RmaAttributeRepositoryInterface $rmaAttributeRepository
      * @param OrderRepositoryInterface $orderRepository
      */
@@ -102,12 +107,13 @@ class Rma implements RmaRepositoryInterface
         Countries $countriesHelper,
         Data $helper,
         RequestInterface $request,
-        Json $serialize,
         History $history,
         ProductRepositoryInterface $productRepository,
         CollectionFactory $rmaFactory,
         \Magento\Rma\Model\ResourceModel\Item\CollectionFactory $rmaItemCollection,
         ShippingFactory $shippingLabelFactory,
+        RestRequest $restRequest,
+        StoreRepositoryInterface $storeRepository,
         RmaAttributeRepositoryInterface $rmaAttributeRepository,
         OrderRepositoryInterface $orderRepository
     ) {
@@ -124,7 +130,8 @@ class Rma implements RmaRepositoryInterface
         $this->rmaItemCollection = $rmaItemCollection;
         $this->shippingLabelFactory = $shippingLabelFactory;
         $this->rmaAttributeRepository = $rmaAttributeRepository;
-        $this->serialize = $serialize;
+        $this->restRequest = $restRequest;
+        $this->storeRepository = $storeRepository;
     }
 
     /**
@@ -141,6 +148,19 @@ class Rma implements RmaRepositoryInterface
             throw new NoSuchEntityException(__("Order not found."));
         }
         $rmaData = $this->getReturnOrderData($rma);
+        $apiUrl = $this->request->getUriString();
+        $storeCodeApi = $this->helper->getStoreCodeByApi($apiUrl);
+        $storeCode = $this->storeRepository->get($rma->getStoreId())->getCode();
+        if ($storeCodeApi && $storeCodeApi !== $storeCode) {
+            return $this->helper->getResponseStatus(
+                __("Return not found."),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
+        }
         return $this->helper->getResponseStatus(
             __("Success"),
             200,
@@ -159,8 +179,7 @@ class Rma implements RmaRepositoryInterface
      */
     public function getReturnOrderData($rma)
     {
-        $order =
-            $this->orderRepository->get($rma->getOrderId());
+        $order = $this->orderRepository->get($rma->getOrderId());
 
         $orderItems = [];
         $shipmentTracking = [];
@@ -365,6 +384,12 @@ class Rma implements RmaRepositoryInterface
         $orderCollection->setCurPage($page);
         $orderData = [];
         foreach ($orderCollection as $order) {
+            $apiUrl = $this->request->getUriString();
+            $storeCodeApi = $this->helper->getStoreCodeByApi($apiUrl);
+            $storeCode = $this->storeRepository->get($order->getStoreId())->getCode();
+            if ($storeCodeApi && $storeCodeApi !== $storeCode) {
+                continue;
+            }
             $orderData[] = $this->getReturnOrderData($order);
         }
         $totalOrders = $orderCollection->getSize();
@@ -470,37 +495,67 @@ class Rma implements RmaRepositoryInterface
      * Return approve
      *
      * @param mixed $rmaEntityId
-     * @param mixed $returnItems
+     * @param array $returnApprove
      * @return mixed
      */
     public function approveRma(
         $rmaEntityId,
-        $returnItems = []
+        $returnApprove = []
     ) {
         try {
             $approveQuantity = [];
-            if ($returnItems) {
-                foreach ($returnItems as $item) {
+            if ($returnApprove) {
+                foreach ($returnApprove as $item) {
                     $approveQuantity[$item['id']] = $item['quantity'];
                 }
+            }
+            $bodyParams = $this->restRequest->getBodyParams();
+            $rma = $this->rmaRepository->get($bodyParams['rma_entity_id']);
+            if ($rma->getStatus() == "Closed") {
+                return $this->helper->getResponseStatus(
+                    __("You can't change. This return is Closed"),
+                    200,
+                    true,
+                    $pageData = null,
+                    $nestedArray = true
+                );
             }
             $rmaItemCollectionFactory = $this->rmaItemCollection;
             $rmaItemsCollection = $rmaItemCollectionFactory->create()
                 ->addFieldToFilter('rma_entity_id', $rmaEntityId);
             $rmaItemData = [];
+            $status = [];
             foreach ($rmaItemsCollection as $rmaItem) {
-                if (isset($approveQuantity[$rmaItem->getEntityId()])) {
-                    $qty = $approveQuantity[$rmaItem->getEntityId()];
-                    $rmaItem->setQtyApproved($qty);
-                    $rmaItem->setStatus('approved');
-                    $rmaItem->save();
-                    $rmaItemData[] = $rmaItem->debug();
+                $requestedQty = $rmaItem->getQtyRequested();
+                $qty = isset($approveQuantity[$rmaItem->getEntityId()]);
+                if ($qty) {
+                    if (isset($approveQuantity[$rmaItem->getEntityId()])) {
+                        $updatedQty = (int)$rmaItem->getQtyApproved() + (int)$approveQuantity[$rmaItem->getEntityId()];
+                        if ((int)$requestedQty >= $updatedQty) {
+                            $rmaItem->setQtyApproved($updatedQty);
+                            $rmaItem->setStatus('approved');
+                            $rmaItem->save();
+                        } else {
+                            $rmaItem->setQtyApproved($requestedQty);
+                            $rmaItem->setStatus('approved');
+                            $rmaItem->save();
+                        }
+                        $rmaItemData[] = $rmaItem->debug();
+                    }
                 } else {
-                    $rmaItem->setQtyApproved(1);
+                    $rmaItem->setQtyApproved($requestedQty);
                     $rmaItem->setStatus('approved');
                     $rmaItem->save();
                     $rmaItemData[] = $rmaItem->debug();
                 }
+                $status[] = $rmaItem->getStatus();
+            }
+            if (count(array_unique($status)) == 1) {
+                $rma->setStatus("Processed and Closed");
+                $rma->save();
+            } else {
+                $rma->setStatus("Partially Approved");
+                $rma->save();
             }
             return $this->helper->getResponseStatus(
                 __("Success"),
@@ -544,6 +599,7 @@ class Rma implements RmaRepositoryInterface
             $rmaItemsCollection = $rmaItemCollectionFactory->create()
                 ->addFieldToFilter('rma_entity_id', $rmaEntityId);
             $rmaItemData = [];
+            $status = [];
             foreach ($rmaItemsCollection as $rmaItem) {
                 if ($rejectId) {
                     if (in_array($rmaItem->getEntityId(), $rejectId)) {
@@ -556,6 +612,18 @@ class Rma implements RmaRepositoryInterface
                     $rmaItem->save();
                     $rmaItemData[] = $rmaItem->debug();
                 }
+                $status[] = $rmaItem->getStatus();
+            }
+            if (count(array_unique($status)) == 1) {
+                $bodyParams = $this->restRequest->getBodyParams();
+                $rma = $this->rmaRepository->get($bodyParams['rma_entity_id']);
+                $rma->setStatus("Closed");
+                $rma->save();
+            } else {
+                $bodyParams = $this->restRequest->getBodyParams();
+                $rma = $this->rmaRepository->get($bodyParams['rma_entity_id']);
+                $rma->setStatus("Partially Rejected");
+                $rma->save();
             }
             return $this->helper->getResponseStatus(
                 __("Success"),
@@ -663,6 +731,93 @@ class Rma implements RmaRepositoryInterface
         } catch (Exception $e) {
             return $this->helper->getResponseStatus(
                 __("Attribute Not Found" . $e->getMessage()),
+                500,
+                false,
+                $data = null,
+                $pageData = null,
+                $nestedArray = true
+            );
+        }
+    }
+
+    /**
+     * Reject Rma
+     *
+     * @param mixed $rmaEntityId
+     * @param mixed $returnAuthorize
+     * @return mixed|void
+     */
+    public function authorizeRma(
+        $rmaEntityId,
+        $returnAuthorize = []
+    ) {
+        try {
+            $authorizeQuantity = [];
+            if ($returnAuthorize) {
+                foreach ($returnAuthorize as $item) {
+                    $authorizeQuantity[$item['id']] = $item['quantity'];
+                }
+            }
+            $bodyParams = $this->restRequest->getBodyParams();
+            $rma = $this->rmaRepository->get($bodyParams['rma_entity_id']);
+            if ($rma->getStatus() == "Closed") {
+                return $this->helper->getResponseStatus(
+                    __("You can't change. This return is Closed"),
+                    200,
+                    true,
+                    $pageData = null,
+                    $nestedArray = true
+                );
+            }
+            $rmaItemCollectionFactory = $this->rmaItemCollection;
+            $rmaItemsCollection = $rmaItemCollectionFactory->create()
+                ->addFieldToFilter('rma_entity_id', $rmaEntityId);
+            $rmaItemData = [];
+            $status = [];
+            foreach ($rmaItemsCollection as $rmaItem) {
+                $requestedQty = $rmaItem->getQtyRequested();
+                $qty = isset($authorizeQuantity[$rmaItem->getEntityId()]);
+
+                if ($qty) {
+                    if (isset($authorizeQuantity[$rmaItem->getEntityId()])) {
+                        $updatedQty = (int)$rmaItem->getQtyAuthorized() + (int)$authorizeQuantity[$rmaItem->getEntityId()];
+                        if ((int)$requestedQty >= $updatedQty) {
+                            $rmaItem->setQtyAuthorized($updatedQty);
+                            $rmaItem->setStatus('authorized');
+                            $rmaItem->save();
+                        } else {
+                            $rmaItem->setQtyAuthorized($requestedQty);
+                            $rmaItem->setStatus('authorized');
+                            $rmaItem->save();
+                        }
+                        $rmaItemData[] = $rmaItem->debug();
+                    }
+                } else {
+                    $rmaItem->setQtyAuthorized($requestedQty);
+                    $rmaItem->setStatus('authorized');
+                    $rmaItem->save();
+                    $rmaItemData[] = $rmaItem->debug();
+                }
+                $status[] = $rmaItem->getStatus();
+            }
+            if (count(array_unique($status)) == 1) {
+                $rma->setStatus("authorized");
+                $rma->save();
+            } else {
+                $rma->setStatus("partially_authorized");
+                $rma->save();
+            }
+            return $this->helper->getResponseStatus(
+                __("Success"),
+                200,
+                true,
+                $rmaItemData,
+                $pageData = null,
+                $nestedArray = true
+            );
+        } catch (Exception $e) {
+            return $this->helper->getResponseStatus(
+                __("Status Not Approved" . $e->getMessage()),
                 500,
                 false,
                 $data = null,
