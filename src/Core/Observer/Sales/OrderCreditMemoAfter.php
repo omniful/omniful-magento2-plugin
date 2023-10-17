@@ -116,20 +116,18 @@ class OrderCreditMemoAfter implements ObserverInterface
                 $searchCriteria = $this->searchCriteriaBuilder->addFilter('order_id', $orderId)->create();
                 $refund = $this->creditMemoRepository->getList($searchCriteria);
                 $refundsItems = $refund->toArray();
+                $refundsUpdateItems = $refundsItems['items'][0];
                 foreach ($refundsItems["items"] as $key => $refundItem) {
                     $refundData = $this->creditMemoRepository->get($refundItem["entity_id"]);
                     foreach ($refundData->getItems() as $item) {
                         unset($item['refund']);
-                        if ($item->getParentItemId()) {
-                            continue;
-                        }
                         $refundItemData = $item->debug();
-                        $refundsItems["items"][$key]['items'][] = $refundItemData;
+                        $refundsUpdateItems['items'][] = $refundItemData;
                     }
                 }
                 return $this->adapter->publishMessage(
                     'order.full.refund',
-                    $refundsItems,
+                    $refundsUpdateItems,
                     $headers
                 );
             } else {
@@ -138,7 +136,7 @@ class OrderCreditMemoAfter implements ObserverInterface
                 $refundData["items"][0] = $refund;
                 $itemData = $refund["items"];
                 unset($refundData["items"][0]["items"]);
-                $refundData = $this->managePartialRefundItems($itemData, $refundData);
+                $refundData = $this->managePartialRefundItems($itemData, $refundData['items'][0]);
                 return $this->adapter->publishMessage(
                     'order.partial.refund',
                     $refundData,
@@ -160,7 +158,7 @@ class OrderCreditMemoAfter implements ObserverInterface
         foreach ($itemData as $item) {
             if ($item["qty"]) {
                 $item['qty'] = (int) $item['qty'];
-                $refundData["items"][0]["items"][] = $item;
+                $refundData["items"][] = $item;
             }
         }
         return $refundData;
