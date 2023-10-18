@@ -699,7 +699,7 @@ class Rma implements RmaRepositoryInterface
      * @param string|null $rmaEntityId
      * @param string|null $carrier
      * @param string|null $title
-     * @param string|null $number
+     * @param string|null $trackingNumber
      * @param string|null $shippingLabel
      * @param string|null $packages
      * @param string|null $methodTitle
@@ -711,7 +711,7 @@ class Rma implements RmaRepositoryInterface
         $rmaEntityId = null,
         $carrier = null,
         $title = null,
-        $number = null,
+        $trackingNumber = null,
         $shippingLabel = null,
         $packages = null,
         $methodTitle = null,
@@ -723,7 +723,7 @@ class Rma implements RmaRepositoryInterface
             $rmaShippingLabel->setRmaEntityId($rmaEntityId);
             $rmaShippingLabel->setCarrierCode($carrier);
             $rmaShippingLabel->setCarrierTitle($title);
-            $rmaShippingLabel->setTrackNumber($number);
+            $rmaShippingLabel->setTrackNumber($trackingNumber);
             $rmaShippingLabel->save();
             return $this->helper->getResponseStatus(
                 __("Shipment updated"),
