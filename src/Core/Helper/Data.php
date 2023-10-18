@@ -5,6 +5,7 @@ namespace Omniful\Core\Helper;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\UrlInterface;
+use Magento\Framework\Webapi\Rest\Response;
 use Magento\Sales\Model\ResourceModel\Order\Status\CollectionFactory;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
@@ -38,18 +39,24 @@ class Data extends AbstractHelper
      * @var UrlInterface
      */
     protected $urlBuilder;
+    /**
+     * @var Response
+     */
+    public $response;
 
     /**
      * Info constructor.
      *
      * @param StoreManagerInterface $storeManager
      * @param CollectionFactory $statusCollectionFactory
+     * @param Response $response
      * @param ScopeConfigInterface $scopeConfig
      * @param UrlInterface $urlBuilder
      */
     public function __construct(
         StoreManagerInterface $storeManager,
         CollectionFactory $statusCollectionFactory,
+        Response $response,
         ScopeConfigInterface $scopeConfig,
         UrlInterface $urlBuilder
     ) {
@@ -57,6 +64,7 @@ class Data extends AbstractHelper
         $this->statusCollectionFactory = $statusCollectionFactory;
         $this->scopeConfig = $scopeConfig;
         $this->urlBuilder = $urlBuilder;
+        $this->response = $response;
     }
 
     /**
@@ -204,7 +212,6 @@ class Data extends AbstractHelper
         } else {
             $responseReturn = $responseData;
         }
-
         return $responseReturn;
     }
 
@@ -234,7 +241,7 @@ class Data extends AbstractHelper
                 ? __($message)->render()
                 : __($contentMessage)->render(),
         ];
-
+        $this->response->setHttpResponseCode($statusResponse["httpCode"]);
         return $statusResponse;
     }
 
