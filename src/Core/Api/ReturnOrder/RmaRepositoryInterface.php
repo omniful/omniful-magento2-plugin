@@ -74,7 +74,7 @@ interface RmaRepositoryInterface
      * @param string|null $rmaEntityId
      * @param string|null $carrier
      * @param string|null $title
-     * @param string|null $number
+     * @param string|null $trackingNumber
      * @param string|null $shippingLabel
      * @param string|null $packages
      * @param string|null $methodTitle
@@ -86,7 +86,7 @@ interface RmaRepositoryInterface
         $rmaEntityId = null,
         $carrier = null,
         $title = null,
-        $number = null,
+        $trackingNumber = null,
         $shippingLabel = null,
         $packages = null,
         $methodTitle = null,
