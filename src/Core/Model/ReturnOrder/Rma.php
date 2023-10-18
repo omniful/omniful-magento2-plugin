@@ -202,22 +202,7 @@ class Rma implements RmaRepositoryInterface
         $paymentMethod = [];
         $shippingAddress = [];
         try {
-            $shippingData = $this->shipmentManagement->getShipmentData($order);
-            $shipmentTracking = [];
             $customerId = $order->getCustomerId();
-
-            foreach ($shippingData as $data) {
-                $shipmentTracking[] = [
-                    "track_number" => (string)$data["tracking_number"],
-                    "title" => (string)$data["title"],
-                    "carrier_code" => (string)$data["code"],
-                    "tracing_link" => (string)$data["tracing_link"],
-                    "tracking_number" => (string)$data["tracking_number"],
-                    "shipping_label_pdf" =>
-                        (string)$data["shipping_label_pdf"],
-                ];
-            }
-
             $customerData = [
                 "customer_id" => $customerId,
                 "first_name" => (string)$order
@@ -269,27 +254,25 @@ class Rma implements RmaRepositoryInterface
                 $customerId,
                 $order->getShippingAddress()->getData()
             );
-
             $dataReturn = [
                 'rma_id' => (int)$rma->getEntityId(),
+                'rma_increment_id' => $rma->getIncrementId(),
                 "status" => $rma->getStatus(),
                 "order_id" => $rma->getOrderId(),
                 "order_increment_id" => $rma->getOrderIncrementId(),
                 "store_id" => $rma->getStoreId(),
                 "customer_id" => $rma->getCustomerId(),
                 "currency" => (string)$order->getOrderCurrencyCode(),
-                "shipping_method" => (string)$rma->getShippingMethods(),
                 "customer" => $customerData,
                 "return_items" => $orderItems,
                 "payment_method" => $paymentMethod,
                 "shipping_address" => $shippingAddress,
-                "shipments" => $shipmentTracking,
             ];
             foreach ($rma->getComments() as $comment) {
                 $dataReturn['comment'][] = $comment->debug();
             }
             foreach ($rma->getTracks() as $tracks) {
-                $dataReturn['tracks'][] = $tracks->debug();
+                $dataReturn['shipments'][] = $tracks->debug();
             }
 
             return $dataReturn;
