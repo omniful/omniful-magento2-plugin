@@ -129,12 +129,16 @@ class RmaSaveAfter implements ObserverInterface
         if ($status == "closed") {
             $status = $itemsClose;
         }
+
         if ($status == "approved_on_item") {
-            $status = "partial_approved";
+            $status = "partial.approved";
         }
 
         if ($status == "processed_closed") {
             $status = "approved";
+        }
+        if ($status == "rejected_on_item") {
+            $status = "partial.rejected";
         }
         if ($statusUnique == 2) {
             if (in_array("pending", $itemsStatus)) {
