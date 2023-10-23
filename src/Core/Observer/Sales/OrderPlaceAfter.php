@@ -10,6 +10,7 @@ use Magento\Sales\Model\Order;
 use Magento\Store\Model\StoreManagerInterface;
 use Omniful\Core\Logger\Logger;
 use Omniful\Core\Model\Adapter;
+use Magento\Framework\Stdlib\DateTime\DateTime;
 use Omniful\Core\Model\Sales\Order as OrderManagement;
 
 class OrderPlaceAfter implements ObserverInterface
@@ -32,6 +33,10 @@ class OrderPlaceAfter implements ObserverInterface
      * @var StoreManagerInterface
      */
     protected $storeManager;
+    /**
+     * @var DateTime
+     */
+    private $dateTime;
 
     /**
      * OrderPlaceAfter constructor.
@@ -39,18 +44,21 @@ class OrderPlaceAfter implements ObserverInterface
      * @param Logger $logger
      * @param Adapter $adapter
      * @param OrderManagement $orderManagement
+     * @param DateTime $dateTime
      * @param StoreManagerInterface $storeManager
      */
     public function __construct(
         Logger $logger,
         Adapter $adapter,
         OrderManagement $orderManagement,
+        DateTime $dateTime,
         StoreManagerInterface $storeManager
     ) {
         $this->logger = $logger;
         $this->adapter = $adapter;
         $this->storeManager = $storeManager;
         $this->orderManagement = $orderManagement;
+        $this->dateTime = $dateTime;
     }
 
     /**
@@ -62,15 +70,20 @@ class OrderPlaceAfter implements ObserverInterface
     public function execute(Observer $observer)
     {
         $order = $observer->getEvent()->getOrder();
-        $store = $order->getStore();
-        try {
-            if ($order->getOrigData("status") === null &&
-                $order->getStatus() !== Order::STATE_CANCELED) {
-                $eventName = self::ORDER_CREATED_EVENT_NAME;
-                return $this->getOrderDataByEventName($store, $order, $eventName);
+        $createdAt = strtotime($order->getCreatedAt());
+        $dateTime = strtotime($this->dateTime->gmtDate());
+        $differenceInSeconds = $dateTime - $createdAt;
+        if ($differenceInSeconds <= 10) {
+            $store = $order->getStore();
+            try {
+                if ($order->getOrigData("status") === null &&
+                    $order->getStatus() !== Order::STATE_CANCELED) {
+                    $eventName = self::ORDER_CREATED_EVENT_NAME;
+                    return $this->getOrderDataByEventName($store, $order, $eventName);
+                }
+            } catch (Exception $e) {
+                $this->logger->error(__($e->getMessage()));
             }
-        } catch (Exception $e) {
-            $this->logger->error(__($e->getMessage()));
         }
     }
 

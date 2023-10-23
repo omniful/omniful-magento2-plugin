@@ -333,8 +333,8 @@ class Order implements OrderInterface
                 ];
             }
             return [
-                "order_id" => (int)$order->getEntityId(),
-                "order_increment_id" => $order->getIncrementId(),
+                "id" => (int)$order->getEntityId(),
+                "increment_id" => $order->getIncrementId(),
                 "status" => [
                     "code" => (string)$order->getStatus(),
                     "label" => $order->getStatusLabel(),
@@ -360,6 +360,7 @@ class Order implements OrderInterface
                 "cancel_reason" => $this->getCancelReason($order),
                 "totals" => $totals,
                 "shipments" => $shipmentTracking,
+                "order_custom_attributes" => [],
             ];
         } catch (NoSuchEntityException $e) {
             return $this->helper->getResponseStatus(
