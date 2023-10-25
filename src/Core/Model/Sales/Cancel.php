@@ -129,6 +129,16 @@ class Cancel implements CancelInterface
                     $nestedArray = true
                 );
             }
+            if(!$order->canCancel()){
+                return $this->helper->getResponseStatus(
+                    __("Your order can no longer be cancelled."),
+                    500,
+                    false,
+                    $data = null,
+                    $pageData = null,
+                    $nestedArray = true
+                );
+            }
             // Check if the order state is "complete", and throw an error if it is
             if ($order->getState() ===
                 \Magento\Sales\Model\Order::STATE_COMPLETE
