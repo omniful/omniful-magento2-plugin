@@ -132,7 +132,7 @@ class Cancel implements CancelInterface
             if(!$order->canCancel()){
                 return $this->helper->getResponseStatus(
                     __("Your order can no longer be cancelled."),
-                    500,
+                    400,
                     false,
                     $data = null,
                     $pageData = null,
