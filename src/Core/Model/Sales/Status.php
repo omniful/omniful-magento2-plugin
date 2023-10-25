@@ -99,13 +99,23 @@ class Status implements StatusInterface
                 "delivered" => "Delivered",
             ];
             $order = $this->orderRepository->get($id);
-
             $apiUrl = $this->request->getUriString();
             $storeCodeApi = $this->helper->getStoreCodeByApi($apiUrl);
             $storeCode = $this->storeRepository->get($order->getStoreId())->getCode();
             if ($storeCodeApi && $storeCodeApi !== $storeCode) {
                 return $this->helper->getResponseStatus(
                     __("Order not found."),
+                    500,
+                    false,
+                    $data = null,
+                    $pageData = null,
+                    $nestedArray = true
+                );
+            }
+
+            if(!$order->canCancel()){
+                return $this->helper->getResponseStatus(
+                    __("Your order can no longer be cancelled."),
                     500,
                     false,
                     $data = null,
