@@ -113,16 +113,6 @@ class Status implements StatusInterface
                 );
             }
 
-            if(!$order->canCancel()){
-                return $this->helper->getResponseStatus(
-                    __("Your order can no longer be cancelled."),
-                    400,
-                    false,
-                    $data = null,
-                    $pageData = null,
-                    $nestedArray = true
-                );
-            }
             if ($order === null) {
                 throw new NoSuchEntityException(__("Order not found."));
             }
