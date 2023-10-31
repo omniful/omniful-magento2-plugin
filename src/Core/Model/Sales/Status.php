@@ -113,7 +113,7 @@ class Status implements StatusInterface
                 );
             }
 
-            if(!$order->canCancel()){
+            if (!$order->canCancel() && $status == "canceled") {
                 return $this->helper->getResponseStatus(
                     __("Your order can no longer be cancelled."),
                     400,
