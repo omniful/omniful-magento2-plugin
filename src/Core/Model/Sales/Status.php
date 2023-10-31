@@ -225,7 +225,7 @@ class Status implements StatusInterface
             case "fraud":
                 return Order::STATE_PAYMENT_REVIEW;
             case "holded":
-                return Order::STATUS_HOLDED;
+                return Order::STATE_HOLDED;
             case "payment_review":
                 return Order::STATE_PAYMENT_REVIEW;
             case "pending":
