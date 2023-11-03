@@ -346,7 +346,7 @@ class Order implements OrderInterface
                 "shipping_method" => (string)$order->getShippingMethod(),
                 "total" => (float)$order->getGrandTotal(),
                 "subtotal" => (float)$order->getSubtotal(),
-                "shipping_incl_tax" => (float)$order->getShippingInclTax(),
+                "shipping_incl_tax" => (float)$order->getShippingInclTax() ? true : false,
                 "tax_total" => (float)$order->getTaxAmount(),
                 "discount_total" => (float)$order->getDiscountAmount(),
                 "created_at" => $order->getCreatedAt()
