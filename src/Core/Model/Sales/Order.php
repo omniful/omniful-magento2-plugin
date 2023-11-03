@@ -321,7 +321,7 @@ class Order implements OrderInterface
                 ],
             ];
 
-            $attributes = $order->getCustomAttributes();
+            $attributes = $order->getExtensionAttributes();
             $attributeData = [];
             foreach ($attributes as $attribute) {
                 $attributeCode = $attribute->getAttributeCode();
