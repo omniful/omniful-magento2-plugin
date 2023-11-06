@@ -229,6 +229,8 @@ class Order implements OrderInterface
                             : null,
                         "quantity" => (float)$item->getQtyOrdered(),
                         "price" => (float)$item->getPrice(),
+                        "original_price" => (float)$item->getOriginalPrice(),
+                        "price_incl_tax" => (float)$item->getPriceInclTax(),
                         "subtotal" => (float)$item->getRowTotal(),
                         "total" => (float)$item->getRowTotalInclTax(),
                         "tax" => (float)$item->getTaxAmount(),
@@ -344,6 +346,8 @@ class Order implements OrderInterface
                 "shipping_method" => (string)$order->getShippingMethod(),
                 "total" => (float)$order->getGrandTotal(),
                 "subtotal" => (float)$order->getSubtotal(),
+                "tax_applied_on_shipping" => (float) $order->getShippingTaxAmount() ? true : false,
+                "shipping_tax_amount" => (float) $order->getShippingTaxAmount(),
                 "tax_total" => (float)$order->getTaxAmount(),
                 "discount_total" => (float)$order->getDiscountAmount(),
                 "created_at" => $order->getCreatedAt()
