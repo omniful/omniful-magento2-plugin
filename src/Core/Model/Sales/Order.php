@@ -6,7 +6,7 @@ use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Api\CreditmemoRepositoryInterface;
-use Magento\Sales\Api\OrderRepositoryInterface;
+use Magento\Sales\Api\OrderRepositoryInterface as OrderRepositoryInterfaceAlias;
 use Magento\Sales\Model\Order\Invoice as InvoiceManagement;
 use Magento\Sales\Model\ResourceModel\Order\CollectionFactory;
 use Magento\Store\Api\StoreRepositoryInterface;
@@ -14,6 +14,7 @@ use Omniful\Core\Api\Sales\OrderInterface;
 use Omniful\Core\Helper\Countries;
 use Omniful\Core\Helper\Data;
 use Omniful\Core\Model\Sales\Shipment as ShipmentManagement;
+use Magento\Framework\Serialize\Serializer\Json;
 
 class Order implements OrderInterface
 {
@@ -23,7 +24,7 @@ class Order implements OrderInterface
     protected $request;
 
     /**
-     * @var OrderRepositoryInterface
+     * @var OrderRepositoryInterfaceAlias
      */
     protected $orderRepository;
 
@@ -58,6 +59,10 @@ class Order implements OrderInterface
      * @var StoreRepositoryInterface
      */
     private $storeRepository;
+    /**
+     * @var Json
+     */
+    private Json $json;
 
     /**
      * Order constructor.
@@ -70,7 +75,8 @@ class Order implements OrderInterface
      * @param InvoiceManagement $invoiceManagement
      * @param StoreRepositoryInterface $storeRepository
      * @param CollectionFactory $orderCollectionFactory
-     * @param OrderRepositoryInterface $orderRepository
+     * @param OrderRepositoryInterfaceAlias $orderRepository
+     * @param Json $json
      */
     public function __construct(
         Data $helper,
@@ -81,7 +87,8 @@ class Order implements OrderInterface
         InvoiceManagement $invoiceManagement,
         StoreRepositoryInterface $storeRepository,
         CollectionFactory $orderCollectionFactory,
-        OrderRepositoryInterface $orderRepository
+        OrderRepositoryInterfaceAlias $orderRepository,
+        Json $json
     ) {
         $this->helper = $helper;
         $this->request = $request;
@@ -92,6 +99,7 @@ class Order implements OrderInterface
         $this->invoiceManagement = $invoiceManagement;
         $this->creditMemoRepository = $creditMemoRepository;
         $this->storeRepository = $storeRepository;
+        $this->json = $json;
     }
 
     /**
@@ -153,6 +161,22 @@ class Order implements OrderInterface
         );
     }
 
+    public function camelize($input, $separator = '_')
+    {
+        return ucfirst(str_replace($separator, '', ucwords($input, $separator)));
+    }
+
+    public function dismount($object) {
+        $reflectionClass = new \ReflectionClass(get_class($object));
+        $array = array();
+        foreach ($reflectionClass->getProperties() as $property) {
+            $property->setAccessible(true);
+            $array[$property->getName()] = $property->getValue($object);
+            $property->setAccessible(false);
+        }
+        return $array;
+    }
+
     /**
      * Get order data.
      *
@@ -162,6 +186,7 @@ class Order implements OrderInterface
      */
     public function getOrderData($order)
     {
+        $extensionAttributes = [];
         $orderItems = [];
         $shipmentTracking = [];
         $customerData = [];
@@ -322,18 +347,28 @@ class Order implements OrderInterface
                     ),
                 ],
             ];
+            
+            $data =  $this->getOrderJsonData($order->getId());
 
-            $attributes = $order->getExtensionAttributes();
-            $attributeData = [];
-            foreach ($attributes as $attribute) {
-                $attributeCode = $attribute->getAttributeCode();
-                $selectedOptionId = $order->getData($attributeCode);
-                $selectedOptionText = $attribute->getSource()->getOptionText($selectedOptionId);
-                $attributeData[] = [
-                    "name" => $attributeCode,
-                    "value" => $selectedOptionText,
-                ];
+            $serializedArray = $this->json->serialize((array) $data->getExtensionAttributes());
+            $unserializedArray = $this->json->unserialize($serializedArray);
+            $extensionAttributes = array_values($unserializedArray)[0];
+            unset ($extensionAttributes['payment_additional_info']);
+            unset ($extensionAttributes['shipping_assignments']);
+            unset ($extensionAttributes['applied_taxes']);
+            unset ($extensionAttributes['item_applied_taxes']);
+            foreach ($extensionAttributes as $key =>$extensionAttribute) {
+                if(is_array($extensionAttribute)) {
+                    $functionName = "get" . $this->camelize($key);
+                    $functionData = $data->getExtensionAttributes()->$functionName();
+                    if(is_object($functionData)) {
+                        $extensionAttributes[$key] = $this->dismount($functionData);
+                    } elseif (isset($functionData[0]) && is_object($functionData[0])) {
+                        $extensionAttributes[$key] = $this->dismount($functionData[0]);
+                    }
+                }
             }
+
             return [
                 "id" => (int)$order->getEntityId(),
                 "increment_id" => $order->getIncrementId(),
@@ -354,7 +389,6 @@ class Order implements OrderInterface
                     ? $order->getCreatedAt()
                     : "",
                 "invoice" => $invoiceData,
-                "custom_attribute" => $attributeData,
                 "invoice_data" => $invoiceFullData,
                 "credit_memo_data" => $creditMemosFullData,
                 "customer" => $customerData,
@@ -365,6 +399,7 @@ class Order implements OrderInterface
                 "totals" => $totals,
                 "shipments" => $shipmentTracking,
                 "order_custom_attributes" => [],
+                'extension_attributes' => $extensionAttributes
             ];
         } catch (NoSuchEntityException $e) {
             return $this->helper->getResponseStatus(
@@ -523,5 +558,16 @@ class Order implements OrderInterface
         }
 
         return $order;
+    }
+
+    /**
+     * Register entity to delete
+     *
+     * @param int
+     * @return \Magento\Sales\Api\Data\OrderInterface $entity
+     */
+    public function getOrderJsonData($orderId)
+    {
+        return $this->getOrderByIdentifier($orderId);exit;
     }
 }
