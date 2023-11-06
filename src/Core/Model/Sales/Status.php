@@ -113,6 +113,16 @@ class Status implements StatusInterface
                 );
             }
 
+            if (!$order->canCancel() && $status == "canceled") {
+                return $this->helper->getResponseStatus(
+                    __("Your order can no longer be cancelled."),
+                    400,
+                    false,
+                    $data = null,
+                    $pageData = null,
+                    $nestedArray = true
+                );
+            }
             if ($order === null) {
                 throw new NoSuchEntityException(__("Order not found."));
             }
@@ -215,7 +225,7 @@ class Status implements StatusInterface
             case "fraud":
                 return Order::STATE_PAYMENT_REVIEW;
             case "holded":
-                return Order::STATUS_HOLDED;
+                return Order::STATE_HOLDED;
             case "payment_review":
                 return Order::STATE_PAYMENT_REVIEW;
             case "pending":
