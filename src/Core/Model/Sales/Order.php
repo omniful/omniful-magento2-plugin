@@ -348,8 +348,8 @@ class Order implements OrderInterface
                 ],
             ];
 
+            $allowedExtensionAttributes = ["order_custom_attributes"];
             $data =  $this->getOrderJsonData($order->getId());
-
             $serializedArray = $this->json->serialize((array) $data->getExtensionAttributes());
             $unserializedArray = $this->json->unserialize($serializedArray);
             $extensionAttributes = array_values($unserializedArray)[0];
@@ -369,6 +369,12 @@ class Order implements OrderInterface
                 }
             }
 
+            $allowedAttributes = [];
+            foreach ($allowedExtensionAttributes as $allowedExtensionAttribute){
+                if(isset($extensionAttributes[$allowedExtensionAttribute])){
+                    $allowedAttributes[$allowedExtensionAttribute] = $extensionAttributes[$allowedExtensionAttribute];
+                }
+            }
             return [
                 "id" => (int)$order->getEntityId(),
                 "increment_id" => $order->getIncrementId(),
@@ -398,8 +404,7 @@ class Order implements OrderInterface
                 "cancel_reason" => $this->getCancelReason($order),
                 "totals" => $totals,
                 "shipments" => $shipmentTracking,
-                "order_custom_attributes" => [],
-                'extension_attributes' => $extensionAttributes
+                'extension_attributes' => $allowedAttributes
             ];
         } catch (NoSuchEntityException $e) {
             return $this->helper->getResponseStatus(
@@ -425,7 +430,7 @@ class Order implements OrderInterface
         $invoiceData = [];
         foreach ($invoices as $invoice) {
             $invoice = $this->invoiceManagement->load($invoice->getId());
-            $invoiceData[] = $invoice->getData();
+            $invoiceData[] = $invoice->debug();
         }
         return $invoiceData;
     }
@@ -445,7 +450,7 @@ class Order implements OrderInterface
         if ($creditMemos !== false) {
             foreach ($creditMemos as $creditMemo) {
                 $creditMemo = $this->creditMemoRepository->get($creditMemo->getId());
-                $creditMemoData[] = $creditMemo->getData();
+                $creditMemoData[] = $creditMemo->debug();
             }
         }
 
