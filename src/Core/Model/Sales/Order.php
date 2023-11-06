@@ -425,7 +425,7 @@ class Order implements OrderInterface
         $invoiceData = [];
         foreach ($invoices as $invoice) {
             $invoice = $this->invoiceManagement->load($invoice->getId());
-            $invoiceData[] = $invoice->getData();
+            $invoiceData[] = $invoice->debug();
         }
         return $invoiceData;
     }
@@ -445,7 +445,7 @@ class Order implements OrderInterface
         if ($creditMemos !== false) {
             foreach ($creditMemos as $creditMemo) {
                 $creditMemo = $this->creditMemoRepository->get($creditMemo->getId());
-                $creditMemoData[] = $creditMemo->getData();
+                $creditMemoData[] = $creditMemo->debug();
             }
         }
 
