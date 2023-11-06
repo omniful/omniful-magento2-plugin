@@ -347,7 +347,7 @@ class Order implements OrderInterface
                     ),
                 ],
             ];
-            
+
             $data =  $this->getOrderJsonData($order->getId());
 
             $serializedArray = $this->json->serialize((array) $data->getExtensionAttributes());
@@ -358,10 +358,10 @@ class Order implements OrderInterface
             unset ($extensionAttributes['applied_taxes']);
             unset ($extensionAttributes['item_applied_taxes']);
             foreach ($extensionAttributes as $key =>$extensionAttribute) {
-                if(is_array($extensionAttribute)) {
+                if (is_array($extensionAttribute)) {
                     $functionName = "get" . $this->camelize($key);
                     $functionData = $data->getExtensionAttributes()->$functionName();
-                    if(is_object($functionData)) {
+                    if (is_object($functionData)) {
                         $extensionAttributes[$key] = $this->dismount($functionData);
                     } elseif (isset($functionData[0]) && is_object($functionData[0])) {
                         $extensionAttributes[$key] = $this->dismount($functionData[0]);
@@ -568,6 +568,6 @@ class Order implements OrderInterface
      */
     public function getOrderJsonData($orderId)
     {
-        return $this->getOrderByIdentifier($orderId);exit;
+        return $this->getOrderByIdentifier($orderId);
     }
 }
