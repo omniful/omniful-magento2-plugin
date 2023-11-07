@@ -242,7 +242,7 @@ class Order implements OrderInterface
                         "price" => (float)$item->getPrice(),
                         "original_price" => (float)$item->getOriginalPrice(),
                         "price_incl_tax" => (float)$item->getPriceInclTax(),
-                        "discount_amount" => (float)$item->getDiscountAmount(),
+                        "discount_amount" => -(float)$item->getDiscountAmount(),
                         "subtotal" => (float)$item->getRowTotal(),
                         "total" => (float)$item->getRowTotalInclTax(),
                         "tax" => (float)$item->getTaxAmount(),
