@@ -5,6 +5,7 @@ namespace Omniful\Core\Model\Sales;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Sales\Api\CreditmemoRepositoryInterface;
 use Magento\Sales\Api\OrderRepositoryInterface as OrderRepositoryInterfaceAlias;
 use Magento\Sales\Model\Order\Invoice as InvoiceManagement;
@@ -14,7 +15,8 @@ use Omniful\Core\Api\Sales\OrderInterface;
 use Omniful\Core\Helper\Countries;
 use Omniful\Core\Helper\Data;
 use Omniful\Core\Model\Sales\Shipment as ShipmentManagement;
-use Magento\Framework\Serialize\Serializer\Json;
+use ReflectionClass;
+use ReflectionException;
 
 class Order implements OrderInterface
 {
@@ -161,22 +163,6 @@ class Order implements OrderInterface
         );
     }
 
-    public function camelize($input, $separator = '_')
-    {
-        return ucfirst(str_replace($separator, '', ucwords($input, $separator)));
-    }
-
-    public function dismount($object) {
-        $reflectionClass = new \ReflectionClass(get_class($object));
-        $array = array();
-        foreach ($reflectionClass->getProperties() as $property) {
-            $property->setAccessible(true);
-            $array[$property->getName()] = $property->getValue($object);
-            $property->setAccessible(false);
-        }
-        return $array;
-    }
-
     /**
      * Get order data.
      *
@@ -256,10 +242,12 @@ class Order implements OrderInterface
                         "price" => (float)$item->getPrice(),
                         "original_price" => (float)$item->getOriginalPrice(),
                         "price_incl_tax" => (float)$item->getPriceInclTax(),
+                        "discount_amount" => -(float)$item->getDiscountAmount(),
                         "subtotal" => (float)$item->getRowTotal(),
                         "total" => (float)$item->getRowTotalInclTax(),
                         "tax" => (float)$item->getTaxAmount(),
-                    ];
+                        "raw_data" => $item->getData(),
+                        ];
                 }
             }
 
@@ -349,15 +337,15 @@ class Order implements OrderInterface
             ];
 
             $allowedExtensionAttributes = ["order_custom_attributes"];
-            $data =  $this->getOrderJsonData($order->getId());
-            $serializedArray = $this->json->serialize((array) $data->getExtensionAttributes());
+            $data = $this->getOrderJsonData($order->getId());
+            $serializedArray = $this->json->serialize((array)$data->getExtensionAttributes());
             $unserializedArray = $this->json->unserialize($serializedArray);
             $extensionAttributes = array_values($unserializedArray)[0];
-            unset ($extensionAttributes['payment_additional_info']);
-            unset ($extensionAttributes['shipping_assignments']);
-            unset ($extensionAttributes['applied_taxes']);
-            unset ($extensionAttributes['item_applied_taxes']);
-            foreach ($extensionAttributes as $key =>$extensionAttribute) {
+            unset($extensionAttributes['payment_additional_info']);
+            unset($extensionAttributes['shipping_assignments']);
+            unset($extensionAttributes['applied_taxes']);
+            unset($extensionAttributes['item_applied_taxes']);
+            foreach ($extensionAttributes as $key => $extensionAttribute) {
                 if (is_array($extensionAttribute)) {
                     $functionName = "get" . $this->camelize($key);
                     $functionData = $data->getExtensionAttributes()->$functionName();
@@ -370,8 +358,8 @@ class Order implements OrderInterface
             }
 
             $allowedAttributes = [];
-            foreach ($allowedExtensionAttributes as $allowedExtensionAttribute){
-                if(isset($extensionAttributes[$allowedExtensionAttribute])){
+            foreach ($allowedExtensionAttributes as $allowedExtensionAttribute) {
+                if (isset($extensionAttributes[$allowedExtensionAttribute])) {
                     $allowedAttributes[$allowedExtensionAttribute] = $extensionAttributes[$allowedExtensionAttribute];
                 }
             }
@@ -387,8 +375,8 @@ class Order implements OrderInterface
                 "shipping_method" => (string)$order->getShippingMethod(),
                 "total" => (float)$order->getGrandTotal(),
                 "subtotal" => (float)$order->getSubtotal(),
-                "tax_applied_on_shipping" => (float) $order->getShippingTaxAmount() ? true : false,
-                "shipping_tax_amount" => (float) $order->getShippingTaxAmount(),
+                "tax_applied_on_shipping" => (float)$order->getShippingTaxAmount() ? true : false,
+                "shipping_tax_amount" => (float)$order->getShippingTaxAmount(),
                 "tax_total" => (float)$order->getTaxAmount(),
                 "discount_total" => (float)$order->getDiscountAmount(),
                 "created_at" => $order->getCreatedAt()
@@ -496,6 +484,69 @@ class Order implements OrderInterface
     }
 
     /**
+     * Register entity to delete
+     *
+     * @param int
+     * @return \Magento\Sales\Api\Data\OrderInterface $entity
+     */
+    public function getOrderJsonData($orderId)
+    {
+        return $this->getOrderByIdentifier($orderId);
+    }
+
+    /**
+     * Get order by order identifier
+     *
+     * @param int|string $orderIdentifier
+     * @return OrderInterface|null
+     * @throws NoSuchEntityException
+     */
+    protected function getOrderByIdentifier($orderIdentifier)
+    {
+        if (is_numeric($orderIdentifier)) {
+            $order = $this->orderRepository->get($orderIdentifier);
+        } else {
+            $order = $this->orderRepository->getByIncrementId($orderIdentifier);
+        }
+        if (!$order->getEntityId()) {
+            throw new NoSuchEntityException(__("Order not found."));
+        }
+
+        return $order;
+    }
+
+    /**
+     * Camelize
+     *
+     * @param mixed $input
+     * @param string $separator
+     * @return string
+     */
+    public function camelize($input, $separator = '_')
+    {
+        return ucfirst(str_replace($separator, '', ucwords($input, $separator)));
+    }
+
+    /**
+     * Dismount
+     *
+     * @param mixed $object
+     * @return array
+     * @throws ReflectionException
+     */
+    public function dismount($object)
+    {
+        $reflectionClass = new ReflectionClass(get_class($object));
+        $array = [];
+        foreach ($reflectionClass->getProperties() as $property) {
+            $property->setAccessible(true);
+            $array[$property->getName()] = $property->getValue($object);
+            $property->setAccessible(false);
+        }
+        return $array;
+    }
+
+    /**
      * Get cancel reason for order
      *
      * @param OrderInterface $order
@@ -542,37 +593,5 @@ class Order implements OrderInterface
             $pageData = null,
             $nestedArray = true
         );
-    }
-
-    /**
-     * Get order by order identifier
-     *
-     * @param int|string $orderIdentifier
-     * @return OrderInterface|null
-     * @throws NoSuchEntityException
-     */
-    protected function getOrderByIdentifier($orderIdentifier)
-    {
-        if (is_numeric($orderIdentifier)) {
-            $order = $this->orderRepository->get($orderIdentifier);
-        } else {
-            $order = $this->orderRepository->getByIncrementId($orderIdentifier);
-        }
-        if (!$order->getEntityId()) {
-            throw new NoSuchEntityException(__("Order not found."));
-        }
-
-        return $order;
-    }
-
-    /**
-     * Register entity to delete
-     *
-     * @param int
-     * @return \Magento\Sales\Api\Data\OrderInterface $entity
-     */
-    public function getOrderJsonData($orderId)
-    {
-        return $this->getOrderByIdentifier($orderId);
     }
 }

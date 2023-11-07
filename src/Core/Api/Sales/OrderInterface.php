@@ -16,10 +16,10 @@ interface OrderInterface
     public function getOrders();
 
     /**
-     * Get order by ID.
+     * Loads a specified order.
      *
-     * @param int $id The ID of the order.
-     * @return string[] Order data.
+     * @param int $id The order ID.
+     * @return \Magento\Sales\Api\Data\OrderInterface
      */
     public function getOrderById(int $id);
 }
