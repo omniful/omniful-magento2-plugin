@@ -259,7 +259,8 @@ class Order implements OrderInterface
                         "subtotal" => (float)$item->getRowTotal(),
                         "total" => (float)$item->getRowTotalInclTax(),
                         "tax" => (float)$item->getTaxAmount(),
-                    ];
+                        "raw_data" => $item->getData(),
+                        ];
                 }
             }
 
