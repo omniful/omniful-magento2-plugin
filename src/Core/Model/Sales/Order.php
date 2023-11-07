@@ -336,7 +336,7 @@ class Order implements OrderInterface
                 ],
             ];
 
-            $allowedExtensionAttributes = ["order_custom_attributes"];
+            $allowedExtensionAttributes = ["order_custom_attributes", "fooman_total_group"];
             $data = $this->getOrderJsonData($order->getId());
             $serializedArray = $this->json->serialize((array)$data->getExtensionAttributes());
             $unserializedArray = $this->json->unserialize($serializedArray);
@@ -393,7 +393,6 @@ class Order implements OrderInterface
                 "totals" => $totals,
                 "shipments" => $shipmentTracking,
                 'extension_attributes' => $allowedAttributes,
-                "raw_data" => $order->getData(),
             ];
         } catch (NoSuchEntityException $e) {
             return $this->helper->getResponseStatus(
