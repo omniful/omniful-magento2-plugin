@@ -392,7 +392,8 @@ class Order implements OrderInterface
                 "cancel_reason" => $this->getCancelReason($order),
                 "totals" => $totals,
                 "shipments" => $shipmentTracking,
-                'extension_attributes' => $allowedAttributes
+                'extension_attributes' => $allowedAttributes,
+                "raw_data" => $order->getData(),
             ];
         } catch (NoSuchEntityException $e) {
             return $this->helper->getResponseStatus(
