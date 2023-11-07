@@ -129,7 +129,7 @@ class Cancel implements CancelInterface
                     $nestedArray = true
                 );
             }
-            if(!$order->canCancel()){
+            if (!$order->canCancel()) {
                 return $this->helper->getResponseStatus(
                     __("Your order can no longer be cancelled."),
                     400,
