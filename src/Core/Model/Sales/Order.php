@@ -393,7 +393,6 @@ class Order implements OrderInterface
                 "totals" => $totals,
                 "shipments" => $shipmentTracking,
                 'extension_attributes' => $allowedAttributes,
-                 "raw_items" => $order->getAllItems(),
             ];
         } catch (NoSuchEntityException $e) {
             return $this->helper->getResponseStatus(
