@@ -239,6 +239,7 @@ class Rma implements RmaRepositoryInterface
                     "product_id" => (int)$product->getId(),
                     "name" => (string)$product->getName(),
                     "quantity" => (float)$item->getQtyRequested(),
+                    "raw_data" => $item->getData(),
                 ], $rmaAttributes);
             }
             $paymentMethod = [
