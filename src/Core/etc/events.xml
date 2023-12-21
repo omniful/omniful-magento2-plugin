@@ -4,4 +4,7 @@
     <event name="rma_save_after">
         <observer name="omnifull_save_after" instance="Omniful\Core\Observer\Rma\RmaSaveAfter" />
     </event>
+    <event name="sales_order_save_after">
+        <observer name="omniful_sales_order_save_after" instance="Omniful\Core\Observer\Sales\OrderSaveAfter" />
+    </event>
 </config>
