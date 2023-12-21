@@ -406,6 +406,21 @@ class Order implements OrderInterface
         }
     }
 
+    public function getOrderInfo($order) {
+        return [
+            "id" => (int)$order->getEntityId(),
+            "increment_id" => $order->getIncrementId(),
+            "status" => [
+                "code" => (string)$order->getStatus(),
+                "label" => $order->getStatusLabel(),
+                "state" => $order->getState(),
+            ],
+            "created_at" => $order->getCreatedAt()
+                ? $order->getCreatedAt()
+                : "",
+        ];
+    }
+
     /**
      * Get Invoice Data
      *
