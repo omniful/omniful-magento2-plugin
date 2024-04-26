@@ -97,29 +97,36 @@ class ProductSaveAfter implements ObserverInterface
             // Connect to the adapter
             $this->adapter->connect();
 
-            // Extract website code, store code, and store view code from the product's store
+            // Extract website code from the product's store
             $websiteCode = $product->getStore()->getWebsite()->getCode();
-            $storeCode = $product->getStore()->getCode();
-            $storeViewCode = $product->getStore()->getCode();
 
-            // Check if the product is visible in the store view
-            if ($product->isVisibleInSiteVisibility() && $product->isVisibleInCatalog()) {
-                // Construct headers array
-                $headers = [
-                    "x-website-code" => $websiteCode,
-                    "x-store-code" => $storeCode,
-                    "x-store-view-code" => $storeViewCode,
-                ];
+            // Loop through all stores in each website
+            $website = $this->websiteRepository->get($product->getStore()->getWebsiteId());
+            $stores = $website->getStores();
+            foreach ($stores as $store) {
+                // Extract store code and store view code
+                $storeCode = $store->getCode();
+                $storeViewCode = $store->getCode();
 
-                // Publish the event
-                $product = $this->productRepository
-                    ->getById($product->getId(), false, $product->getStore()->getId());
-                $payload = $this->productManagement->getProductFullData($product);
-                $response = $this->adapter->publishMessage(
-                    $eventName,
-                    $payload,
-                    $headers
-                );
+                // Check if the product is visible in the store view
+                if ($product->isVisibleInSiteVisibility() && $product->isVisibleInCatalog()) {
+                    // Construct headers array
+                    $headers = [
+                        "x-website-code" => $websiteCode,
+                        "x-store-code" => $storeCode,
+                        "x-store-view-code" => $storeViewCode,
+                    ];
+
+                    // Publish the event
+                    $product = $this->productRepository
+                        ->getById($product->getId(), false, $store->getId());
+                    $payload = $this->productManagement->getProductFullData($product);
+                    $response = $this->adapter->publishMessage(
+                        $eventName,
+                        $payload,
+                        $headers
+                    );
+                }
             }
 
             if (!$response) {
@@ -132,6 +139,7 @@ class ProductSaveAfter implements ObserverInterface
             );
         }
     }
+
 
     /**
      * Check if the product is new or updated
