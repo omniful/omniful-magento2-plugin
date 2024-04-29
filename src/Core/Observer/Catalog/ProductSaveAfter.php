@@ -95,7 +95,7 @@ class ProductSaveAfter implements ObserverInterface
                 : self::PRODUCT_UPDATED_EVENT_NAME;
 
 
-            $payload = getProductInfo($product);
+            $payload = $this->productManagement->getProductInfo($product);
 
             // Retrieve website IDs
             $websiteIds = $product->getWebsiteIds();
@@ -148,10 +148,4 @@ class ProductSaveAfter implements ObserverInterface
             $product->getCreatedAt() == $product->getUpdatedAt();
     }
 
-    public function getProductInfo($product) {
-        return [
-            "id" => (int)$product->getId(),
-            "sku" => (string)$product->getSku(),
-        ];
-    }
 }
