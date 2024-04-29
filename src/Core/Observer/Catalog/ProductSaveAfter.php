@@ -97,42 +97,25 @@ class ProductSaveAfter implements ObserverInterface
             // Connect to the adapter
             $this->adapter->connect();
 
-            // Extract website code from the product's store
-            $websiteCode = $product->getStore()->getWebsite()->getCode();
+            // Retrieve website IDs
+            $websiteIds = $product->getWebsiteIds();
 
-            // Loop through all stores in each website
-            $website = $this->websiteRepository->get($product->getStore()->getWebsiteId());
-            $stores = $website->getStores();
-            foreach ($stores as $store) {
-                // Extract store code and store view code
-                $storeCode = $store->getCode();
-                $storeViewCode = $store->getCode();
+            foreach ($websiteIds as $websiteId) {
+                // Get stores for each website
+                $website = $this->storeManager->getWebsite($websiteId);
+                $stores = $website->getStores();
 
-                // Check if the product is visible in the store view
-                if ($product->isVisibleInSiteVisibility() && $product->isVisibleInCatalog()) {
-                    // Construct headers array
-                    $headers = [
-                        "x-website-code" => $websiteCode,
-                        "x-store-code" => $storeCode,
-                        "x-store-view-code" => $storeViewCode,
-                    ];
+                foreach ($stores as $store) {
+                    // Process each store view
+                    $storeId = $store->getId();
+                    $storeCode = $store->getCode();
+                    $storeViewCode = $store->getCode();
 
-                    // Publish the event
-                    $product = $this->productRepository
-                        ->getById($product->getId(), false, $store->getId());
-                    $payload = $this->productManagement->getProductFullData($product);
-                    $response = $this->adapter->publishMessage(
-                        $eventName,
-                        $payload,
-                        $headers
-                    );
+                    // Do something with the store view information
+                    // For example:
+                    $this->logger->info("Website ID: $websiteId, Store ID: $storeId, Store Code: $storeCode, Store View Code: $storeViewCode");
                 }
             }
-
-            if (!$response) {
-                return false;
-            }
-            return true;
         } catch (Exception $e) {
             $this->logger->info(
                 __("Error while updating product: " . $e->getMessage())
