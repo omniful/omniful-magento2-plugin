@@ -62,14 +62,15 @@ class ProductSaveAfter implements ObserverInterface
      * @param ProductManagement $productManagement
      */
     public function __construct(
-        Logger $logger,
-        Adapter $adapter,
-        ProductModel $productModel,
+        Logger                     $logger,
+        Adapter                    $adapter,
+        ProductModel               $productModel,
         WebsiteRepositoryInterface $websiteRepository,
-        ProductRepository $productRepository,
-        StoreManagerInterface $storeManager,
-        ProductManagement $productManagement
-    ) {
+        ProductRepository          $productRepository,
+        StoreManagerInterface      $storeManager,
+        ProductManagement          $productManagement
+    )
+    {
         $this->logger = $logger;
         $this->adapter = $adapter;
         $this->websiteRepository = $websiteRepository;
@@ -90,11 +91,6 @@ class ProductSaveAfter implements ObserverInterface
         $product = $observer->getProduct();
         $response = '';
         try {
-            $eventName = $this->isNewProduct($product)
-                ? self::PRODUCT_CREATED_EVENT_NAME
-                : self::PRODUCT_UPDATED_EVENT_NAME;
-
-
             $payload = $this->productManagement->getProductInfo($product);
 
             // Retrieve website IDs
@@ -106,24 +102,11 @@ class ProductSaveAfter implements ObserverInterface
                 $stores = $website->getStores();
 
                 foreach ($stores as $store) {
-                    // Process each store view
-                    $storeId = $store->getId();
-                    $storeCode = $store->getCode();
-                    $storeViewCode = $store->getCode();
-
-                    $headers = [
-                        "x-website-code" => $website->getCode(),
-                        "x-store-code" => $store->getCode(),
-                        "x-store-view-code" => $store->getCode(),
-                    ];
-
-                    // Connect to the adapter
-                    $this->adapter->connect($store->getId());
-                    $this->adapter->publishMessage(
-                        $eventName,
-                        $payload,
-                        $headers
-                    );
+                    try {
+                        $this->publishProductData($website, $store, $payload);
+                    } catch (Exception $e) {
+                        $this->logger->error(__($e->getMessage()));
+                    }
 
                 }
             }
@@ -134,6 +117,23 @@ class ProductSaveAfter implements ObserverInterface
         }
     }
 
+
+    private function publishProductData($website, $store, $payload)
+    {
+        $headers = [
+            "x-website-code" => $website->getCode(),
+            "x-store-code" => $store->getCode(),
+            "x-store-view-code" => $store->getCode(),
+        ];
+
+        // Connect to the adapter
+        $this->adapter->connect($store->getId());
+        $this->adapter->publishMessage(
+            "product.event",
+            $payload,
+            $headers
+        );
+    }
 
 
     /**
