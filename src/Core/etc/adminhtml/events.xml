@@ -16,7 +16,7 @@
     </event>
 
     <!-- Product Update After -->
-    <event name="catalog_product_save_after">
+    <event name="catalog_product_save_after_commit_after">
         <observer name="adminhtml_omniful_handle_catalog_product_save_after" instance="Omniful\Core\Observer\Catalog\ProductSaveAfter" />
     </event>
 
