@@ -94,8 +94,8 @@ class ProductSaveAfter implements ObserverInterface
                 ? self::PRODUCT_CREATED_EVENT_NAME
                 : self::PRODUCT_UPDATED_EVENT_NAME;
 
-            // Connect to the adapter
-            $this->adapter->connect();
+
+            $payload = getProductInfo($product);
 
             // Retrieve website IDs
             $websiteIds = $product->getWebsiteIds();
@@ -111,9 +111,20 @@ class ProductSaveAfter implements ObserverInterface
                     $storeCode = $store->getCode();
                     $storeViewCode = $store->getCode();
 
-                    // Do something with the store view information
-                    // For example:
-                    $this->logger->info("Website ID: $websiteId, Store ID: $storeId, Store Code: $storeCode, Store View Code: $storeViewCode");
+                    $headers = [
+                        "x-website-code" => $website->getCode(),
+                        "x-store-code" => $store->getCode(),
+                        "x-store-view-code" => $store->getCode(),
+                    ];
+
+                    // Connect to the adapter
+                    $this->adapter->connect($store->getId());
+                    $this->adapter->publishMessage(
+                        $eventName,
+                        $payload,
+                        $headers
+                    );
+
                 }
             }
         } catch (Exception $e) {
@@ -137,22 +148,10 @@ class ProductSaveAfter implements ObserverInterface
             $product->getCreatedAt() == $product->getUpdatedAt();
     }
 
-    /**
-     * Get Header
-     *
-     * @param array $product
-     * @return array
-     */
-    public function getHeader($product)
-    {
-        $code = $product->getStore()->getCode();
+    public function getProductInfo($product) {
         return [
-            "x-website-code" => $code == 'admin' ? 'default' : $product
-                ->getStore()
-                ->getWebsite()
-                ->getCode(),
-            "x-store-code" => $code == 'admin' ? 'default' : $product->getStore()->getCode(),
-            "x-store-view-code" => $code == 'admin' ? 'default' : $product->getStore()->getName(),
+            "id" => (int)$product->getId(),
+            "sku" => (string)$product->getSku(),
         ];
     }
 }
