@@ -77,6 +77,8 @@ class Info implements InfoInterface
                     "all_stores" => $allStores,
                     "stock_sources" => $stockSources,
                     "order_statuses" => $orderStatuses,
+                    "open_source_version" => "v2.2.0",
+                    "adobe_commerce_version" => "vCommerce1.0.19"
                 ],
             ];
         } catch (Exception $e) {
