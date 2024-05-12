@@ -102,7 +102,7 @@ class OrderSaveAfter implements ObserverInterface
         ];
 
         // Connect to the adapter
-        $this->adapter->connect();
+        $this->adapter->connect($store->getId());
 
         // Publish the event if the event name is not empty
         if ($eventName !== "") {

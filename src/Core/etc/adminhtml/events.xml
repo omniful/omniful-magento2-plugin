@@ -5,16 +5,6 @@
         <observer name="adminhtml_omniful_handle_sales_order_creditmemo_save_after" instance="Omniful\Core\Observer\Sales\OrderCreditMemoAfter" />
     </event>
 
-    <!-- Order Cancel After -->
-    <event name="order_cancel_after">
-        <observer name="adminhtml_omniful_handle_sales_order_cancel_after" instance="Omniful\Core\Observer\Sales\OrderCancelAfter" />
-    </event>
-
-    <!-- Order Place After -->
-    <event name="checkout_submit_all_after">
-        <observer name="adminhtml_omniful_handle_sales_order_place_after" instance="Omniful\Core\Observer\Sales\OrderPlaceAfter" />
-    </event>
-
     <!-- Product Update After -->
     <event name="catalog_product_save_after">
         <observer name="adminhtml_omniful_handle_catalog_product_save_after" instance="Omniful\Core\Observer\Catalog\ProductSaveAfter" />
