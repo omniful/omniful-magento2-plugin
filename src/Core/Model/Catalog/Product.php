@@ -886,4 +886,11 @@ class Product implements ProductInterface
         }
         return $productData;
     }
+
+    public function getProductInfo($product) {
+        return [
+            "id" => (int)$product->getId(),
+            "sku" => (string)$product->getSku(),
+        ];
+    }
 }

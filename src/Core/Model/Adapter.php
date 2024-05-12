@@ -90,7 +90,7 @@ class Adapter
      *
      * @return void
      */
-    public function connect()
+    public function connect($storeId = null)
     {
         $this->domain = null;
         $this->timestamp = null;
@@ -104,13 +104,13 @@ class Adapter
         $xDeviceInfo = $this->request->getHeader("X-Device-Info");
 
         try {
-            if (!$this->coreHelper->getIsActive()) {
+            if (!$this->coreHelper->getIsActive($storeId)) {
                 return;
             }
 
-            $this->webhookUrl = $this->coreHelper->getWebhookUrl();
-            $this->workspaceId = $this->coreHelper->getWorkspaceId();
-            $this->webhookToken = $this->coreHelper->getWebhookToken();
+            $this->webhookUrl = $this->coreHelper->getWebhookUrl($storeId);
+            $this->workspaceId = $this->coreHelper->getWorkspaceId($storeId);
+            $this->webhookToken = $this->coreHelper->getWebhookToken($storeId);
         } catch (\Magento\Framework\Exception\LocalizedException $e) {
             $this->logger->info($e->getMessage());
         }
